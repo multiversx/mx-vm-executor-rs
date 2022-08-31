@@ -1,0 +1,7 @@
+
+[workspace]
+members = [
+    "exec-c-api",
+    "exec-service",
+    "exec-service-wasmer",
+]

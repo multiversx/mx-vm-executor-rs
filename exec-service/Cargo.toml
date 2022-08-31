@@ -1,0 +1,20 @@
+[package]
+name = "elrond-exec-service"
+version = "0.0.1"
+edition = "2021"
+
+[lib]
+
+[dependencies]
+enumset = "1.0"
+cfg-if = "1.0"
+lazy_static = "1.4"
+libc = { version = "^0.2", default-features = false }
+serde = { version = "1", optional = true, features = ["derive"] }
+thiserror = "1"
+typetag = { version = "0.1", optional = true }
+paste = "1.0"
+anyhow = "1.0"
+
+env_logger = "0.8.4"
+log = "0.4.14"
