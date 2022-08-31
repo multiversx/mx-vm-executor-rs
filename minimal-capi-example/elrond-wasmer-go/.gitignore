@@ -1,0 +1,6 @@
+
+# Output Go program binary
+elrond-wasmer-go
+
+# Output Rust library binary
+libcapiprototype.so
