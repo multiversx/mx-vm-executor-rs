@@ -9,19 +9,21 @@ pub struct BasicExecutorService {
 impl BasicExecutorService {
     pub fn new() -> Self {
         Self {
-            last_error: "INITIAL ERROR".to_string(),
+            last_error: String::new(),
         }
     }
 }
 
 impl ExecutorLastError for BasicExecutorService {
-    fn update_last_error_str(&mut self, err_str: &str) {
-        self.last_error = err_str.to_string();
+    fn update_last_error_str(&mut self, err_str: String) {
+        self.last_error = err_str;
     }
 
     fn get_last_error_string(&self) -> String {
         self.last_error.clone()
     }
+
+    fn set_imports(&mut self, _imports: Vec<elrond_exec_service::WasmerImportData>) {}
 }
 
 impl ExecutorService for BasicExecutorService {}
