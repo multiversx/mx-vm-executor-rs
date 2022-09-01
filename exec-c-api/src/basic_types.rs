@@ -1,4 +1,3 @@
-
 /// The `wasmer_result_t` enum is a type that represents either a
 /// success, or a failure.
 #[allow(non_camel_case_types)]

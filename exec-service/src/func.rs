@@ -1,6 +1,12 @@
+use std::borrow::Cow;
 use std::ffi::c_void;
 use std::sync::Arc;
-use std::borrow::Cow;
+
+pub struct WasmerImportData {
+    pub module_name: String,
+    pub import_name: String,
+    pub import_func: Function,
+}
 
 /// Represents a function pointer. It is mostly used in the
 /// `typed_func` module within the `wrap` functions, to wrap imported

@@ -18,8 +18,6 @@ fn get_last_error_string() -> String {
 ///
 /// This can be used to dynamically allocate a buffer with the correct number of
 /// bytes needed to store a message.
-///
-/// See `wasmer_last_error_message()` to get a full example.
 #[no_mangle]
 pub extern "C" fn vm_exec_last_error_length() -> c_int {
     let error_message = get_last_error_string();
@@ -44,19 +42,6 @@ pub extern "C" fn vm_exec_last_error_length() -> c_int {
 ///  * The buffer is too smal to hold the error message.
 ///
 /// Note: The error message always has a trailing null character.
-///
-/// Example:
-///
-/// ```c
-/// int error_length = wasmer_last_error_length();
-///
-/// if (error_length > 0) {
-///     char *error_message = malloc(error_length);
-///     wasmer_last_error_message(error_message, error_length);
-///     printf("Error message: `%s`\n", error_message);
-/// } else {
-///     printf("No error message\n");
-/// }
 /// ```
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_last_error_message(
@@ -94,12 +79,18 @@ pub unsafe extern "C" fn vm_exec_last_error_message(
 
 #[derive(Debug)]
 pub struct CApiError {
-    pub msg: String,
+    message: &'static str,
+}
+
+impl CApiError {
+    pub fn new(message: &'static str) -> Self {
+        Self { message }
+    }
 }
 
 impl Display for CApiError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", &self.msg)
+        write!(f, "{}", &self.message)
     }
 }
 

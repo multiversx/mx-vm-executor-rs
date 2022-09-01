@@ -2,6 +2,8 @@
 //! and table) on an instance.
 
 use crate::{
+    error::CApiError,
+    service_singleton::with_service,
     // export::{wasmer_import_export_kind, wasmer_import_export_value},
     value::vm_exec_value_tag,
     vm_exec_byte_array,
@@ -16,12 +18,7 @@ use std::{ffi::c_void, result::Result, slice, sync::Arc};
 //     import::{ImportObject, Namespace},
 //     types::{FuncSig, Type},
 // };
-use elrond_exec_service::{FuncPointer, FuncSig, Function, Type};
-
-pub enum ImportError {
-    ModuleNameError,
-    ImportNameError,
-}
+use elrond_exec_service::{FuncPointer, FuncSig, Function, Type, WasmerImportData};
 
 // pub static mut GLOBAL_IMPORT_OBJECT: *mut ImportObject = 0 as *mut ImportObject;
 
@@ -36,62 +33,32 @@ pub struct vm_exec_import_t {
 #[derive(Clone)]
 pub struct vm_exec_import_func_t;
 
-pub struct WasmerImportData {
-    pub module_name: String,
-    pub import_name: String,
-    pub import_func: Function,
-}
-
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_import_object_cache_from_imports_never(
+pub unsafe extern "C" fn vm_exec_set_imports(
     imports: *mut vm_exec_import_t,
     imports_len: c_uint,
 ) -> vm_exec_result_t {
-    vm_exec_result_t::VM_EXEC_OK
-}
-
-#[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
-pub unsafe extern "C" fn vm_exec_import_object_cache_from_imports(
-    // imports: *mut wasmer_import_t,
-    imports_len: c_uint,
-) -> vm_exec_result_t {
-    // let imports_result = wasmer_create_import_object_from_imports(imports, imports_len);
-    // let import_object = match imports_result {
-    //     Err(ImportError::ModuleNameError) => {
-    //         update_last_error(CApiError {
-    //             msg: "error converting module name to string".to_string(),
-    //         });
-    //         return wasmer_result_t::WASMER_ERROR;
-    //     }
-    //     Err(ImportError::ImportNameError) => {
-    //         update_last_error(CApiError {
-    //             msg: "error converting import_name to string".to_string(),
-    //         });
-    //         return wasmer_result_t::WASMER_ERROR;
-    //     }
-    //     Ok(created_imports_object) => created_imports_object,
-    // };
-
-    // if GLOBAL_IMPORT_OBJECT != (0 as *mut ImportObject) {
-    //     let _ = Box::from_raw(GLOBAL_IMPORT_OBJECT); // deallocate previous GLOBAL_IMPORT_OBJECT
-    // }
-
-    // GLOBAL_IMPORT_OBJECT = Box::into_raw(Box::new(import_object));
-    vm_exec_result_t::VM_EXEC_OK
+    match process_raw_imports(imports, imports_len) {
+        Ok(converted_imports) => {
+            with_service(|service| service.set_imports(converted_imports));
+            vm_exec_result_t::VM_EXEC_OK
+        }
+        Err(capi_error) => {
+            with_service(|service| service.update_last_error_str(capi_error.to_string()));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
 }
 
 /// Assembles an ImportObject from a list of imports received on the C API
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub unsafe fn create_import_object_from_imports(
+pub unsafe fn process_raw_imports(
     imports: *mut vm_exec_import_t,
     imports_len: c_uint,
-) -> Result<Vec<WasmerImportData>, ImportError> {
+) -> Result<Vec<WasmerImportData>, CApiError> {
     let imports: &[vm_exec_import_t] = slice::from_raw_parts(imports, imports_len as usize);
-    // let mut import_object = ImportObject::new();
-    // let mut namespaces = HashMap::new();
     let mut result = Vec::with_capacity(imports_len as usize);
 
     for import in imports {
@@ -99,63 +66,32 @@ pub unsafe fn create_import_object_from_imports(
             import.module_name.bytes,
             import.module_name.bytes_len as usize,
         );
-        let module_name = if let Ok(s) = std::str::from_utf8(module_name) {
-            s
-        } else {
-            return Err(ImportError::ModuleNameError);
-        };
+        let module_name = std::str::from_utf8(module_name)
+            .map_err(|_| CApiError::new("error converting module name to string"))?;
+
         let import_name = slice::from_raw_parts(
             import.import_name.bytes,
             import.import_name.bytes_len as usize,
         );
-        let import_name = if let Ok(s) = std::str::from_utf8(import_name) {
-            s
-        } else {
-            return Err(ImportError::ImportNameError);
-        };
+        let import_name = std::str::from_utf8(import_name)
+            .map_err(|_| CApiError::new("error converting import name to string"))?;
 
         let func_export = import.import_func as *mut Function;
         let import_func = (&*func_export).clone();
 
-        println!(
-            "Rust: {}, {}, {}",
-            module_name,
-            import_name,
-            import_func.signature.params().len()
-        );
+        // println!(
+        //     "Rust: {}, {}, {}",
+        //     module_name,
+        //     import_name,
+        //     import_func.signature.params().len()
+        // );
 
         result.push(WasmerImportData {
             module_name: module_name.to_string(),
             import_name: import_name.to_string(),
             import_func,
         });
-
-        // let namespace = namespaces.entry(module_name).or_insert_with(Namespace::new);
-
-        // let export = match import.tag {
-        //     wasmer_import_export_kind::WASM_MEMORY => {
-        //         let mem = import.value.memory as *mut Memory;
-        //         Export::Memory((&*mem).clone())
-        //     }
-        //     wasmer_import_export_kind::WASM_FUNCTION => {
-        //         let func_export = import.value.func as *mut Export;
-        //         (&*func_export).clone()
-        //     }
-        //     wasmer_import_export_kind::WASM_GLOBAL => {
-        //         let global = import.value.global as *mut Global;
-        //         Export::Global((&*global).clone())
-        //     }
-        //     wasmer_import_export_kind::WASM_TABLE => {
-        //         let table = import.value.table as *mut Table;
-        //         Export::Table((&*table).clone())
-        //     }
-        // };
-        // namespace.insert(import_name, export);
     }
-
-    // for (module_name, namespace) in namespaces.into_iter() {
-    //     import_object.register(module_name, namespace);
-    // }
 
     Ok(result)
 }
