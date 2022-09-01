@@ -7,5 +7,9 @@ pub trait ExecutorLastError {
 
     fn get_last_error_string(&self) -> String;
 
+    fn push_execution_info(&mut self, line: &str);
+
+    fn get_execution_info(&self) -> String;
+
     fn set_imports(&mut self, imports: Vec<WasmerImportData>);
 }
