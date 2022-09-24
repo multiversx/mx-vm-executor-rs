@@ -80,7 +80,7 @@ unsafe fn string_copy(s: String, dest_buffer: *mut c_char, dest_buffer_len: c_in
 
     let dest_buffer_len = dest_buffer_len as usize;
 
-    if s.len() + 1 >= dest_buffer_len {
+    if s.len() >= dest_buffer_len {
         // buffer is too small to hold the error message
         return -1;
     }
