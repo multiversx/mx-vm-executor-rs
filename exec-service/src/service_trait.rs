@@ -11,6 +11,8 @@ pub trait ExecutorService: ExecutorLastError {
 
     fn get_execution_info(&self) -> String;
 
+    fn clear_execution_info(&mut self);
+
     fn set_imports(&mut self, imports: Vec<WasmerImportData>);
 
     fn new_instance(
