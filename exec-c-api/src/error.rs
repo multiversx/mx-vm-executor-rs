@@ -48,11 +48,13 @@ pub extern "C" fn vm_exec_execution_info_length() -> c_int {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_execution_info_message(
+pub unsafe extern "C" fn vm_exec_execution_info_flush(
     dest_buffer: *mut c_char,
     dest_buffer_len: c_int,
 ) -> c_int {
-    string_copy(get_execution_info(), dest_buffer, dest_buffer_len)
+    let result = string_copy(get_execution_info(), dest_buffer, dest_buffer_len);
+    with_service(|service| service.clear_execution_info());
+    result
 }
 
 fn get_last_error_string() -> String {

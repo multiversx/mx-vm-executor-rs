@@ -43,6 +43,10 @@ impl ExecutorService for BasicExecutorService {
         self.execution_info.clone()
     }
 
+    fn clear_execution_info(&mut self) {
+        self.execution_info.clear();
+    }
+
     fn set_imports(&mut self, _imports: Vec<elrond_exec_service::WasmerImportData>) {}
 
     fn new_instance(
@@ -54,7 +58,7 @@ impl ExecutorService for BasicExecutorService {
     }
 
     fn instance_call(&mut self, instance: &dyn Instance, func_name: &str) -> Result<(), String> {
-        self.push_execution_info(format!("Instance call! {}", func_name).as_str());
+        self.push_execution_info(format!("Rust instance call! {}", func_name).as_str());
         Ok(())
     }
 }
