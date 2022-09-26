@@ -1,5 +1,9 @@
-mod basic_exec;
-mod wasmer_instance;
+#![allow(unused_imports)] // TODO: clean up later
 
-pub use basic_exec::*;
+mod wasmer_context;
+mod wasmer_instance;
+mod wasmer_service;
+
+pub use wasmer_context::*;
 pub use wasmer_instance::*;
+pub use wasmer_service::*;

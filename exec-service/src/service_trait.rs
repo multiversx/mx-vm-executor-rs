@@ -1,4 +1,6 @@
-use crate::{CompilationOptions, Instance, WasmerImportData};
+use crate::{CompilationOptions, ServiceInstance, WasmerImportData};
+
+pub type ExecutorError = Box<dyn std::error::Error>;
 
 pub trait ExecutorLastError {
     fn update_last_error_str(&mut self, err_str: String);
@@ -19,7 +21,5 @@ pub trait ExecutorService: ExecutorLastError {
         &self,
         bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, String>;
-
-    fn instance_call(&mut self, instance: &dyn Instance, func_name: &str) -> Result<(), String>;
+    ) -> Result<Box<dyn ServiceInstance>, ExecutorError>;
 }

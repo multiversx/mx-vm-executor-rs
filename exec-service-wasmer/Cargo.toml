@@ -10,13 +10,13 @@ elrond-exec-service = { path = "../exec-service" }
 
 # We rename `wasmer` to `wasmer-api` to avoid the conflict with this
 # library name (see `[lib]`).
-# wasmer = { version = "=2.2.1", default-features = true, features = [
-#     "sys",
-#     "wasmparser",
-# ], package = "wasmer" }
-# wasmer-compiler-singlepass = { version = "=2.2.1" }
+wasmer = { version = "=2.2.1", default-features = true, features = [
+    "sys",
+    "wasmparser",
+], package = "wasmer" }
+wasmer-compiler-singlepass = { version = "=2.2.1" }
 # wasmer-engine = { version = "=2.2.1"}
-# wasmer-engine-universal = { version = "=2.2.1" }
+wasmer-engine-universal = { version = "=2.2.1" }
 # wasmer-middlewares = { version = "=2.2.1" }
 # wasmer-types = { version = "=2.2.1" }
 # enumset = "1.0"
