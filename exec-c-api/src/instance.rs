@@ -9,7 +9,7 @@ use crate::{
     // value::{wasmer_value, wasmer_value_t},
     vm_exec_result_t,
 };
-use elrond_exec_service::{CompilationOptions, Instance};
+use elrond_exec_service::{CompilationOptions, ServiceInstance};
 use libc::{c_char, c_void};
 use std::{ffi::CStr, ptr, slice};
 // use wasmer_runtime::{Ctx, Instance, Memory, Value};
@@ -62,7 +62,7 @@ pub struct vm_exec_instance_t;
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    content: Box<dyn Instance>,
+    content: Box<dyn ServiceInstance>,
 }
 
 #[allow(clippy::cast_ptr_alignment)]
@@ -114,7 +114,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
             vm_exec_result_t::VM_EXEC_OK
         }
         Err(message) => {
-            with_service(|service| service.update_last_error_str(message));
+            with_service(|service| service.update_last_error_str(message.to_string()));
             vm_exec_result_t::VM_EXEC_ERROR
         }
     }
@@ -249,8 +249,7 @@ pub unsafe extern "C" fn vm_exec_instance_call(
     // wasmer_middleware_common::opcode_trace::reset_opcodetracer_last_location(instance);
     // let result = instance.call(func_name_r);
 
-    let result =
-        with_service(|service| service.instance_call(capi_instance.content.as_ref(), func_name_r));
+    let result = capi_instance.content.call(func_name_r);
     match result {
         Ok(()) => vm_exec_result_t::VM_EXEC_OK,
         Err(message) => {

@@ -2,23 +2,25 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use elrond_exec_service::CompilationOptions;
+use elrond_exec_service::ExecutorError;
 use elrond_exec_service::ExecutorLastError;
 use elrond_exec_service::ExecutorService;
-use elrond_exec_service::Instance;
+use elrond_exec_service::ServiceInstance;
 
+use crate::WasmerContext;
 use crate::WasmerInstance;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
     pub last_error: String,
-    pub execution_info: String,
+    pub context_rc: Rc<RefCell<WasmerContext>>,
 }
 
 impl BasicExecutorService {
     pub fn new() -> Self {
         Self {
             last_error: String::new(),
-            execution_info: String::new(),
+            context_rc: Rc::new(RefCell::new(WasmerContext::default())),
         }
     }
 }
@@ -35,30 +37,33 @@ impl ExecutorLastError for BasicExecutorService {
 
 impl ExecutorService for BasicExecutorService {
     fn push_execution_info(&mut self, info: &str) {
-        self.execution_info.push_str(info);
-        self.execution_info.push('\n');
+        let mut context = self.context_rc.borrow_mut();
+        context.push_execution_info(info);
     }
 
     fn get_execution_info(&self) -> String {
-        self.execution_info.clone()
+        let context = self.context_rc.borrow();
+        context.execution_info.clone()
     }
 
     fn clear_execution_info(&mut self) {
-        self.execution_info.clear();
+        let mut context = self.context_rc.borrow_mut();
+        context.execution_info.clear();
     }
 
-    fn set_imports(&mut self, _imports: Vec<elrond_exec_service::WasmerImportData>) {}
+    fn set_imports(&mut self, imports: Vec<elrond_exec_service::WasmerImportData>) {
+        let mut context = self.context_rc.borrow_mut();
+        context.imports = imports;
+    }
 
     fn new_instance(
         &self,
-        _bytes: &[u8],
+        wasm_bytes: &[u8],
         _compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, String> {
-        Ok(Box::new(WasmerInstance {}))
-    }
-
-    fn instance_call(&mut self, instance: &dyn Instance, func_name: &str) -> Result<(), String> {
-        self.push_execution_info(format!("Rust instance call! {}", func_name).as_str());
-        Ok(())
+    ) -> Result<Box<dyn ServiceInstance>, ExecutorError> {
+        Ok(Box::new(WasmerInstance::new(
+            self.context_rc.clone(),
+            wasm_bytes,
+        )?))
     }
 }

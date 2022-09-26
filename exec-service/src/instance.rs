@@ -8,6 +8,6 @@ pub struct CompilationOptions {
     pub runtime_breakpoints: bool,
 }
 
-pub trait Instance {
+pub trait ServiceInstance {
     fn call(&self, func_name: &str) -> Result<(), String>;
 }
