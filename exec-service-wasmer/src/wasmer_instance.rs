@@ -6,7 +6,7 @@ use wasmer::{imports, wat2wasm, Instance, Module, Store, Value};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
-use crate::{BasicExecutorService, WasmerContext};
+use crate::{wasmer_convert::convert_imports, BasicExecutorService, WasmerContext};
 
 pub struct WasmerInstance {
     // pub(crate) service_ref: Rc<RefCell<Box<dyn ExecutorService>>>,
@@ -30,7 +30,7 @@ impl WasmerInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        let import_object = imports! {};
+        let import_object = convert_imports(&store, &context_rc.borrow().imports);
 
         println!("Instantiating module...");
         // Let's instantiate the Wasm module.

@@ -88,10 +88,4 @@ pub enum Type {
     I32,
     /// The `i64` type.
     I64,
-    /// The `f32` type.
-    F32,
-    /// The `f64` type.
-    F64,
-    /// The `v128` type.
-    V128,
 }

@@ -124,9 +124,6 @@ impl From<Type> for vm_exec_value_tag {
         match ty {
             Type::I32 => vm_exec_value_tag::VM_EXEC_VALUE_I32,
             Type::I64 => vm_exec_value_tag::VM_EXEC_VALUE_I64,
-            Type::F32 => unreachable!("F32 not supported in C API"),
-            Type::F64 => unreachable!("F64 not supported in C API"),
-            Type::V128 => unreachable!("V128 not supported in C API"),
         }
     }
 }
