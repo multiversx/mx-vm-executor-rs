@@ -2,6 +2,10 @@
 
 use crate::{
     service_singleton::with_service,
+    string_copy,
+    string_length,
+    vm_exec_byte_array,
+    vm_exec_byte_array_list,
     // error::{update_last_error, CApiError},
     // export::{wasmer_exports_t, NamedExport, NamedExports},
     // import::GLOBAL_IMPORT_OBJECT,
@@ -10,7 +14,7 @@ use crate::{
     vm_exec_result_t,
 };
 use elrond_exec_service::{CompilationOptions, ServiceInstance};
-use libc::{c_char, c_void};
+use libc::{c_char, c_int, c_void};
 use std::{ffi::CStr, ptr, slice};
 // use wasmer_runtime::{Ctx, Instance, Memory, Value};
 // use wasmer_runtime_core::import::ImportObject;
@@ -80,29 +84,6 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 
     let wasm_bytes: &[u8] = slice::from_raw_parts_mut(wasm_bytes_ptr, wasm_bytes_len as usize);
     let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
-    // let compiler_chain_generator = prepare_middleware_chain_generator(&options);
-    // let compiler = get_compiler(compiler_chain_generator);
-    // let result_compilation = wasmer_runtime_core::compile_with(bytes, &compiler);
-    // let new_module = match result_compilation {
-    //     Ok(module) => module,
-    //     Err(_) => {
-    //         update_last_error(CApiError {
-    //             msg: "compile error".to_string(),
-    //         });
-    //         return vm_exec_result_t::WASMER_ERROR;
-    //     }
-    // };
-
-    // let import_object: &mut ImportObject = &mut *(GLOBAL_IMPORT_OBJECT as *mut ImportObject);
-    // let result_instantiation = new_module.instantiate(&import_object);
-    // let mut new_instance = match result_instantiation {
-    //     Ok(instance) => instance,
-    //     Err(error) => {
-    //         update_last_error(error);
-    //         return vm_exec_result_t::WASMER_ERROR;
-    //     }
-    // };
-    // metering::set_points_limit(&mut new_instance, options.gas_limit);
     let instance_result =
         with_service(|service| service.new_instance(wasm_bytes, compilation_options));
     match instance_result {
@@ -277,6 +258,54 @@ pub unsafe extern "C" fn vm_exec_instance_call(
     // }
 
     // result
+}
+
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_check_signatures(
+    instance: *mut vm_exec_instance_t,
+) -> vm_exec_result_t {
+    vm_exec_result_t::VM_EXEC_OK
+}
+
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exported_function_names_length(
+    instance: *mut vm_exec_instance_t,
+) -> c_int {
+    // unpack the instance object
+    if instance.is_null() {
+        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
+        return 0;
+    }
+    let capi_instance = &mut *(instance as *mut CapiInstance);
+
+    let func_names = capi_instance.content.get_exported_function_names();
+    if func_names.is_empty() {
+        0
+    } else {
+        let len_sum: usize = func_names.iter().map(|func_name| func_name.len()).sum();
+        (len_sum + func_names.len()) as c_int
+    }
+}
+
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exported_function_names(
+    instance: *mut vm_exec_instance_t,
+    dest_buffer: *mut c_char,
+    dest_buffer_len: c_int,
+) -> c_int {
+    // unpack the instance object
+    if instance.is_null() {
+        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
+        return 0;
+    }
+    let capi_instance = &mut *(instance as *mut CapiInstance);
+
+    let func_names = capi_instance.content.get_exported_function_names();
+    let concat = func_names.join("|");
+    string_copy(concat, dest_buffer, dest_buffer_len)
 }
 
 // /// Gets all the exports of the given WebAssembly instance.
