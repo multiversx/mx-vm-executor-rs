@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use elrond_exec_service::{ExecutorError, ExecutorService, ServiceInstance};
 
-use wasmer::{imports, wat2wasm, Instance, Module, Store, Value};
+use wasmer::{imports, wat2wasm, Extern, Instance, Module, Store, Value};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
@@ -49,5 +49,21 @@ impl ServiceInstance for WasmerInstance {
             .borrow_mut()
             .push_execution_info(format!("Rust instance call! {}", func_name).as_str());
         Ok(())
+    }
+
+    fn check_signatures(&self) -> bool {
+        true
+    }
+
+    fn get_exported_function_names(&self) -> Vec<String> {
+        self.instance
+            .exports
+            .iter()
+            .filter_map(|(name, export)| match export {
+                Extern::Function(_) => Some(name),
+                _ => None,
+            })
+            .cloned()
+            .collect()
     }
 }

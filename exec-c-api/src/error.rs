@@ -8,7 +8,7 @@ use std::{
     ptr, slice,
 };
 
-use crate::service_singleton::with_service;
+use crate::{service_singleton::with_service, string_copy, string_length};
 
 /// Gets the length in bytes of the last error if any.
 ///
@@ -63,39 +63,6 @@ fn get_last_error_string() -> String {
 
 fn get_execution_info() -> String {
     with_service(|service| service.get_execution_info())
-}
-
-fn string_length(s: String) -> c_int {
-    if s.is_empty() {
-        0
-    } else {
-        s.len() as c_int + 1 // NULL terminator
-    }
-}
-
-/// Copies a String to destination pointer, over the C API.
-unsafe fn string_copy(s: String, dest_buffer: *mut c_char, dest_buffer_len: c_int) -> c_int {
-    if dest_buffer.is_null() {
-        // buffer pointer is null
-        return -1;
-    }
-
-    let dest_buffer_len = dest_buffer_len as usize;
-
-    if s.len() >= dest_buffer_len {
-        // buffer is too small to hold the error message
-        return -1;
-    }
-
-    let dest_buffer = slice::from_raw_parts_mut(dest_buffer as *mut u8, dest_buffer_len);
-
-    ptr::copy_nonoverlapping(s.as_ptr(), dest_buffer.as_mut_ptr(), s.len());
-
-    // Add a trailing null so people using the string as a `char *` don't
-    // accidentally read into garbage.
-    dest_buffer[s.len()] = 0;
-
-    s.len() as c_int + 1
 }
 
 #[derive(Debug)]

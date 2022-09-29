@@ -13,7 +13,7 @@ pub fn convert_imports(store: &Store, service_imports: &[WasmerImportData]) -> I
                 store,
                 convert_signature(service_import.import_func.signature.as_ref()),
                 // service_import.import_func.func,
-                |args| Ok(vec![]), // TODO
+                |_args| Ok(vec![]), // TODO
             ),
         )
     }
