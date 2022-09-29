@@ -55,6 +55,10 @@ impl ServiceInstance for WasmerInstance {
         true
     }
 
+    fn has_function(&self, func_name: &str) -> bool {
+        self.instance.exports.get_function(func_name).is_ok()
+    }
+
     fn get_exported_function_names(&self) -> Vec<String> {
         self.instance
             .exports

@@ -13,5 +13,7 @@ pub trait ServiceInstance {
 
     fn check_signatures(&self) -> bool;
 
+    fn has_function(&self, func_name: &str) -> bool;
+
     fn get_exported_function_names(&self) -> Vec<String>;
 }

@@ -170,42 +170,6 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 ///   * `instance` is a null pointer,
 ///   * `name` is a null pointer,
 ///   * `params` is a null pointer.
-///
-/// Example of calling an exported function that needs two parameters, and returns one value:
-///
-/// ```c
-/// // First argument.
-/// wasmer_value_t argument_one = {
-///     .tag = WASM_I32,
-///     .value.I32 = 3,
-/// };
-///
-/// // Second argument.
-/// wasmer_value_t argument_two = {
-///     .tag = WASM_I32,
-///     .value.I32 = 4,
-/// };
-///
-/// // First result.
-/// wasmer_value_t result_one;
-///
-/// // All arguments and results.
-/// wasmer_value_t arguments[] = {argument_one, argument_two};
-/// wasmer_value_t results[]   = {result_one};
-///
-/// vm_exec_result_t call_result = wasmer_instance_call(
-///     instance,  // instance pointer
-///     "sum",     // the exported function name
-///     arguments, // the arguments
-///     2,         // the number of arguments
-///     results,   // the results
-///     1          // the number of results
-/// );
-///
-/// if (call_result == WASMER_OK) {
-///     printf("Result is: %d\n", results[0].value.I32);
-/// }
-/// ```
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_call(
@@ -227,9 +191,6 @@ pub unsafe extern "C" fn vm_exec_instance_call(
     let func_name_c = CStr::from_ptr(func_name_ptr);
     let func_name_r = func_name_c.to_str().unwrap();
 
-    // wasmer_middleware_common::opcode_trace::reset_opcodetracer_last_location(instance);
-    // let result = instance.call(func_name_r);
-
     let result = capi_instance.content.call(func_name_r);
     match result {
         Ok(()) => vm_exec_result_t::VM_EXEC_OK,
@@ -238,26 +199,6 @@ pub unsafe extern "C" fn vm_exec_instance_call(
             vm_exec_result_t::VM_EXEC_ERROR
         }
     }
-
-    // let last_opcode_location =
-    //     wasmer_middleware_common::opcode_trace::get_opcodetracer_last_location(instance);
-    // if last_opcode_location > 0 {
-    //     let imported_functions = instance.module.info.name_table.to_vec();
-    //     for i in 0..imported_functions.len() {
-    //         println!("Import {}\t{}", i, imported_functions[i]);
-    //     }
-
-    //     for (k, v) in instance.module.info.exports.iter() {
-    //         println!("Export {:?}\t{}", v, k);
-    //     }
-
-    //     println!(
-    //         "wasmer_instance_call OPCODE_LAST_LOCATION = {}",
-    //         last_opcode_location
-    //     );
-    // }
-
-    // result
 }
 
 #[allow(clippy::cast_ptr_alignment)]
@@ -266,6 +207,34 @@ pub unsafe extern "C" fn vm_check_signatures(
     instance: *mut vm_exec_instance_t,
 ) -> vm_exec_result_t {
     vm_exec_result_t::VM_EXEC_OK
+}
+
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exec_instance_has_function(
+    instance: *mut vm_exec_instance_t,
+    func_name_ptr: *const c_char,
+) -> c_int {
+    // unpack the instance object
+    if instance.is_null() {
+        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
+        return -1;
+    }
+    let capi_instance = &mut *(instance as *mut CapiInstance);
+
+    // unpack the function name
+    if func_name_ptr.is_null() {
+        with_service(|service| service.update_last_error_str("name ptr is null".to_string()));
+        return -1;
+    }
+    let func_name_c = CStr::from_ptr(func_name_ptr);
+    let func_name_r = func_name_c.to_str().unwrap();
+
+    if capi_instance.content.has_function(func_name_r) {
+        1
+    } else {
+        0
+    }
 }
 
 #[allow(clippy::cast_ptr_alignment)]
