@@ -12,7 +12,7 @@ pub struct WasmerImportData {
 /// `typed_func` module within the `wrap` functions, to wrap imported
 /// functions.
 #[repr(transparent)]
-pub struct FuncPtr(*mut c_void);
+pub struct FuncPtr(pub *mut c_void);
 
 /// Const pointer to a `Func`.
 #[derive(Debug, Clone)]
@@ -26,10 +26,16 @@ impl FuncPointer {
         FuncPointer(f)
     }
 
-    // pub(crate) fn inner(&self) -> *const FuncPtr {
-    //     self.0
-    // }
+    pub fn inner(&self) -> *const FuncPtr {
+        self.0
+    }
 }
+
+// Manually implemented because FuncPointer contains a raw pointer to Ctx
+// unsafe impl Send for FuncPtr {}
+unsafe impl Send for FuncPointer {}
+unsafe impl Sync for FuncPointer {}
+// unsafe impl Send for WasmerImportData {}
 
 #[derive(Debug, Clone)]
 pub struct Function {

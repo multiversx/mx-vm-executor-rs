@@ -80,17 +80,17 @@ pub unsafe fn process_raw_imports(
         let import_func = (&*func_export).clone();
 
         // some crude temporary logging
-        with_service(|service| {
-            service.push_execution_info(
-                format!(
-                    "Rust import: {}, {}, {}",
-                    module_name,
-                    import_name,
-                    import_func.signature.params().len()
-                )
-                .as_str(),
-            )
-        });
+        // with_service(|service| {
+        //     service.push_execution_info(
+        //         format!(
+        //             "Rust import: {}, {}, {}",
+        //             module_name,
+        //             import_name,
+        //             import_func.signature.params().len()
+        //         )
+        //         .as_str(),
+        //     )
+        // });
 
         result.push(WasmerImportData {
             module_name: module_name.to_string(),

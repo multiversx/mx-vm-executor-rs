@@ -8,7 +8,6 @@ use crate::{
     vm_exec_byte_array_list,
     // error::{update_last_error, CApiError},
     // export::{wasmer_exports_t, NamedExport, NamedExports},
-    // import::GLOBAL_IMPORT_OBJECT,
     // memory::wasmer_memory_t,
     // value::{wasmer_value, wasmer_value_t},
     vm_exec_result_t,
@@ -76,6 +75,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
     wasm_bytes_ptr: *mut u8,
     wasm_bytes_len: u32,
     options_ptr: *const vm_exec_compilation_options_t,
+    // data_ptr: *mut c_void, // TODO: wrap, make the context properly spawn the instance
 ) -> vm_exec_result_t {
     if wasm_bytes_ptr.is_null() {
         with_service(|service| service.update_last_error_str("wasm bytes ptr is null".to_string()));
@@ -204,7 +204,7 @@ pub unsafe extern "C" fn vm_exec_instance_call(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_check_signatures(
-    instance: *mut vm_exec_instance_t,
+    _instance: *mut vm_exec_instance_t,
 ) -> vm_exec_result_t {
     vm_exec_result_t::VM_EXEC_OK
 }
@@ -345,48 +345,28 @@ pub unsafe extern "C" fn vm_exported_function_names(
 // //     *exports = Box::into_raw(named_exports) as *mut wasmer_exports_t;
 // // }
 
-// /// Sets the data that can be hold by an instance context.
-// ///
-// /// An instance context (represented by the opaque
-// /// `wasmer_instance_context_t` structure) can hold user-defined
-// /// data. This function sets the data. This function is complementary
-// /// of `wasmer_instance_context_data_get()`.
-// ///
-// /// This function does nothing if `instance` is a null pointer.
-// ///
-// /// Example:
-// ///
-// /// ```c
-// /// // Define your own data.
-// /// typedef struct {
-// ///     // …
-// /// } my_data;
-// ///
-// /// // Allocate them and set them on the given instance.
-// /// my_data *data = malloc(sizeof(my_data));
-// /// data->… = …;
-// /// wasmer_instance_context_data_set(instance, (void*) my_data);
-// ///
-// /// // You can read your data.
-// /// {
-// ///     my_data *data = (my_data*) wasmer_instance_context_data_get(wasmer_instance_context_get(instance));
-// ///     // …
-// /// }
-// /// ```
-// #[allow(clippy::cast_ptr_alignment)]
-// #[no_mangle]
-// pub extern "C" fn wasmer_instance_context_data_set(
-//     instance: *mut vm_exec_instance_t,
-//     data_ptr: *mut c_void,
-// ) {
-//     if instance.is_null() {
-//         return;
-//     }
+/// Sets the data that can be hold by an instance context.
+///
+/// An instance context (represented by the opaque
+/// `wasmer_instance_context_t` structure) can hold user-defined
+/// data. This function sets the data. This function is complementary
+/// of `wasmer_instance_context_data_get()`.
+///
+/// This function does nothing if `instance` is a null pointer.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exec_instance_context_data_set(
+    instance: *mut vm_exec_instance_t,
+    data_ptr: *mut c_void,
+) {
+    println!("Called vm_exec_instance_context_data_set");
+    if instance.is_null() {
+        return;
+    }
+    let capi_instance = &mut *(instance as *mut CapiInstance);
 
-//     let instance = unsafe { &mut *(instance as *mut Instance) };
-
-//     instance.context_mut().data = data_ptr;
-// }
+    capi_instance.content.set_context_data_ptr(data_ptr);
+}
 
 // /// Gets the `memory_idx`th memory of the instance.
 // ///
