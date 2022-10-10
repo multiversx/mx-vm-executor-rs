@@ -4,6 +4,7 @@ mod wasmer_context;
 mod wasmer_convert;
 mod wasmer_instance;
 mod wasmer_service;
+mod wasmer_env;
 
 pub use wasmer_context::*;
 pub use wasmer_instance::*;

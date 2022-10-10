@@ -1,3 +1,5 @@
+use std::ffi::c_void;
+
 pub struct CompilationOptions {
     pub gas_limit: u64,
     pub unmetered_locals: usize,
@@ -9,6 +11,8 @@ pub struct CompilationOptions {
 }
 
 pub trait ServiceInstance {
+    fn set_context_data_ptr(&mut self, context_ptr: *mut c_void);
+
     fn call(&self, func_name: &str) -> Result<(), String>;
 
     fn check_signatures(&self) -> bool;

@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, ffi::c_void, mem::forget, rc::Rc};
 
 use elrond_exec_service::{ExecutorError, ExecutorService, ServiceInstance};
 
@@ -6,12 +6,17 @@ use wasmer::{imports, wat2wasm, Extern, Instance, Module, Store, Value};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
-use crate::{wasmer_convert::convert_imports, BasicExecutorService, WasmerContext};
+use crate::{
+    wasmer_convert::convert_imports,
+    wasmer_env::{ImportRuntimeContext, ImportRuntimeContextRef},
+    BasicExecutorService, WasmerContext,
+};
 
 pub struct WasmerInstance {
     // pub(crate) service_ref: Rc<RefCell<Box<dyn ExecutorService>>>,
     pub(crate) context_rc: Rc<RefCell<WasmerContext>>,
-    pub(crate) instance: Instance,
+    pub(crate) wasmer_instance: Instance,
+    pub(crate) runtime_context_ref: ImportRuntimeContextRef, // TODO: move somewhere else, ideally some overarching context obj
 }
 
 impl WasmerInstance {
@@ -30,24 +35,47 @@ impl WasmerInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        let import_object = convert_imports(&store, &context_rc.borrow().imports);
+        // let runtime_context = ImportRuntimeContext::default();
+        println!("Converting imports...");
+        let runtime_context_ref = ImportRuntimeContextRef::new(ImportRuntimeContext::default());
+        let import_object = convert_imports(
+            &store,
+            runtime_context_ref.clone(),
+            &context_rc.borrow().imports,
+        );
 
         println!("Instantiating module...");
         // Let's instantiate the Wasm module.
-        let instance = Instance::new(&module, &import_object)?;
+        let wasmer_instance = Instance::new(&module, &import_object)?;
 
         Ok(WasmerInstance {
             context_rc,
-            instance,
+            wasmer_instance,
+            runtime_context_ref,
         })
     }
 }
 
 impl ServiceInstance for WasmerInstance {
+    fn set_context_data_ptr(&mut self, context_ptr: *mut c_void) {
+        println!("Setting context_ptr ... {:?}", context_ptr);
+        self.runtime_context_ref.set_context_ptr(context_ptr);
+        // self.context_ptr = context_ptr;
+    }
+
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.context_rc
             .borrow_mut()
             .push_execution_info(format!("Rust instance call! {}", func_name).as_str());
+
+        let func = self
+            .wasmer_instance
+            .exports
+            .get_function(func_name)
+            .map_err(|_| "function not found".to_string())?;
+
+        let _ = func.call(&[]);
+
         Ok(())
     }
 
@@ -56,11 +84,11 @@ impl ServiceInstance for WasmerInstance {
     }
 
     fn has_function(&self, func_name: &str) -> bool {
-        self.instance.exports.get_function(func_name).is_ok()
+        self.wasmer_instance.exports.get_function(func_name).is_ok()
     }
 
     fn get_exported_function_names(&self) -> Vec<String> {
-        self.instance
+        self.wasmer_instance
             .exports
             .iter()
             .filter_map(|(name, export)| match export {
