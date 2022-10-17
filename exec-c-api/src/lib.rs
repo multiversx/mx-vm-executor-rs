@@ -7,5 +7,6 @@ pub mod instance;
 pub mod service_singleton;
 pub mod signals;
 pub mod value;
+pub mod vm_hook_pointers;
 
 pub use basic_types::*;
