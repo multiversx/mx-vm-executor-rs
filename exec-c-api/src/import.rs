@@ -8,6 +8,7 @@ use crate::{
     value::vm_exec_value_tag,
     vm_exec_byte_array,
     vm_exec_result_t,
+    vm_hook_pointers::vm_exec_vm_hook_pointers,
 };
 use libc::c_uint;
 // use std::collections::HashMap;
@@ -148,3 +149,8 @@ pub extern "C" fn vm_exec_import_func_destroy(func: *mut vm_exec_import_func_t) 
         unsafe { Box::from_raw(func as *mut Function) };
     }
 }
+
+/// Frees memory for the given Func
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub extern "C" fn vm_exec_set_vm_hook_pointers(_ptrs: *const vm_exec_vm_hook_pointers) {}

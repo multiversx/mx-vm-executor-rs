@@ -1,22 +1,21 @@
 use std::{cell::RefCell, ffi::c_void, mem::forget, rc::Rc};
 
-use elrond_exec_service::{ExecutorError, ExecutorService, ServiceInstance};
+use elrond_exec_service::{ExecutorError, ExecutorService, ServiceInstance, VMHooksDefault};
 
 use wasmer::{imports, wat2wasm, Extern, Instance, Module, Store, Value};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
 use crate::{
-    wasmer_convert::convert_imports,
-    wasmer_env::{ImportRuntimeContext, ImportRuntimeContextRef},
-    BasicExecutorService, WasmerContext,
+    BasicExecutorService, WasmerContext, wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper,
 };
 
 pub struct WasmerInstance {
     // pub(crate) service_ref: Rc<RefCell<Box<dyn ExecutorService>>>,
     pub(crate) context_rc: Rc<RefCell<WasmerContext>>,
     pub(crate) wasmer_instance: Instance,
-    pub(crate) runtime_context_ref: ImportRuntimeContextRef, // TODO: move somewhere else, ideally some overarching context obj
+    // pub(crate) runtime_context_ref: ImportRuntimeContextRef, // TODO: move somewhere else, ideally some overarching context obj
+    pub(crate) vm_hooks_wrapper: VMHooksWrapper,
 }
 
 impl WasmerInstance {
@@ -37,11 +36,11 @@ impl WasmerInstance {
         // Create an empty import object.
         // let runtime_context = ImportRuntimeContext::default();
         println!("Converting imports...");
-        let runtime_context_ref = ImportRuntimeContextRef::new(ImportRuntimeContext::default());
-        let import_object = convert_imports(
+        // let runtime_context_ref = ImportRuntimeContextRef::new(ImportRuntimeContext::default());
+        let vm_hooks_wrapper = VMHooksWrapper::new(VMHooksDefault);
+        let import_object = generate_import_object(
             &store,
-            runtime_context_ref.clone(),
-            &context_rc.borrow().imports,
+            &vm_hooks_wrapper,
         );
 
         println!("Instantiating module...");
@@ -51,7 +50,7 @@ impl WasmerInstance {
         Ok(WasmerInstance {
             context_rc,
             wasmer_instance,
-            runtime_context_ref,
+            vm_hooks_wrapper,
         })
     }
 }
@@ -59,7 +58,7 @@ impl WasmerInstance {
 impl ServiceInstance for WasmerInstance {
     fn set_context_data_ptr(&mut self, context_ptr: *mut c_void) {
         println!("Setting context_ptr ... {:?}", context_ptr);
-        self.runtime_context_ref.set_context_ptr(context_ptr);
+        // self.runtime_context_ref.set_context_ptr(context_ptr);
         // self.context_ptr = context_ptr;
     }
 
