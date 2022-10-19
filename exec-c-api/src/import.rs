@@ -2,7 +2,7 @@
 //! and table) on an instance.
 
 use crate::{
-    error::CApiError,
+    capi_error::CApiError,
     service_singleton::with_service,
     // export::{wasmer_import_export_kind, wasmer_import_export_value},
     value::vm_exec_value_tag,

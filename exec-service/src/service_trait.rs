@@ -1,4 +1,4 @@
-use crate::{CompilationOptions, ServiceInstance, WasmerImportData};
+use crate::{Executor, WasmerImportData};
 
 pub type ExecutorError = Box<dyn std::error::Error>;
 
@@ -17,9 +17,5 @@ pub trait ExecutorService: ExecutorLastError {
 
     fn set_imports(&mut self, imports: Vec<WasmerImportData>);
 
-    fn new_instance(
-        &self,
-        bytes: &[u8],
-        compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn ServiceInstance>, ExecutorError>;
+    fn new_executor(&self) -> Result<Box<dyn Executor>, ExecutorError>;
 }

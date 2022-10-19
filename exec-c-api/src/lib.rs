@@ -1,9 +1,10 @@
 #![allow(unused_imports)] // TODO: clean up later
 
 mod basic_types;
-pub mod error;
+pub mod capi_error;
 pub mod import;
-pub mod instance;
+pub mod capi_instance;
+pub mod capi_executor;
 pub mod service_singleton;
 pub mod signals;
 pub mod value;
