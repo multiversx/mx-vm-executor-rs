@@ -1,6 +1,7 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
+    capi_executor::{vm_exec_executor_t, CapiExecutor},
     service_singleton::with_service,
     string_copy,
     string_length,
@@ -71,12 +72,19 @@ pub struct CapiInstance {
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_instance(
+    executor: *mut vm_exec_executor_t,
     instance: *mut *mut vm_exec_instance_t,
     wasm_bytes_ptr: *mut u8,
     wasm_bytes_len: u32,
     options_ptr: *const vm_exec_compilation_options_t,
-    // data_ptr: *mut c_void, // TODO: wrap, make the context properly spawn the instance
 ) -> vm_exec_result_t {
+    // unpack the executor object
+    if executor.is_null() {
+        with_service(|service| service.update_last_error_str("executor ptr is null".to_string()));
+        return vm_exec_result_t::VM_EXEC_ERROR;
+    }
+    let capi_executor = &mut *(executor as *mut CapiExecutor);
+
     if wasm_bytes_ptr.is_null() {
         with_service(|service| service.update_last_error_str("wasm bytes ptr is null".to_string()));
         return vm_exec_result_t::VM_EXEC_ERROR;
@@ -84,8 +92,10 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 
     let wasm_bytes: &[u8] = slice::from_raw_parts_mut(wasm_bytes_ptr, wasm_bytes_len as usize);
     let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
-    let instance_result =
-        with_service(|service| service.new_instance(wasm_bytes, compilation_options));
+    let instance_result = capi_executor
+        .content
+        .new_instance(wasm_bytes, compilation_options);
+    // with_service(|service| service.new_instance());
     match instance_result {
         Ok(instance_box) => {
             let capi_instance = CapiInstance {

@@ -2,12 +2,15 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use elrond_exec_service::CompilationOptions;
+use elrond_exec_service::Executor;
 use elrond_exec_service::ExecutorError;
 use elrond_exec_service::ExecutorLastError;
 use elrond_exec_service::ExecutorService;
 use elrond_exec_service::ServiceInstance;
 
 use crate::WasmerContext;
+use crate::WasmerExecutor;
+use crate::WasmerExecutorData;
 use crate::WasmerInstance;
 
 #[derive(Default)]
@@ -56,14 +59,9 @@ impl ExecutorService for BasicExecutorService {
         context.imports = imports;
     }
 
-    fn new_instance(
-        &self,
-        wasm_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn ServiceInstance>, ExecutorError> {
-        Ok(Box::new(WasmerInstance::new(
-            self.context_rc.clone(),
-            wasm_bytes,
-        )?))
+    fn new_executor(&self) -> Result<Box<dyn Executor>, ExecutorError> {
+        Ok(Box::new(WasmerExecutor {
+            data: Rc::new(WasmerExecutorData::default()),
+        }))
     }
 }
