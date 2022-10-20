@@ -10,4 +10,4 @@ pub use func::*;
 pub use instance::*;
 pub use service_error::ServiceError;
 pub use service_trait::*;
-pub use vm_hooks::{VMHooks, VMHooksDefault};
+pub use vm_hooks::*;

@@ -14,11 +14,9 @@ use crate::{
 };
 
 pub struct WasmerInstance {
-    // pub(crate) service_ref: Rc<RefCell<Box<dyn ExecutorService>>>,
-    pub(crate) executor_data: Rc<WasmerExecutorData>,
-    pub(crate) context_rc: Rc<RefCell<WasmerContext>>,
-    pub(crate) wasmer_instance: Instance,
-    pub(crate) vm_hooks_wrapper: VMHooksWrapper,
+    pub executor_data: Rc<WasmerExecutorData>,
+    pub context_rc: Rc<RefCell<WasmerContext>>, // TODO: remove
+    pub wasmer_instance: Instance,
 }
 
 impl WasmerInstance {
@@ -30,12 +28,6 @@ impl WasmerInstance {
 }
 
 impl ServiceInstance for WasmerInstance {
-    fn set_context_data_ptr(&mut self, context_ptr: *mut c_void) {
-        println!("Setting context_ptr ... {:?}", context_ptr);
-        // self.runtime_context_ref.set_context_ptr(context_ptr);
-        // self.context_ptr = context_ptr;
-    }
-
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.context_rc
             .borrow_mut()

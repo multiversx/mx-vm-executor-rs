@@ -1,4 +1,4 @@
-use crate::{Executor, WasmerImportData};
+use crate::{Executor, VMHooks, WasmerImportData};
 
 pub type ExecutorError = Box<dyn std::error::Error>;
 
@@ -17,5 +17,8 @@ pub trait ExecutorService: ExecutorLastError {
 
     fn set_imports(&mut self, imports: Vec<WasmerImportData>);
 
-    fn new_executor(&self) -> Result<Box<dyn Executor>, ExecutorError>;
+    fn new_executor(
+        &self,
+        vm_hooks_builder: Box<dyn VMHooks>,
+    ) -> Result<Box<dyn Executor>, ExecutorError>;
 }
