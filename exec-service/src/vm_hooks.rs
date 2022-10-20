@@ -6,14 +6,6 @@
 
 use std::ffi::c_void;
 
-// pub trait VMHooksContext {
-//     fn as_raw_ptr(&self) -> *mut c_void;
-// }
-
-// pub trait VMHooksBuilder {
-//     fn build_vm_hooks_object(&self, context: Box<dyn VMHooksContext>) -> Box<dyn VMHooks>;
-// }
-
 #[rustfmt::skip]
 pub trait VMHooks: core::fmt::Debug + 'static {
     fn set_context_ptr(&mut self, context_ptr: *mut c_void);
@@ -267,6 +259,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32;
 }
 
+/// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
 #[derive(Debug)]
 pub struct VMHooksDefault;
 
