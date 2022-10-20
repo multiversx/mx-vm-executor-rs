@@ -355,8 +355,6 @@ pub unsafe extern "C" fn vm_exported_function_names(
 // //     *exports = Box::into_raw(named_exports) as *mut wasmer_exports_t;
 // // }
 
-
-
 // /// Gets the `memory_idx`th memory of the instance.
 // ///
 // /// Note that the index is always `0` until multiple memories are supported.
