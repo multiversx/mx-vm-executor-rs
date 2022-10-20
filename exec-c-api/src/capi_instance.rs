@@ -3,28 +3,11 @@
 use crate::{
     capi_executor::{vm_exec_executor_t, CapiExecutor},
     service_singleton::with_service,
-    string_copy,
-    string_length,
-    vm_exec_byte_array,
-    vm_exec_byte_array_list,
-    // error::{update_last_error, CApiError},
-    // export::{wasmer_exports_t, NamedExport, NamedExports},
-    // memory::wasmer_memory_t,
-    // value::{wasmer_value, wasmer_value_t},
-    vm_exec_result_t,
+    string_copy, vm_exec_result_t,
 };
 use elrond_exec_service::{CompilationOptions, ServiceInstance};
-use libc::{c_char, c_int, c_void};
-use std::{ffi::CStr, ptr, slice};
-// use wasmer_runtime::{Ctx, Instance, Memory, Value};
-// use wasmer_runtime_core::import::ImportObject;
-
-// use wasmer_middleware_common::metering;
-// use wasmer_middleware_common::opcode_control;
-// use wasmer_middleware_common::opcode_trace;
-// use wasmer_middleware_common::runtime_breakpoints;
-// use wasmer_runtime_core::backend::Compiler;
-// use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
+use libc::{c_char, c_int};
+use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
 ///
@@ -110,62 +93,6 @@ pub unsafe extern "C" fn vm_exec_new_instance(
         }
     }
 }
-
-// /// Returns the instance context. Learn more by looking at the
-// /// `wasmer_instance_context_t` struct.
-// ///
-// /// This function returns `null` if `instance` is a null pointer.
-// ///
-// /// Example:
-// ///
-// /// ```c
-// /// const wasmer_instance_context_get *context = wasmer_instance_context_get(instance);
-// /// my_data *data = (my_data *) wasmer_instance_context_data_get(context);
-// /// // Do something with `my_data`.
-// /// ```
-// ///
-// /// It is often useful with `wasmer_instance_context_data_set()`.
-// #[allow(clippy::cast_ptr_alignment)]
-// #[no_mangle]
-// pub extern "C" fn wasmer_instance_context_get(
-//     instance: *mut vm_exec_instance_t,
-// ) -> *const wasmer_instance_context_t {
-//     if instance.is_null() {
-//         return ptr::null() as _;
-//     }
-
-//     let instance = unsafe { &*(instance as *const Instance) };
-//     let context: *const Ctx = instance.context() as *const _;
-
-//     context as *const wasmer_instance_context_t
-// }
-
-// /// Verifies whether the specified function name is imported by the given instance.
-// #[allow(clippy::cast_ptr_alignment)]
-// #[no_mangle]
-// pub unsafe extern "C" fn wasmer_instance_is_function_imported(
-//     instance: *mut vm_exec_instance_t,
-//     name: *const c_char,
-// ) -> bool {
-//     if instance.is_null() {
-//         return false;
-//     }
-
-//     if name.is_null() {
-//         return false;
-//     }
-
-//     let instance = &*(instance as *const Instance);
-
-//     let func_name_c = CStr::from_ptr(name);
-//     let func_name_r = func_name_c.to_str().unwrap();
-
-//     let module = instance.module();
-
-//     let functions = module.info().name_table.to_vec();
-
-//     functions.contains(&func_name_r)
-// }
 
 /// Calls an exported function of a WebAssembly instance by `name`
 /// with the provided parameters. The exported function results are
@@ -287,74 +214,6 @@ pub unsafe extern "C" fn vm_exported_function_names(
     string_copy(concat, dest_buffer, dest_buffer_len)
 }
 
-// /// Gets all the exports of the given WebAssembly instance.
-// ///
-
-// /// This function stores a Rust vector of exports into `exports` as an
-// /// opaque pointer of kind `wasmer_exports_t`.
-// ///
-// /// As is, you can do anything with `exports` except using the
-// /// companion functions, like `wasmer_exports_len()`,
-// /// `wasmer_exports_get()` or `wasmer_export_kind()`. See the example below.
-// ///
-// /// **Warning**: The caller owns the object and should call
-// /// `wasmer_exports_destroy()` to free it.
-// ///
-// /// Example:
-// ///
-// /// ```c
-// /// // Get the exports.
-// /// wasmer_exports_t *exports = NULL;
-// /// wasmer_instance_exports(instance, &exports);
-// ///
-// /// // Get the number of exports.
-// /// int exports_length = wasmer_exports_len(exports);
-// /// printf("Number of exports: %d\n", exports_length);
-// ///
-// /// // Read the first export.
-// /// wasmer_export_t *export = wasmer_exports_get(exports, 0);
-// ///
-// /// // Get the kind of the export.
-// /// wasmer_import_export_kind export_kind = wasmer_export_kind(export);
-// ///
-// /// // Assert it is a function (why not).
-// /// assert(export_kind == WASM_FUNCTION);
-// ///
-// /// // Read the export name.
-// /// wasmer_byte_array name_bytes = wasmer_export_name(export);
-// ///
-// /// assert(name_bytes.bytes_len == sizeof("sum") - 1);
-// /// assert(memcmp(name_bytes.bytes, "sum", sizeof("sum") - 1) == 0);
-// ///
-// /// // Destroy the exports.
-// /// wasmer_exports_destroy(exports);
-// /// ```
-// // #[allow(clippy::cast_ptr_alignment)]
-// // #[no_mangle]
-// // pub unsafe extern "C" fn wasmer_instance_exports(
-// //     instance: *mut vm_exec_instance_t,
-// //     exports: *mut *mut wasmer_exports_t,
-// // ) {
-// //     if instance.is_null() {
-// //         return;
-// //     }
-
-// //     let instance_ref = &mut *(instance as *mut Instance);
-// //     let mut exports_vec: Vec<NamedExport> = Vec::with_capacity(instance_ref.exports().count());
-
-// //     for (name, export) in instance_ref.exports() {
-// //         exports_vec.push(NamedExport {
-// //             name: name.clone(),
-// //             export: export.clone(),
-// //             instance: instance as *mut Instance,
-// //         });
-// //     }
-
-// //     let named_exports: Box<NamedExports> = Box::new(NamedExports(exports_vec));
-
-// //     *exports = Box::into_raw(named_exports) as *mut wasmer_exports_t;
-// // }
-
 // /// Gets the `memory_idx`th memory of the instance.
 // ///
 // /// Note that the index is always `0` until multiple memories are supported.
@@ -386,28 +245,6 @@ pub unsafe extern "C" fn vm_exported_function_names(
 // //     let memory = ctx.memory(0);
 // //     memory as *const Memory as *const wasmer_memory_t
 // // }
-
-// /// Gets the data that can be hold by an instance.
-// ///
-// /// This function is complementary of
-// /// `wasmer_instance_context_data_set()`. Please read its
-// /// documentation. You can also read the documentation of
-// /// `wasmer_instance_context_t` to get other examples.
-// ///
-// /// This function returns nothing if `ctx` is a null pointer.
-// #[allow(clippy::cast_ptr_alignment)]
-// #[no_mangle]
-// pub extern "C" fn wasmer_instance_context_data_get(
-//     ctx: *const wasmer_instance_context_t,
-// ) -> *mut c_void {
-//     if ctx.is_null() {
-//         return ptr::null_mut() as _;
-//     }
-
-//     let ctx = unsafe { &*(ctx as *const Ctx) };
-
-//     ctx.data
-// }
 
 /// Frees memory for the given `vm_exec_instance_t`.
 ///

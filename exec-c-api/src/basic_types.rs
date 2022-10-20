@@ -1,9 +1,5 @@
 use libc::{c_char, c_int};
-use std::{
-    error::Error,
-    fmt::{self, Display, Formatter},
-    ptr, slice,
-};
+use std::{ptr, slice};
 
 /// The `wasmer_result_t` enum is a type that represents either a
 /// success, or a failure.
