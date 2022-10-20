@@ -5,7 +5,6 @@ use libc::{c_char, c_int};
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
-    ptr, slice,
 };
 
 use crate::{service_singleton::with_service, string_copy, string_length};

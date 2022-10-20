@@ -2,12 +2,10 @@
 
 use crate::{
     capi_vm_hook_pointers::vm_exec_vm_hook_pointers, capi_vm_hooks::CapiVMHooks,
-    service_singleton::with_service, string_copy, string_length, vm_exec_byte_array,
-    vm_exec_byte_array_list, vm_exec_result_t,
+    service_singleton::with_service, vm_exec_result_t,
 };
-use elrond_exec_service::{CompilationOptions, Executor, ServiceInstance};
-use libc::{c_char, c_int, c_void};
-use std::{ffi::CStr, ptr, slice};
+use elrond_exec_service::Executor;
+use libc::c_void;
 
 #[repr(C)]
 pub struct vm_exec_executor_t;
@@ -20,16 +18,15 @@ pub struct CapiExecutor {
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_executor(
     executor: *mut *mut vm_exec_executor_t,
-    vm_hook_pointers_ptr_raw: *mut c_void,
+    vm_hook_pointers_ptr_ptr: *mut *mut vm_exec_vm_hook_pointers,
 ) -> vm_exec_result_t {
-    if vm_hook_pointers_ptr_raw.is_null() {
+    if vm_hook_pointers_ptr_ptr.is_null() {
         with_service(|service| service.update_last_error_str("VM hooks ptr is null".to_string()));
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
     // unpacking the vm hooks object pointer
-    let vm_hook_pointers_ptr_cast = vm_hook_pointers_ptr_raw as *mut *mut vm_exec_vm_hook_pointers;
-    let vm_hook_pointers_ptr = *vm_hook_pointers_ptr_cast;
+    let vm_hook_pointers_ptr = *vm_hook_pointers_ptr_ptr;
     let vm_hook_pointers = (*vm_hook_pointers_ptr).clone();
 
     // create executor
