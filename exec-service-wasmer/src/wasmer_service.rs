@@ -1,18 +1,15 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use elrond_exec_service::CompilationOptions;
 use elrond_exec_service::Executor;
 use elrond_exec_service::ExecutorError;
 use elrond_exec_service::ExecutorLastError;
 use elrond_exec_service::ExecutorService;
-use elrond_exec_service::ServiceInstance;
 use elrond_exec_service::VMHooks;
 
 use crate::WasmerContext;
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;
-use crate::WasmerInstance;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
@@ -53,11 +50,6 @@ impl ExecutorService for BasicExecutorService {
     fn clear_execution_info(&mut self) {
         let mut context = self.context_rc.borrow_mut();
         context.execution_info.clear();
-    }
-
-    fn set_imports(&mut self, imports: Vec<elrond_exec_service::WasmerImportData>) {
-        let mut context = self.context_rc.borrow_mut();
-        context.imports = imports;
     }
 
     fn new_executor(

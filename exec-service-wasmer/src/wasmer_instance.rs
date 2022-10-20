@@ -1,17 +1,10 @@
-use std::{cell::RefCell, ffi::c_void, mem::forget, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
-use elrond_exec_service::{
-    Executor, ExecutorError, ExecutorService, ServiceInstance, VMHooksDefault,
-};
+use elrond_exec_service::ServiceInstance;
 
-use wasmer::{imports, wat2wasm, Extern, Instance, Module, Store, Value};
-use wasmer_compiler_singlepass::Singlepass;
-use wasmer_engine_universal::Universal;
+use wasmer::{Extern, Instance};
 
-use crate::{
-    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, BasicExecutorService,
-    WasmerContext, WasmerExecutorData,
-};
+use crate::{WasmerContext, WasmerExecutorData};
 
 pub struct WasmerInstance {
     pub executor_data: Rc<WasmerExecutorData>,

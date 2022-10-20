@@ -1,10 +1,4 @@
-use std::{
-    borrow::Borrow,
-    ffi::c_void,
-    ops::Deref,
-    rc::Rc,
-    sync::{Arc, Mutex},
-};
+use std::rc::Rc;
 
 use elrond_exec_service::VMHooks;
 use wasmer::WasmerEnv;

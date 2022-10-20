@@ -1,4 +1,4 @@
-#![allow(unused_imports)] // TODO: clean up later
+// #![allow(unused_imports)] // TODO: clean up later
 
 mod wasmer_context;
 mod wasmer_executor;
