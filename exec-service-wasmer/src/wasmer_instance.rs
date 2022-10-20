@@ -1,15 +1,15 @@
 use std::{cell::RefCell, rc::Rc};
 
-use elrond_exec_service::ServiceInstance;
+use elrond_exec_service::Instance;
 
-use wasmer::{Extern, Instance};
+use wasmer::Extern;
 
 use crate::{WasmerContext, WasmerExecutorData};
 
 pub struct WasmerInstance {
     pub executor_data: Rc<WasmerExecutorData>,
     pub context_rc: Rc<RefCell<WasmerContext>>, // TODO: remove
-    pub wasmer_instance: Instance,
+    pub wasmer_instance: wasmer::Instance,
 }
 
 impl WasmerInstance {
@@ -20,7 +20,7 @@ impl WasmerInstance {
     // }
 }
 
-impl ServiceInstance for WasmerInstance {
+impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.context_rc
             .borrow_mut()

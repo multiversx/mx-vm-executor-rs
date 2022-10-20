@@ -8,7 +8,7 @@ pub struct CompilationOptions {
     pub runtime_breakpoints: bool,
 }
 
-pub trait ServiceInstance {
+pub trait Instance {
     fn call(&self, func_name: &str) -> Result<(), String>;
 
     fn check_signatures(&self) -> bool;

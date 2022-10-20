@@ -5,7 +5,7 @@ use crate::{
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
-use elrond_exec_service::{CompilationOptions, ServiceInstance};
+use elrond_exec_service::{CompilationOptions, Instance};
 use libc::{c_char, c_int};
 use std::{ffi::CStr, slice};
 
@@ -49,7 +49,7 @@ pub struct vm_exec_instance_t;
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    content: Box<dyn ServiceInstance>,
+    content: Box<dyn Instance>,
 }
 
 #[allow(clippy::cast_ptr_alignment)]

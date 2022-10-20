@@ -3,11 +3,11 @@ use crate::{
     WasmerInstance,
 };
 use elrond_exec_service::{
-    CompilationOptions, Executor, ExecutorError, ServiceError, ServiceInstance, VMHooks,
+    CompilationOptions, Executor, ExecutorError, Instance, ServiceError, VMHooks,
 };
 use std::ffi::c_void;
 use std::{cell::RefCell, rc::Rc};
-use wasmer::{Instance, Module, Store};
+use wasmer::{Module, Store};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
@@ -38,7 +38,7 @@ impl Executor for WasmerExecutor {
         &self,
         wasm_bytes: &[u8],
         _compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn ServiceInstance>, ExecutorError> {
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let compiler = Singlepass::default();
 
@@ -57,7 +57,7 @@ impl Executor for WasmerExecutor {
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
         println!("Instantiating module ...");
-        let wasmer_instance = Instance::new(&module, &import_object)?;
+        let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
 
         Ok(Box::new(WasmerInstance {
             executor_data: self.data.clone(),
