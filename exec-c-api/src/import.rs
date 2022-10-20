@@ -3,12 +3,12 @@
 
 use crate::{
     capi_error::CApiError,
+    capi_vm_hook_pointers::vm_exec_vm_hook_pointers,
     service_singleton::with_service,
     // export::{wasmer_import_export_kind, wasmer_import_export_value},
     value::vm_exec_value_tag,
     vm_exec_byte_array,
     vm_exec_result_t,
-    capi_vm_hook_pointers::vm_exec_vm_hook_pointers,
 };
 use libc::c_uint;
 // use std::collections::HashMap;

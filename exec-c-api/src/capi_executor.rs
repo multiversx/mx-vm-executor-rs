@@ -1,7 +1,7 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
-    capi_vm_hook_pointers::vm_exec_vm_hook_pointers, capi_vm_hooks::CapiVmHooks,
+    capi_vm_hook_pointers::vm_exec_vm_hook_pointers, capi_vm_hooks::CapiVMHooks,
     service_singleton::with_service, string_copy, string_length, vm_exec_byte_array,
     vm_exec_byte_array_list, vm_exec_result_t,
 };
@@ -34,7 +34,7 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 
     // create executor
     let executor_result =
-        with_service(|service| service.new_executor(Box::new(CapiVmHooks::new(vm_hook_pointers))));
+        with_service(|service| service.new_executor(Box::new(CapiVMHooks::new(vm_hook_pointers))));
     match executor_result {
         Ok(executor_box) => {
             let capi_executor = CapiExecutor {

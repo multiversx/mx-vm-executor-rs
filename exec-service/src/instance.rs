@@ -1,5 +1,3 @@
-use std::ffi::c_void;
-
 pub struct CompilationOptions {
     pub gas_limit: u64,
     pub unmetered_locals: usize,
