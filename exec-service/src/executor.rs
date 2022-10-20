@@ -1,4 +1,4 @@
-use crate::{CompilationOptions, ExecutorError, ServiceInstance};
+use crate::{CompilationOptions, ExecutorError, Instance};
 
 use std::ffi::c_void;
 
@@ -9,5 +9,5 @@ pub trait Executor {
         &self,
         bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn ServiceInstance>, ExecutorError>;
+    ) -> Result<Box<dyn Instance>, ExecutorError>;
 }
