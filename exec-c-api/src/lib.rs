@@ -8,6 +8,7 @@ pub mod capi_executor;
 pub mod service_singleton;
 pub mod signals;
 pub mod value;
-pub mod vm_hook_pointers;
+pub mod capi_vm_hook_pointers;
+pub mod capi_vm_hooks;
 
 pub use basic_types::*;

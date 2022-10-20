@@ -8,7 +8,7 @@ use crate::{
     value::vm_exec_value_tag,
     vm_exec_byte_array,
     vm_exec_result_t,
-    vm_hook_pointers::vm_exec_vm_hook_pointers,
+    capi_vm_hook_pointers::vm_exec_vm_hook_pointers,
 };
 use libc::c_uint;
 // use std::collections::HashMap;

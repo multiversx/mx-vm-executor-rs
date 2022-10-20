@@ -4,7 +4,20 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-pub trait VMHooks: 'static {
+use std::ffi::c_void;
+
+// pub trait VMHooksContext {
+//     fn as_raw_ptr(&self) -> *mut c_void;
+// }
+
+// pub trait VMHooksBuilder {
+//     fn build_vm_hooks_object(&self, context: Box<dyn VMHooksContext>) -> Box<dyn VMHooks>;
+// }
+
+#[rustfmt::skip]
+pub trait VMHooks: core::fmt::Debug + 'static {
+    fn set_context_ptr(&mut self, context_ptr: *mut c_void);
+
     fn get_gas_left(&self) -> i64;
     fn get_sc_address(&self, result_offset: i32);
     fn get_owner_address(&self, result_offset: i32);
@@ -254,11 +267,15 @@ pub trait VMHooks: 'static {
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32;
 }
 
+#[derive(Debug)]
 pub struct VMHooksDefault;
 
 #[allow(unused)]
 #[rustfmt::skip]
 impl VMHooks for VMHooksDefault {
+    fn set_context_ptr(&mut self, _context_ptr: *mut c_void) {
+    }
+
     fn get_gas_left(&self) -> i64 {
         println!("Called: get_gas_left");
         0

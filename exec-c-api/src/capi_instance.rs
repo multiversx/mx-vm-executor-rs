@@ -355,28 +355,7 @@ pub unsafe extern "C" fn vm_exported_function_names(
 // //     *exports = Box::into_raw(named_exports) as *mut wasmer_exports_t;
 // // }
 
-/// Sets the data that can be hold by an instance context.
-///
-/// An instance context (represented by the opaque
-/// `wasmer_instance_context_t` structure) can hold user-defined
-/// data. This function sets the data. This function is complementary
-/// of `wasmer_instance_context_data_get()`.
-///
-/// This function does nothing if `instance` is a null pointer.
-#[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
-pub unsafe extern "C" fn vm_exec_instance_context_data_set(
-    instance: *mut vm_exec_instance_t,
-    data_ptr: *mut c_void,
-) {
-    println!("Called vm_exec_instance_context_data_set");
-    if instance.is_null() {
-        return;
-    }
-    let capi_instance = &mut *(instance as *mut CapiInstance);
 
-    capi_instance.content.set_context_data_ptr(data_ptr);
-}
 
 // /// Gets the `memory_idx`th memory of the instance.
 // ///

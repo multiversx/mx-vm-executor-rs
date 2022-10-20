@@ -3,8 +3,10 @@ use crate::{
     WasmerContext, WasmerInstance,
 };
 use elrond_exec_service::{
-    CompilationOptions, Executor, ExecutorError, ExecutorService, ServiceInstance, VMHooksDefault,
+    CompilationOptions, Executor, ExecutorError, ExecutorService, ServiceError, ServiceInstance,
+    VMHooks, VMHooksDefault,
 };
+use std::ffi::c_void;
 use std::{cell::RefCell, rc::Rc};
 use wasmer::{imports, wat2wasm, Extern, Instance, Module, Store, Value};
 use wasmer_compiler_singlepass::Singlepass;
@@ -14,10 +16,25 @@ pub struct WasmerExecutor {
     pub data: Rc<WasmerExecutorData>,
 }
 
-#[derive(Default)]
-pub struct WasmerExecutorData {}
+pub struct WasmerExecutorData {
+    pub vm_hooks: Rc<Box<dyn VMHooks>>,
+}
 
 impl Executor for WasmerExecutor {
+    fn set_context_ptr(&mut self, context_ptr: *mut c_void) -> Result<(), ExecutorError> {
+        println!("Setting context pointer ...");
+        if let Some(data_mut) = Rc::get_mut(&mut self.data) {
+            if let Some(vm_hooks) = Rc::get_mut(&mut data_mut.vm_hooks) {
+                vm_hooks.set_context_ptr(context_ptr);
+                return Ok(());
+            }
+        }
+
+        Err(Box::new(ServiceError::new(
+            "WasmerExecutor already has instances, can no longer be configured",
+        )))
+    }
+
     fn new_instance(
         &self,
         wasm_bytes: &[u8],
@@ -29,22 +46,24 @@ impl Executor for WasmerExecutor {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        println!("Compiling module...");
+        println!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        println!("Converting imports...");
-        let vm_hooks_wrapper = VMHooksWrapper::new(VMHooksDefault);
+        println!("Converting imports ...");
+        let vm_hooks_wrapper = VMHooksWrapper {
+            vm_hooks: self.data.vm_hooks.clone(),
+            // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
+        };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        println!("Instantiating module...");
+        println!("Instantiating module ...");
         let wasmer_instance = Instance::new(&module, &import_object)?;
 
         Ok(Box::new(WasmerInstance {
             executor_data: self.data.clone(),
             context_rc: Rc::new(RefCell::new(WasmerContext::default())),
             wasmer_instance,
-            vm_hooks_wrapper,
         }))
     }
 }

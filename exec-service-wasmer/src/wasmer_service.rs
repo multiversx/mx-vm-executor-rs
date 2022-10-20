@@ -7,6 +7,7 @@ use elrond_exec_service::ExecutorError;
 use elrond_exec_service::ExecutorLastError;
 use elrond_exec_service::ExecutorService;
 use elrond_exec_service::ServiceInstance;
+use elrond_exec_service::VMHooks;
 
 use crate::WasmerContext;
 use crate::WasmerExecutor;
@@ -59,9 +60,15 @@ impl ExecutorService for BasicExecutorService {
         context.imports = imports;
     }
 
-    fn new_executor(&self) -> Result<Box<dyn Executor>, ExecutorError> {
+    fn new_executor(
+        &self,
+        vm_hooks_builder: Box<dyn VMHooks>,
+    ) -> Result<Box<dyn Executor>, ExecutorError> {
+        let data = WasmerExecutorData {
+            vm_hooks: Rc::new(vm_hooks_builder),
+        };
         Ok(Box::new(WasmerExecutor {
-            data: Rc::new(WasmerExecutorData::default()),
+            data: Rc::new(data),
         }))
     }
 }
