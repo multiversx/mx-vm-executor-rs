@@ -1,14 +1,9 @@
-use crate::{
-    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, WasmerInstance,
-};
+use crate::WasmerInstance;
 use elrond_exec_service::{
     CompilationOptions, Executor, ExecutorError, Instance, ServiceError, VMHooks,
 };
 use std::ffi::c_void;
 use std::rc::Rc;
-use wasmer::{Module, Store};
-use wasmer_compiler_singlepass::Singlepass;
-use wasmer_engine_universal::Universal;
 
 pub struct WasmerExecutor {
     pub data: Rc<WasmerExecutorData>,
@@ -36,31 +31,8 @@ impl Executor for WasmerExecutor {
     fn new_instance(
         &self,
         wasm_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        // Use Singlepass compiler with the default settings
-        let compiler = Singlepass::default();
-
-        // Create the store
-        let store = Store::new(&Universal::new(compiler).engine());
-
-        println!("Compiling module ...");
-        let module = Module::new(&store, wasm_bytes)?;
-
-        // Create an empty import object.
-        println!("Converting imports ...");
-        let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: self.data.vm_hooks.clone(),
-            // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
-        };
-        let import_object = generate_import_object(&store, &vm_hooks_wrapper);
-
-        println!("Instantiating module ...");
-        let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
-
-        Ok(Box::new(WasmerInstance {
-            executor_data: self.data.clone(),
-            wasmer_instance,
-        }))
+        WasmerInstance::new(self.data.clone(), wasm_bytes, compilation_options)
     }
 }
