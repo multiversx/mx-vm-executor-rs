@@ -20,10 +20,7 @@ pub unsafe extern "C" fn vm_exec_new_executor(
     executor: *mut *mut vm_exec_executor_t,
     vm_hook_pointers_ptr_ptr: *mut *mut vm_exec_vm_hook_c_func_pointers,
 ) -> vm_exec_result_t {
-    if vm_hook_pointers_ptr_ptr.is_null() {
-        with_service(|service| service.update_last_error_str("VM hooks ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
-    }
+    return_if_ptr_null!(vm_hook_pointers_ptr_ptr, "VM hooks ptr is null");
 
     // unpacking the vm hooks object pointer
     let vm_hook_pointers_ptr = *vm_hook_pointers_ptr_ptr;
@@ -58,15 +55,10 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
-    executor: *mut vm_exec_executor_t,
+    executor_ptr: *mut vm_exec_executor_t,
     vm_hooks_ptr: *mut c_void,
 ) -> vm_exec_result_t {
-    // unpack the executor object
-    if executor.is_null() {
-        with_service(|service| service.update_last_error_str("executor ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
-    }
-    let capi_executor = &mut *(executor as *mut CapiExecutor);
+    let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
     let result = capi_executor.content.set_vm_hooks_ptr(vm_hooks_ptr);
     match result {
