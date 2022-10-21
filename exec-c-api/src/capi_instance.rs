@@ -55,18 +55,13 @@ pub struct CapiInstance {
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_instance(
-    executor: *mut vm_exec_executor_t,
-    instance: *mut *mut vm_exec_instance_t,
+    executor_ptr: *mut vm_exec_executor_t,
+    instance_ptr_ptr: *mut *mut vm_exec_instance_t,
     wasm_bytes_ptr: *mut u8,
     wasm_bytes_len: u32,
     options_ptr: *const vm_exec_compilation_options_t,
 ) -> vm_exec_result_t {
-    // unpack the executor object
-    if executor.is_null() {
-        with_service(|service| service.update_last_error_str("executor ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
-    }
-    let capi_executor = &mut *(executor as *mut CapiExecutor);
+    let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
     if wasm_bytes_ptr.is_null() {
         with_service(|service| service.update_last_error_str("wasm bytes ptr is null".to_string()));
@@ -84,7 +79,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
             let capi_instance = CapiInstance {
                 content: instance_box,
             };
-            *instance = Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+            *instance_ptr_ptr = Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
             vm_exec_result_t::VM_EXEC_OK
         }
         Err(message) => {
@@ -110,15 +105,10 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_call(
-    instance: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_exec_instance_t,
     func_name_ptr: *const c_char,
 ) -> vm_exec_result_t {
-    // unpack the instance object
-    if instance.is_null() {
-        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
-    }
-    let capi_instance = &mut *(instance as *mut CapiInstance);
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
 
     // unpack the function name
     if func_name_ptr.is_null() {
@@ -149,21 +139,13 @@ pub unsafe extern "C" fn vm_check_signatures(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_has_function(
-    instance: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_exec_instance_t,
     func_name_ptr: *const c_char,
 ) -> c_int {
-    // unpack the instance object
-    if instance.is_null() {
-        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
-        return -1;
-    }
-    let capi_instance = &mut *(instance as *mut CapiInstance);
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", -1);
 
     // unpack the function name
-    if func_name_ptr.is_null() {
-        with_service(|service| service.update_last_error_str("name ptr is null".to_string()));
-        return -1;
-    }
+    return_if_ptr_null!(func_name_ptr, "function name ptr is null", -1);
     let func_name_c = CStr::from_ptr(func_name_ptr);
     let func_name_r = func_name_c.to_str().unwrap();
 
@@ -177,14 +159,9 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exported_function_names_length(
-    instance: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_exec_instance_t,
 ) -> c_int {
-    // unpack the instance object
-    if instance.is_null() {
-        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
-        return 0;
-    }
-    let capi_instance = &mut *(instance as *mut CapiInstance);
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
 
     let func_names = capi_instance.content.get_exported_function_names();
     if func_names.is_empty() {
@@ -198,16 +175,11 @@ pub unsafe extern "C" fn vm_exported_function_names_length(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exported_function_names(
-    instance: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_exec_instance_t,
     dest_buffer: *mut c_char,
     dest_buffer_len: c_int,
 ) -> c_int {
-    // unpack the instance object
-    if instance.is_null() {
-        with_service(|service| service.update_last_error_str("instance ptr is null".to_string()));
-        return 0;
-    }
-    let capi_instance = &mut *(instance as *mut CapiInstance);
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
 
     let func_names = capi_instance.content.get_exported_function_names();
     let concat = func_names.join("|");
