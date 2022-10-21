@@ -20,11 +20,11 @@ pub struct WasmerExecutorData {
 }
 
 impl Executor for WasmerExecutor {
-    fn set_context_ptr(&mut self, context_ptr: *mut c_void) -> Result<(), ExecutorError> {
+    fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         println!("Setting context pointer ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(vm_hooks) = Rc::get_mut(&mut data_mut.vm_hooks) {
-                vm_hooks.set_context_ptr(context_ptr);
+                vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
                 return Ok(());
             }
         }
