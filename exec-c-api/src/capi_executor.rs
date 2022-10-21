@@ -1,7 +1,7 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
-    capi_vm_hook_pointers::vm_exec_vm_hook_pointers, capi_vm_hooks::CapiVMHooks,
+    capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers, capi_vm_hooks::CapiVMHooks,
     service_singleton::with_service, vm_exec_result_t,
 };
 use elrond_exec_service::Executor;
@@ -18,7 +18,7 @@ pub struct CapiExecutor {
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_executor(
     executor: *mut *mut vm_exec_executor_t,
-    vm_hook_pointers_ptr_ptr: *mut *mut vm_exec_vm_hook_pointers,
+    vm_hook_pointers_ptr_ptr: *mut *mut vm_exec_vm_hook_c_func_pointers,
 ) -> vm_exec_result_t {
     if vm_hook_pointers_ptr_ptr.is_null() {
         with_service(|service| service.update_last_error_str("VM hooks ptr is null".to_string()));
@@ -57,9 +57,9 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 /// This function does nothing if `instance` is a null pointer.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_executor_set_context_ptr(
+pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
     executor: *mut vm_exec_executor_t,
-    context_ptr: *mut c_void,
+    vm_hooks_ptr: *mut c_void,
 ) -> vm_exec_result_t {
     // unpack the executor object
     if executor.is_null() {
@@ -68,7 +68,7 @@ pub unsafe extern "C" fn vm_exec_executor_set_context_ptr(
     }
     let capi_executor = &mut *(executor as *mut CapiExecutor);
 
-    let result = capi_executor.content.set_context_ptr(context_ptr);
+    let result = capi_executor.content.set_vm_hooks_ptr(vm_hooks_ptr);
     match result {
         Ok(()) => vm_exec_result_t::VM_EXEC_OK,
         Err(message) => {

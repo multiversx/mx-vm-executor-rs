@@ -9,7 +9,7 @@ use std::ffi::c_void;
 #[repr(C)]
 #[derive(Clone)]
 #[rustfmt::skip]
-pub struct vm_exec_vm_hook_pointers {
+pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_gas_left_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub get_sc_address_func_ptr: extern "C" fn(context: *mut c_void, result_offset: i32),
     pub get_owner_address_func_ptr: extern "C" fn(context: *mut c_void, result_offset: i32),
@@ -259,8 +259,8 @@ pub struct vm_exec_vm_hook_pointers {
     pub elliptic_curve_get_values_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32,
 }
 
-impl std::fmt::Debug for vm_exec_vm_hook_pointers {
+impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "vm_exec_vm_hook_pointers")
+        write!(f, "vm_exec_vm_hook_c_func_pointers")
     }
 }
