@@ -2,10 +2,6 @@
 
 // use crate::service::with_service;
 use libc::{c_char, c_int};
-use std::{
-    error::Error,
-    fmt::{self, Display, Formatter},
-};
 
 use crate::{service_singleton::with_service, string_copy, string_length};
 
@@ -44,22 +40,3 @@ pub unsafe extern "C" fn vm_exec_last_error_message(
 fn get_last_error_string() -> String {
     with_service(|service| service.get_last_error_string())
 }
-
-#[derive(Debug)]
-pub struct CApiError {
-    message: &'static str,
-}
-
-impl CApiError {
-    pub fn new(message: &'static str) -> Self {
-        Self { message }
-    }
-}
-
-impl Display for CApiError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", &self.message)
-    }
-}
-
-impl Error for CApiError {}
