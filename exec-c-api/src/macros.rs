@@ -6,11 +6,7 @@ macro_rules! return_if_ptr_null {
         }
     };
     ($ptr_var:ident, $err_msg:expr) => {
-        return_if_ptr_null!(
-            $ptr_var,
-            $err_msg,
-            vm_exec_result_t::VM_EXEC_ERROR
-        )
+        return_if_ptr_null!($ptr_var, $err_msg, vm_exec_result_t::VM_EXEC_ERROR)
     };
 }
 
