@@ -1,12 +1,11 @@
 use crate::{
-    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, WasmerContext,
-    WasmerInstance,
+    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, WasmerInstance,
 };
 use elrond_exec_service::{
     CompilationOptions, Executor, ExecutorError, Instance, ServiceError, VMHooks,
 };
 use std::ffi::c_void;
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 use wasmer::{Module, Store};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
@@ -61,7 +60,6 @@ impl Executor for WasmerExecutor {
 
         Ok(Box::new(WasmerInstance {
             executor_data: self.data.clone(),
-            context_rc: Rc::new(RefCell::new(WasmerContext::default())),
             wasmer_instance,
         }))
     }
