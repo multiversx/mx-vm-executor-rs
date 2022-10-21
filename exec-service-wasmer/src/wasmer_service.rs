@@ -1,4 +1,3 @@
-use std::cell::RefCell;
 use std::rc::Rc;
 
 use elrond_exec_service::Executor;
@@ -7,21 +6,18 @@ use elrond_exec_service::ExecutorLastError;
 use elrond_exec_service::ExecutorService;
 use elrond_exec_service::VMHooks;
 
-use crate::WasmerContext;
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
     pub last_error: String,
-    pub context_rc: Rc<RefCell<WasmerContext>>,
 }
 
 impl BasicExecutorService {
     pub fn new() -> Self {
         Self {
             last_error: String::new(),
-            context_rc: Rc::new(RefCell::new(WasmerContext::default())),
         }
     }
 }
@@ -37,21 +33,6 @@ impl ExecutorLastError for BasicExecutorService {
 }
 
 impl ExecutorService for BasicExecutorService {
-    fn push_execution_info(&mut self, info: &str) {
-        let mut context = self.context_rc.borrow_mut();
-        context.push_execution_info(info);
-    }
-
-    fn get_execution_info(&self) -> String {
-        let context = self.context_rc.borrow();
-        context.execution_info.clone()
-    }
-
-    fn clear_execution_info(&mut self) {
-        let mut context = self.context_rc.borrow_mut();
-        context.execution_info.clear();
-    }
-
     fn new_executor(
         &self,
         vm_hooks_builder: Box<dyn VMHooks>,

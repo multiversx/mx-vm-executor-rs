@@ -1,30 +1,19 @@
-use std::{cell::RefCell, rc::Rc};
+use std::rc::Rc;
 
 use elrond_exec_service::Instance;
 
 use wasmer::Extern;
 
-use crate::{WasmerContext, WasmerExecutorData};
+use crate::WasmerExecutorData;
 
 pub struct WasmerInstance {
     pub executor_data: Rc<WasmerExecutorData>,
-    pub context_rc: Rc<RefCell<WasmerContext>>, // TODO: remove
     pub wasmer_instance: wasmer::Instance,
-}
-
-impl WasmerInstance {
-    // pub fn new(
-    //     context_rc: Rc<RefCell<WasmerContext>>,
-    //     wasm_bytes: &[u8],
-    // ) -> Result<Self, ExecutorError> {
-    // }
 }
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
-        self.context_rc
-            .borrow_mut()
-            .push_execution_info(format!("Rust instance call! {}", func_name).as_str());
+        println!("Rust instance call: {}", func_name);
 
         let func = self
             .wasmer_instance
