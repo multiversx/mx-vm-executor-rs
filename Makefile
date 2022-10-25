@@ -17,6 +17,15 @@ capi-osx-amd64:
 	cp target/release/libvmexeccapi.dylib /Users/ovidiu/Documents/elrond/wasm-vm/wasmer2
 	cp exec-c-api/vmexeccapi.h /Users/ovidiu/Documents/elrond/wasm-vm/wasmer2/libvmexeccapi.h
 
+capi-osx-amd64-d:
+	cargo build -p elrond-vm-exec-c-api
+	mv target/debug/libelrond_vm_exec_c_api.dylib target/debug/libvmexeccapi.dylib
+
+	# copy libs and header [temporary hardcoded paths]
+	sudo cp target/debug/libvmexeccapi.dylib /usr/local/lib
+	cp target/debug/libvmexeccapi.dylib /Users/ovidiu/Documents/elrond/wasm-vm/wasmer2
+	cp exec-c-api/vmexeccapi.h /Users/ovidiu/Documents/elrond/wasm-vm/wasmer2/libvmexeccapi.h
+
 clean:
 	cargo clean
 	rm libvmexeccapi.so

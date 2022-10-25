@@ -1,9 +1,10 @@
 use crate::{
-    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
+    wasmer_imports::generate_import_object, wasmer_metering::*, wasmer_vm_hooks::VMHooksWrapper,
+    WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance};
-use std::rc::Rc;
-use wasmer::{Extern, Module, Store};
+use std::{rc::Rc, sync::Arc};
+use wasmer::{wasmparser::Operator, CompilerConfig, Extern, Module, Store};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
@@ -18,8 +19,31 @@ impl WasmerInstance {
         wasm_bytes: &[u8],
         _compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
+        // Let's define our cost function.
+        //
+        // This function will be called for each `Operator` encountered during
+        // the Wasm module execution. It should return the cost of the operator
+        // that it received as it first argument.
+        let cost_function = |operator: &Operator| -> u64 {
+            match operator {
+                Operator::LocalGet { .. } | Operator::I32Const { .. } => 1,
+                Operator::I32Add { .. } => 2,
+                _ => 0,
+            }
+        };
+
+        // Now let's create our metering middleware.
+        //
+        // `Metering` needs to be configured with a limit and a cost function.
+        //
+        // For each `Operator`, the metering middleware will call the cost
+        // function and subtract the cost from the remaining points.
+        let metering = Arc::new(Metering::new(10_000, cost_function));
+
         // Use Singlepass compiler with the default settings
-        let compiler = Singlepass::default();
+        let mut compiler = Singlepass::default();
+        compiler.push_middleware(metering);
+        println!("Added metering middleware");
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
