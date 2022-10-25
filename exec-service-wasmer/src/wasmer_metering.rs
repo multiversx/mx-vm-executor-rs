@@ -112,6 +112,7 @@ pub struct FunctionMetering<F: Fn(&Operator) -> u64 + Send + Sync> {
 ///
 /// See the [`get_remaining_points`] function to get an example.
 #[derive(Debug, PartialEq)]
+#[allow(dead_code)]
 pub enum MeteringPoints {
     /// The given number of metering points is left for the execution.
     /// If the value is 0, all points are consumed but the execution
@@ -290,6 +291,7 @@ impl<F: Fn(&Operator) -> u64 + Send + Sync> FunctionMiddleware for FunctionMeter
 ///     matches!(get_remaining_points(instance), MeteringPoints::Remaining(points) if points > 0)
 /// }
 /// ```
+#[allow(dead_code)]
 pub fn get_remaining_points(instance: &Instance) -> MeteringPoints {
     let exhausted: i32 = instance
         .exports

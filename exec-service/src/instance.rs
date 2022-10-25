@@ -16,4 +16,9 @@ pub trait Instance {
     fn has_function(&self, func_name: &str) -> bool;
 
     fn get_exported_function_names(&self) -> Vec<String>;
+
+    // metering
+    fn get_points_used(&self) -> u64;
+    fn set_points_used(&self, new_gas: u64);
+    fn set_points_limit(&self, new_limit: u64);
 }

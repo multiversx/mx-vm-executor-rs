@@ -103,4 +103,15 @@ impl Instance for WasmerInstance {
             .cloned()
             .collect()
     }
+
+    // metering
+    fn get_points_used(&self) -> u64 {
+        0
+    }
+
+    fn set_points_used(&self, _new_gas: u64) {}
+
+    fn set_points_limit(&self, new_limit: u64) {
+        set_remaining_points(&self.wasmer_instance, new_limit)
+    }
 }

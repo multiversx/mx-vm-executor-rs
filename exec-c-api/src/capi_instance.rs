@@ -49,7 +49,7 @@ pub struct vm_exec_instance_t;
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    content: Box<dyn Instance>,
+    pub content: Box<dyn Instance>,
 }
 
 #[allow(clippy::cast_ptr_alignment)]
