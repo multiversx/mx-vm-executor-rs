@@ -38,7 +38,10 @@ impl WasmerInstance {
         //
         // For each `Operator`, the metering middleware will call the cost
         // function and subtract the cost from the remaining points.
-        let metering = Arc::new(Metering::new(10_000, cost_function));
+        // for testing purposes, we set the limit to 10_000
+        let initial_limit = 10_000;
+        //let initial_limit = compilation_options.gas_limit;
+        let metering = Arc::new(Metering::new(initial_limit, cost_function));
 
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
