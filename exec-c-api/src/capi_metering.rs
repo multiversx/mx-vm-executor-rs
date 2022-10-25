@@ -10,12 +10,12 @@ pub static mut OPCODE_COSTS: [u32; OPCODE_COUNT] = [0; OPCODE_COUNT];
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_set_opcode_costs(opcode_costs_pointer: *const u32) {
-    println!("vm_exec_set_opcode_costs");
+    println!("\nvm_exec_set_opcode_costs");
     OPCODE_COSTS.copy_from_slice(slice::from_raw_parts(opcode_costs_pointer, OPCODE_COUNT));
     for (i, cost) in OPCODE_COSTS.iter().enumerate() {
         println!("opcode {} cost {}", i, cost);
     }
-    println!();
+    println!("\n");
 }
 
 // TODO: add comments

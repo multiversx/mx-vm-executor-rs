@@ -109,12 +109,16 @@ impl Instance for WasmerInstance {
 
     // metering
     fn get_points_used(&self) -> u64 {
+        println!("wasmer_instance: get_points_used");
         0
     }
 
-    fn set_points_used(&self, _new_gas: u64) {}
+    fn set_points_used(&self, _new_gas: u64) {
+        println!("wasmer_instance: set_points_used");
+    }
 
     fn set_points_limit(&self, new_limit: u64) {
+        println!("wasmer_instance: set_points_limit");
         set_remaining_points(&self.wasmer_instance, new_limit)
     }
 }
