@@ -1,6 +1,6 @@
 use crate::WasmerInstance;
 use elrond_exec_service::{
-    CompilationOptions, Executor, ExecutorError, Instance, ServiceError, VMHooks,
+    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
 };
 use std::ffi::c_void;
 use std::rc::Rc;
@@ -11,6 +11,7 @@ pub struct WasmerExecutor {
 
 pub struct WasmerExecutorData {
     pub vm_hooks: Rc<Box<dyn VMHooks>>,
+    pub opcode_cost: OpcodeCost,
 }
 
 impl Executor for WasmerExecutor {
@@ -34,5 +35,12 @@ impl Executor for WasmerExecutor {
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         WasmerInstance::new(self.data.clone(), wasm_bytes, compilation_options)
+    }
+
+    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) {
+        println!("Setting opcode cost ...");
+        if let Some(data_mut) = Rc::get_mut(&mut self.data) {
+            data_mut.opcode_cost = opcode_cost.clone();
+        }
     }
 }

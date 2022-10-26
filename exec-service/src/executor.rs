@@ -1,4 +1,4 @@
-use crate::{CompilationOptions, ExecutorError, Instance};
+use crate::{CompilationOptions, ExecutorError, Instance, OpcodeCost};
 
 use std::ffi::c_void;
 
@@ -10,4 +10,6 @@ pub trait Executor {
         bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError>;
+
+    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost);
 }

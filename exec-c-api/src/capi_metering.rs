@@ -1,21 +1,23 @@
-use std::slice;
-
+use crate::capi_executor::{vm_exec_executor_t, CapiExecutor};
 use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
 use crate::service_singleton::with_service;
+use crate::vm_exec_result_t;
+use elrond_exec_service::OpcodeCost;
 
-pub const OPCODE_COUNT: usize = 448;
-pub static mut OPCODE_COSTS: [u32; OPCODE_COUNT] = [0; OPCODE_COUNT];
+#[repr(C)]
+pub struct vm_exec_opcode_cost_t;
 
 // TODO: add comments
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_set_opcode_costs(opcode_costs_pointer: *const u32) {
-    println!("\nvm_exec_set_opcode_costs");
-    OPCODE_COSTS.copy_from_slice(slice::from_raw_parts(opcode_costs_pointer, OPCODE_COUNT));
-    for (i, cost) in OPCODE_COSTS.iter().enumerate() {
-        println!("opcode {} cost {}", i, cost);
-    }
-    println!("\n");
+pub unsafe extern "C" fn vm_exec_set_opcode_costs(
+    executor_ptr: *mut vm_exec_executor_t,
+    opcode_cost_ptr: *const vm_exec_opcode_cost_t,
+) -> vm_exec_result_t {
+    let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
+    let opcode_costs: &OpcodeCost = &*(opcode_cost_ptr as *const OpcodeCost);
+    capi_executor.content.set_opcode_cost(opcode_costs);
+    vm_exec_result_t::VM_EXEC_OK
 }
 
 // TODO: add comments
