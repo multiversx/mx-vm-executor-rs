@@ -4,7 +4,7 @@ use crate::{
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance};
 use std::{rc::Rc, sync::Arc};
-use wasmer::{wasmparser::Operator, CompilerConfig, Extern, Module, Store};
+use wasmer::{CompilerConfig, Extern, Module, Store};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
@@ -17,31 +17,13 @@ impl WasmerInstance {
     pub(crate) fn new(
         executor_data: Rc<WasmerExecutorData>,
         wasm_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        // Let's define our cost function.
-        //
-        // This function will be called for each `Operator` encountered during
-        // the Wasm module execution. It should return the cost of the operator
-        // that it received as it first argument.
-        let cost_function = |operator: &Operator| -> u64 {
-            match operator {
-                Operator::LocalGet { .. } | Operator::I32Const { .. } => 1,
-                Operator::I32Add { .. } => 2,
-                _ => 0,
-            }
-        };
-
-        // Now let's create our metering middleware.
-        //
-        // `Metering` needs to be configured with a limit and a cost function.
-        //
-        // For each `Operator`, the metering middleware will call the cost
-        // function and subtract the cost from the remaining points.
-        // for testing purposes, we set the limit to 10_000
-        let initial_limit = 10_000;
-        //let initial_limit = compilation_options.gas_limit;
-        let metering = Arc::new(Metering::new(initial_limit, cost_function));
+        // Create metering middleware
+        let metering = Arc::new(Metering::new(
+            compilation_options.gas_limit,
+            executor_data.opcode_cost.clone(),
+        ));
 
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
@@ -107,18 +89,18 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    // metering
+    fn set_points_limit(&self, limit: u64) {
+        println!("INSTANCE: set_points_limit");
+        set_points_limit(&self.wasmer_instance, limit)
+    }
+
+    fn set_points_used(&self, points: u64) {
+        println!("INSTANCE: set_points_used");
+        set_points_used(&self.wasmer_instance, points)
+    }
+
     fn get_points_used(&self) -> u64 {
-        println!("wasmer_instance: get_points_used");
-        0
-    }
-
-    fn set_points_used(&self, _new_gas: u64) {
-        println!("wasmer_instance: set_points_used");
-    }
-
-    fn set_points_limit(&self, new_limit: u64) {
-        println!("wasmer_instance: set_points_limit");
-        set_remaining_points(&self.wasmer_instance, new_limit)
+        println!("INSTANCE: get_points_used");
+        get_points_used(&self.wasmer_instance)
     }
 }

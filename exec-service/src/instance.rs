@@ -10,15 +10,10 @@ pub struct CompilationOptions {
 
 pub trait Instance {
     fn call(&self, func_name: &str) -> Result<(), String>;
-
     fn check_signatures(&self) -> bool;
-
     fn has_function(&self, func_name: &str) -> bool;
-
     fn get_exported_function_names(&self) -> Vec<String>;
-
-    // metering
+    fn set_points_limit(&self, limit: u64);
+    fn set_points_used(&self, points: u64);
     fn get_points_used(&self) -> u64;
-    fn set_points_used(&self, new_gas: u64);
-    fn set_points_limit(&self, new_limit: u64);
 }
