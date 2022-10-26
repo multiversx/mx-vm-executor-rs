@@ -39,7 +39,6 @@ impl ExecutorService for BasicExecutorService {
     ) -> Result<Box<dyn Executor>, ExecutorError> {
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
-            // we can change this to use maxuint right?
             opcode_cost: Default::default(),
         };
         Ok(Box::new(WasmerExecutor {
