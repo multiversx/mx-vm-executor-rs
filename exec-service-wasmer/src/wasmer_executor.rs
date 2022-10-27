@@ -41,7 +41,7 @@ impl Executor for WasmerExecutor {
         println!("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(opcode_cost_mut) = Rc::get_mut(&mut data_mut.opcode_cost) {
-                *opcode_cost_mut = *opcode_cost;
+                *opcode_cost_mut = opcode_cost.clone();
             }
         }
     }

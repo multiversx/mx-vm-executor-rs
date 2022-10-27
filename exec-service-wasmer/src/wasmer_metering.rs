@@ -62,7 +62,7 @@ impl ModuleMiddleware for Metering {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             opcode_cost: Rc::clone(&self.opcode_cost),
-            global_indexes: Rc::clone(&self.global_indexes),
+            global_indexes: self.global_indexes.borrow().clone().unwrap(),
         })
     }
 
@@ -93,7 +93,7 @@ impl ModuleMiddleware for Metering {
             ExportIndex::Global(points_used_global_index),
         );
 
-        let mut metering_global_indexes = Rc::as_ref(&self.global_indexes).borrow_mut();
+        let mut metering_global_indexes = self.global_indexes.borrow_mut();
         *metering_global_indexes = Some(MeteringGlobalIndexes(
             points_limit_global_index,
             points_used_global_index,
@@ -105,7 +105,7 @@ impl ModuleMiddleware for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     opcode_cost: Rc<OpcodeCost>,
-    global_indexes: Rc<RefCell<Option<MeteringGlobalIndexes>>>,
+    global_indexes: MeteringGlobalIndexes,
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -117,9 +117,7 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        self.accumulated_cost += get_opcode_cost(&operator, Rc::as_ref(&self.opcode_cost)) as u64;
-        let metering_global_indexes_borrow = Rc::as_ref(&self.global_indexes).borrow();
-        let metering_global_indexes = metering_global_indexes_borrow.as_ref().unwrap();
+        self.accumulated_cost += get_opcode_cost(&operator, self.opcode_cost.as_ref()) as u64;
 
         // Possible sources and targets of a branch. Finalize the cost of the previous basic block and perform necessary checks.
         match operator {
@@ -136,19 +134,19 @@ impl FunctionMiddleware for FunctionMetering {
                 if self.accumulated_cost > 0 {
                     state.extend(&[
                         // Increment the points used counter.
-                        Operator::GlobalGet { global_index: metering_global_indexes.points_used().as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
                         Operator::I64Const { value: self.accumulated_cost as i64 },
                         Operator::I64Add,
-                        Operator::GlobalSet { global_index: metering_global_indexes.points_used().as_u32()},
+                        Operator::GlobalSet { global_index: self.global_indexes.points_used().as_u32()},
 
-                        // Check if out of gas (points_used >= points_limit)        
-                        Operator::GlobalGet { global_index: metering_global_indexes.points_used().as_u32() },
-                        Operator::GlobalGet { global_index: metering_global_indexes.points_limit().as_u32() },
+                        // Check if out of gas (points_used >= points_limit)
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
                         Operator::I64GeU,
                         Operator::If { ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType) },
                         // TODO: insert breakpoint out of gas here
                         Operator::Unreachable,
-                        Operator::End,         
+                        Operator::End,
                     ]);
 
                     self.accumulated_cost = 0;
