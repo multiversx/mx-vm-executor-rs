@@ -40,7 +40,6 @@ impl WasmerInstance {
         println!("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
-            // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
@@ -90,17 +89,14 @@ impl Instance for WasmerInstance {
     }
 
     fn set_points_limit(&self, limit: u64) {
-        println!("Setting points limit to {}", limit);
         set_points_limit(&self.wasmer_instance, limit)
     }
 
     fn set_points_used(&self, points: u64) {
-        println!("Setting points used to {}", points);
         set_points_used(&self.wasmer_instance, points)
     }
 
     fn get_points_used(&self) -> u64 {
-        println!("Getting points used ...");
         get_points_used(&self.wasmer_instance)
     }
 }

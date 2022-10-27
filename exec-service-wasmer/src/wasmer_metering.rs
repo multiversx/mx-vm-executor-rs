@@ -61,7 +61,7 @@ impl ModuleMiddleware for Metering {
     ) -> Box<dyn FunctionMiddleware> {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
-            opcode_cost: Rc::clone(&self.opcode_cost),
+            opcode_cost: self.opcode_cost.clone(),
             global_indexes: self.global_indexes.borrow().clone().unwrap(),
         })
     }
