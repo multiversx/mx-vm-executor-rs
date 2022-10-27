@@ -37,12 +37,17 @@ impl Executor for WasmerExecutor {
         WasmerInstance::new(self.data.clone(), wasm_bytes, compilation_options)
     }
 
-    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) {
+    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
         println!("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(opcode_cost_mut) = Rc::get_mut(&mut data_mut.opcode_cost) {
                 *opcode_cost_mut = opcode_cost.clone();
+                return Ok(());
             }
         }
+
+        Err(Box::new(ServiceError::new(
+            "WasmerExecutor opcodes cost configuration error",
+        )))
     }
 }

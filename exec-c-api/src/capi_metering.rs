@@ -15,11 +15,17 @@ pub unsafe extern "C" fn vm_exec_set_opcode_costs(
     executor_ptr: *mut vm_exec_executor_t,
     opcode_cost_ptr: *const vm_exec_opcode_cost_t,
 ) -> vm_exec_result_t {
-    println!("capi_metering: vm_exec_set_opcode_costs");
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
     let opcode_costs: &OpcodeCost = &*(opcode_cost_ptr as *const OpcodeCost);
-    capi_executor.content.set_opcode_cost(opcode_costs);
-    vm_exec_result_t::VM_EXEC_OK
+
+    let result = capi_executor.content.set_opcode_cost(opcode_costs);
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message.to_string()));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
 }
 
 // vm_exec_instance_set_points_limit sets the number of points(gas) limit for the given instance.
@@ -29,7 +35,6 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
     instance_ptr: *const vm_exec_instance_t,
     limit: u64,
 ) -> vm_exec_result_t {
-    println!("capi_metering: vm_exec_instance_set_points_limit");
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     capi_instance.content.set_points_limit(limit);
     vm_exec_result_t::VM_EXEC_OK
@@ -42,7 +47,6 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
     instance_ptr: *const vm_exec_instance_t,
     points: u64,
 ) -> vm_exec_result_t {
-    println!("capi_metering: vm_exec_instance_set_points_used");
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     capi_instance.content.set_points_used(points);
     vm_exec_result_t::VM_EXEC_OK
@@ -54,7 +58,6 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
 pub unsafe extern "C" fn vm_exec_instance_get_points_used(
     instance_ptr: *const vm_exec_instance_t,
 ) -> u64 {
-    println!("capi_metering: vm_exec_instance_get_points_used");
     let capi_instance =
         cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
     capi_instance.content.get_points_used()

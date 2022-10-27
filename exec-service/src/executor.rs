@@ -11,5 +11,5 @@ pub trait Executor {
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError>;
 
-    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost);
+    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError>;
 }
