@@ -76,7 +76,7 @@ impl ModuleMiddleware for Metering {
             .push(GlobalInit::I64Const(self.points_limit as i64));
 
         module_info.exports.insert(
-            "wasmer_metering_points_limit".to_string(),
+            METERING_POINTS_LIMIT.to_string(),
             ExportIndex::Global(points_limit_global_index),
         );
 
@@ -89,7 +89,7 @@ impl ModuleMiddleware for Metering {
             .push(GlobalInit::I32Const(0));
 
         module_info.exports.insert(
-            "wasmer_metering_points_used".to_string(),
+            METERING_POINTS_USED.to_string(),
             ExportIndex::Global(points_used_global_index),
         );
 
@@ -166,26 +166,26 @@ pub fn set_points_limit(instance: &Instance, limit: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_LIMIT)
-        .expect("Can't get `wasmer_metering_points_limit` from Instance")
+        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_LIMIT).as_str())
         .set(limit.into())
-        .expect("Can't set `wasmer_metering_points_limit` in Instance");
+        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_LIMIT).as_str())
 }
 
 pub fn set_points_used(instance: &Instance, points: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect("Can't get `wasmer_metering_points_used` from Instance")
+        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
         .set(points.into())
-        .expect("Can't set `wasmer_metering_points_used` in Instance");
+        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_USED).as_str())
 }
 
 pub fn get_points_used(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect("Can't get `wasmer_metering_points_used` from Instance")
+        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
         .get()
         .try_into()
-        .expect("`wasmer_metering_points_used` from Instance has wrong type")
+        .expect(format!("`{}` from Instance has wrong type", METERING_POINTS_USED).as_str())
 }
