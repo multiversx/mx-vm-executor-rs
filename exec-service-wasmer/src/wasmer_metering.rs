@@ -1,14 +1,18 @@
 use crate::get_opcode_cost;
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
+use std::cell::RefCell;
 use std::mem;
-use std::sync::Mutex;
-use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType};
+use std::rc::Rc;
+use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
 use wasmer::{
     ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
     MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
+
+const METERING_POINTS_LIMIT: &str = "metering_points_limit";
+const METERING_POINTS_USED: &str = "metering_points_used";
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes(GlobalIndex, GlobalIndex);
@@ -26,16 +30,16 @@ impl MeteringGlobalIndexes {
 #[derive(Debug)]
 pub struct Metering {
     points_limit: u64,
-    opcode_cost: OpcodeCost,
-    global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
+    opcode_cost: Rc<OpcodeCost>,
+    global_indexes: Rc<RefCell<Option<MeteringGlobalIndexes>>>,
 }
 
 impl Metering {
-    pub fn new(points_limit: u64, opcode_cost: OpcodeCost) -> Self {
+    pub fn new(points_limit: u64, opcode_cost: Rc<OpcodeCost>) -> Self {
         Self {
             points_limit,
             opcode_cost,
-            global_indexes: Mutex::new(None),
+            global_indexes: Rc::new(RefCell::from(None)),
         }
     }
 }
@@ -50,25 +54,19 @@ impl MemoryUsage for Metering {
     }
 }
 
-impl<'a> ModuleMiddleware for Metering {
+impl ModuleMiddleware for Metering {
     fn generate_function_middleware(
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
-            opcode_cost: self.opcode_cost.clone(),
-            global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
+            opcode_cost: Rc::clone(&self.opcode_cost),
+            global_indexes: Rc::clone(&self.global_indexes),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
-        let mut global_indexes = self.global_indexes.lock().unwrap();
-
-        if global_indexes.is_some() {
-            panic!("Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules.");
-        }
-
         let points_limit_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I64, Mutability::Var));
@@ -95,18 +93,19 @@ impl<'a> ModuleMiddleware for Metering {
             ExportIndex::Global(points_used_global_index),
         );
 
-        *global_indexes = Some(MeteringGlobalIndexes(
+        let mut metering_global_indexes = Rc::as_ref(&self.global_indexes).borrow_mut();
+        *metering_global_indexes = Some(MeteringGlobalIndexes(
             points_limit_global_index,
             points_used_global_index,
-        ))
+        ));
     }
 }
 
 #[derive(Debug)]
 struct FunctionMetering {
     accumulated_cost: u64,
-    opcode_cost: OpcodeCost,
-    global_indexes: MeteringGlobalIndexes,
+    opcode_cost: Rc<OpcodeCost>,
+    global_indexes: Rc<RefCell<Option<MeteringGlobalIndexes>>>,
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -118,7 +117,9 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        self.accumulated_cost += get_opcode_cost(&operator, &self.opcode_cost) as u64;
+        self.accumulated_cost += get_opcode_cost(&operator, Rc::as_ref(&self.opcode_cost)) as u64;
+        let metering_global_indexes_borrow = Rc::as_ref(&self.global_indexes).borrow();
+        let metering_global_indexes = metering_global_indexes_borrow.as_ref().unwrap();
 
         // Possible sources and targets of a branch. Finalize the cost of the previous basic block and perform necessary checks.
         match operator {
@@ -134,27 +135,20 @@ impl FunctionMiddleware for FunctionMetering {
             => {
                 if self.accumulated_cost > 0 {
                     state.extend(&[
-                        Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
-                        Operator::I64Const { value: self.accumulated_cost as i64 },
-                        Operator::I64LtU,
-                        Operator::If { ty: TypeOrFuncType::Type(WpType::EmptyBlockType) },
-                        Operator::I32Const { value: 1 },
-                        // TODO: talk with team about this
-                        //Operator::GlobalSet { global_index: self.global_indexes.points_exhausted().as_u32() },
-                        Operator::Unreachable,
-                        Operator::End,
-                        
-                        // Decrement the points limit by the amount of points used in the current basic block.
-                        Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
-                        Operator::I64Const { value: self.accumulated_cost as i64 },
-                        Operator::I64Sub,
-                        Operator::GlobalSet { global_index: self.global_indexes.points_limit().as_u32() },
-
                         // Increment the points used counter.
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
+                        Operator::GlobalGet { global_index: metering_global_indexes.points_used().as_u32() },
                         Operator::I64Const { value: self.accumulated_cost as i64 },
                         Operator::I64Add,
-                        Operator::GlobalSet { global_index: self.global_indexes.points_used().as_u32() },
+                        Operator::GlobalSet { global_index: metering_global_indexes.points_used().as_u32()},
+
+                        // Check if out of gas (points_used >= points_limit)        
+                        Operator::GlobalGet { global_index: metering_global_indexes.points_used().as_u32() },
+                        Operator::GlobalGet { global_index: metering_global_indexes.points_limit().as_u32() },
+                        Operator::I64GeU,
+                        Operator::If { ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType) },
+                        // TODO: insert breakpoint out of gas here
+                        Operator::Unreachable,
+                        Operator::End,         
                     ]);
 
                     self.accumulated_cost = 0;
@@ -171,7 +165,7 @@ impl FunctionMiddleware for FunctionMetering {
 pub fn set_points_limit(instance: &Instance, limit: u64) {
     instance
         .exports
-        .get_global("wasmer_metering_points_limit")
+        .get_global(METERING_POINTS_LIMIT)
         .expect("Can't get `wasmer_metering_points_limit` from Instance")
         .set(limit.into())
         .expect("Can't set `wasmer_metering_points_limit` in Instance");
@@ -180,7 +174,7 @@ pub fn set_points_limit(instance: &Instance, limit: u64) {
 pub fn set_points_used(instance: &Instance, points: u64) {
     instance
         .exports
-        .get_global("wasmer_metering_points_used")
+        .get_global(METERING_POINTS_USED)
         .expect("Can't get `wasmer_metering_points_used` from Instance")
         .set(points.into())
         .expect("Can't set `wasmer_metering_points_used` in Instance");
@@ -189,7 +183,7 @@ pub fn set_points_used(instance: &Instance, points: u64) {
 pub fn get_points_used(instance: &Instance) -> u64 {
     instance
         .exports
-        .get_global("wasmer_metering_points_used")
+        .get_global(METERING_POINTS_USED)
         .expect("Can't get `wasmer_metering_points_used` from Instance")
         .get()
         .try_into()

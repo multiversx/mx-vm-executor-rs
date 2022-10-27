@@ -22,13 +22,13 @@ impl WasmerInstance {
         // Create metering middleware
         let metering = Arc::new(Metering::new(
             compilation_options.gas_limit,
-            executor_data.opcode_cost.clone(),
+            Rc::clone(&executor_data.opcode_cost),
         ));
 
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
+        println!("Adding metering middleware ...");
         compiler.push_middleware(metering);
-        println!("Added metering middleware");
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -90,17 +90,17 @@ impl Instance for WasmerInstance {
     }
 
     fn set_points_limit(&self, limit: u64) {
-        println!("INSTANCE: set_points_limit");
+        println!("wasmer_instance: set_points_limit");
         set_points_limit(&self.wasmer_instance, limit)
     }
 
     fn set_points_used(&self, points: u64) {
-        println!("INSTANCE: set_points_used");
+        println!("wasmer_instance: set_points_used");
         set_points_used(&self.wasmer_instance, points)
     }
 
     fn get_points_used(&self) -> u64 {
-        println!("INSTANCE: get_points_used");
+        println!("wasmer_instance: get_points_used");
         get_points_used(&self.wasmer_instance)
     }
 }

@@ -11,7 +11,7 @@ pub struct WasmerExecutor {
 
 pub struct WasmerExecutorData {
     pub vm_hooks: Rc<Box<dyn VMHooks>>,
-    pub opcode_cost: OpcodeCost,
+    pub opcode_cost: Rc<OpcodeCost>,
 }
 
 impl Executor for WasmerExecutor {
@@ -40,7 +40,9 @@ impl Executor for WasmerExecutor {
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) {
         println!("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
-            data_mut.opcode_cost = opcode_cost.clone();
+            if let Some(opcode_cost_mut) = Rc::get_mut(&mut data_mut.opcode_cost) {
+                *opcode_cost_mut = *opcode_cost;
+            }
         }
     }
 }
