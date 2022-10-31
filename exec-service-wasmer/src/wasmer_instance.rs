@@ -25,18 +25,18 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        println!("Compiling module ...");
+        executor_data.print_execution_info("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        println!("Converting imports ...");
+        executor_data.print_execution_info("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
             // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        println!("Instantiating module ...");
+        executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
 
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
@@ -81,7 +81,8 @@ fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<Stri
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
-        println!("Rust instance call: {}", func_name);
+        self.executor_data
+            .print_execution_info(format!("Rust instance call: {}", func_name).as_str());
 
         let func = self
             .wasmer_instance

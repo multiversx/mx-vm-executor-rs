@@ -28,7 +28,9 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
 /// the returned pointer can be invalidated.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_instance_memory_data(instance_ptr: *mut vm_exec_instance_t) -> *mut u8 {
+pub unsafe extern "C" fn vm_exec_instance_memory_data(
+    instance_ptr: *mut vm_exec_instance_t,
+) -> *mut u8 {
     let capi_instance = cast_input_ptr!(
         instance_ptr,
         CapiInstance,

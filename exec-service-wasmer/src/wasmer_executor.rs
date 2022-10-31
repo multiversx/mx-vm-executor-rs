@@ -11,11 +11,13 @@ pub struct WasmerExecutor {
 
 pub struct WasmerExecutorData {
     pub vm_hooks: Rc<Box<dyn VMHooks>>,
+    pub print_execution_info: bool,
 }
 
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
-        println!("Setting context pointer ...");
+        self.data
+            .print_execution_info("Setting context pointer ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(vm_hooks) = Rc::get_mut(&mut data_mut.vm_hooks) {
                 vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
@@ -34,5 +36,13 @@ impl Executor for WasmerExecutor {
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         WasmerInstance::new(self.data.clone(), wasm_bytes, compilation_options)
+    }
+}
+
+impl WasmerExecutorData {
+    pub fn print_execution_info(&self, message: &str) {
+        if self.print_execution_info {
+            println!("{}", message);
+        }
     }
 }
