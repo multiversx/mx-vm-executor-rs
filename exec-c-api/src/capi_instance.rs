@@ -17,39 +17,11 @@ use std::{ffi::CStr, slice};
 #[repr(C)]
 pub struct vm_exec_instance_t;
 
-/// Opaque pointer to a `wasmer_runtime::Ctx` value in Rust.
-///
-/// An instance context is passed to any host function (aka imported
-/// function) as the first argument. It is necessary to read the
-/// instance data or the memory, respectively with the
-/// `wasmer_instance_context_data_get()` function, and the
-/// `wasmer_instance_context_memory()` function.
-///
-/// It is also possible to get the instance context outside a host
-/// function by using the `wasmer_instance_context_get()`
-/// function. See also `wasmer_instance_context_data_set()` to set the
-/// instance context data.
-///
-/// Example:
-///
-/// ```c
-/// // A host function that prints data from the WebAssembly memory to
-/// // the standard output.
-/// void print(wasmer_instance_context_t *context, int32_t pointer, int32_t length) {
-///     // Use `wasmer_instance_context` to get back the first instance memory.
-///     const wasmer_memory_t *memory = wasmer_instance_context_memory(context, 0);
-///
-///     // Continue…
-/// }
-/// ```
-// #[repr(C)]
-// pub struct wasmer_instance_context_t;
-
 #[repr(C)]
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    pub content: Box<dyn Instance>,
+    pub(crate) content: Box<dyn Instance>,
 }
 
 #[allow(clippy::cast_ptr_alignment)]
@@ -73,7 +45,6 @@ pub unsafe extern "C" fn vm_exec_new_instance(
     let instance_result = capi_executor
         .content
         .new_instance(wasm_bytes, compilation_options);
-    // with_service(|service| service.new_instance());
     match instance_result {
         Ok(instance_box) => {
             let capi_instance = CapiInstance {
@@ -186,55 +157,12 @@ pub unsafe extern "C" fn vm_exported_function_names(
     string_copy(concat, dest_buffer, dest_buffer_len)
 }
 
-// /// Gets the `memory_idx`th memory of the instance.
-// ///
-// /// Note that the index is always `0` until multiple memories are supported.
-// ///
-// /// This function is mostly used inside host functions (aka imported
-// /// functions) to read the instance memory.
-// ///
-// /// Example of a _host function_ that reads and prints a string based on a pointer and a length:
-// ///
-// /// ```c
-// /// void print_string(const wasmer_instance_context_t *context, int32_t pointer, int32_t length) {
-// ///     // Get the 0th memory.
-// ///     const wasmer_memory_t *memory = wasmer_instance_context_memory(context, 0);
-// ///
-// ///     // Get the memory data as a pointer.
-// ///     uint8_t *memory_bytes = wasmer_memory_data(memory);
-// ///
-// ///     // Print what we assumed to be a string!
-// ///     printf("%.*s", length, memory_bytes + pointer);
-// /// }
-// /// ```
-// // #[allow(clippy::cast_ptr_alignment)]
-// // #[no_mangle]
-// // pub extern "C" fn wasmer_instance_context_memory(
-// //     ctx: *const wasmer_instance_context_t,
-// //     _memory_idx: u32,
-// // ) -> *const wasmer_memory_t {
-// //     let ctx = unsafe { &*(ctx as *const Ctx) };
-// //     let memory = ctx.memory(0);
-// //     memory as *const Memory as *const wasmer_memory_t
-// // }
-
 /// Frees memory for the given `vm_exec_instance_t`.
 ///
 /// Check the `wasmer_instantiate()` function to get a complete
 /// example.
 ///
 /// If `instance` is a null pointer, this function does nothing.
-///
-/// Example:
-///
-/// ```c
-/// // Get an instance.
-/// vm_exec_instance_t *instance = NULL;
-/// wasmer_instantiate(&instance, bytes, bytes_length, imports, 0);
-///
-/// // Destroy the instance.
-/// wasmer_instance_destroy(instance);
-/// ```
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instance_t) {

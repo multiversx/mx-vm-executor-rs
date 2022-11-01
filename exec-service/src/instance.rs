@@ -1,3 +1,5 @@
+use crate::ExecutorError;
+
 pub struct CompilationOptions {
     pub gas_limit: u64,
     pub unmetered_locals: usize,
@@ -16,4 +18,7 @@ pub trait Instance {
     fn set_points_limit(&self, limit: u64);
     fn set_points_used(&self, points: u64);
     fn get_points_used(&self) -> u64;
+    fn memory_length(&self) -> u64;
+    fn memory_ptr(&self) -> *mut u8;
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 }
