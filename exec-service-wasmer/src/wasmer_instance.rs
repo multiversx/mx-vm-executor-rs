@@ -28,8 +28,8 @@ impl WasmerInstance {
 
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
-        self.data
-            .print_execution_info("Adding metering middleware ...");
+
+        executor_data.print_execution_info("Adding metering middleware ...");
         compiler.push_middleware(metering);
 
         // Create the store
