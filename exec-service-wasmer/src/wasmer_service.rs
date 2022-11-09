@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::sync::Arc;
 
 use elrond_exec_service::Executor;
 use elrond_exec_service::ExecutorError;
@@ -39,7 +40,7 @@ impl ExecutorService for BasicExecutorService {
     ) -> Result<Box<dyn Executor>, ExecutorError> {
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
-            opcode_cost: Rc::new(Default::default()),
+            opcode_cost: Arc::new(Default::default()),
             print_execution_info: false,
         };
         Ok(Box::new(WasmerExecutor {
