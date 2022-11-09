@@ -3,7 +3,7 @@ use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
-use wasmer::wasmparser::Operator;
+use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
 use wasmer::{
     ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
     MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
@@ -147,6 +147,11 @@ impl FunctionMiddleware for FunctionMetering {
                         Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
                         Operator::I64GeU,
                         // TODO: insert BREAKPOINT_VALUE_OUT_OF_GAS
+                        Operator::If {
+                            ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+                        },
+                        Operator::Unreachable,
+                        Operator::End,
                     ]);
 
                     self.accumulated_cost = 0;

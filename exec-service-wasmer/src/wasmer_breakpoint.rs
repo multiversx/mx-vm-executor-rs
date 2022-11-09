@@ -12,8 +12,11 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
 pub const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
+#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
+#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
+#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
 #[derive(Clone, Debug, MemoryUsage)]
