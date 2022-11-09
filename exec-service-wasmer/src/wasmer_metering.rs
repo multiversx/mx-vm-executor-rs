@@ -146,7 +146,7 @@ impl FunctionMiddleware for FunctionMetering {
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
                         Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
                         Operator::I64GeU,
-                        // TODO: insert out of gas breakpoint
+                        // TODO: insert BREAKPOINT_VALUE_OUT_OF_GAS
                     ]);
 
                     self.accumulated_cost = 0;

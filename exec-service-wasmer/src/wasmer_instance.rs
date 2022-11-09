@@ -36,8 +36,6 @@ impl WasmerInstance {
         executor_data.print_execution_info("Adding breakpoint middleware ...");
         compiler.push_middleware(breakpoint);
 
-        // TODO: chain middlewares
-
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 

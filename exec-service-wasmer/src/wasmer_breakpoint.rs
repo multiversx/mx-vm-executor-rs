@@ -12,11 +12,8 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
 pub const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
-#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
-#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
-#[allow(dead_code)]
 pub const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
 #[derive(Clone, Debug, MemoryUsage)]
@@ -124,7 +121,6 @@ impl FunctionMiddleware for FunctionBreakpoint {
     }
 }
 
-#[allow(dead_code)]
 pub fn set_breakpoint_value(instance: &Instance, value: u64) {
     instance
         .exports
@@ -134,7 +130,6 @@ pub fn set_breakpoint_value(instance: &Instance, value: u64) {
         .expect(format!("Can't set `{}` in Instance", BREAKPOINT_VALUE).as_str())
 }
 
-#[allow(dead_code)]
 pub fn get_breakpoint_value(instance: &Instance) -> u64 {
     instance
         .exports
