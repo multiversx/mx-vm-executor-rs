@@ -4,7 +4,7 @@ use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::cell::RefCell;
 use std::mem;
 use std::rc::Rc;
-use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
+use wasmer::wasmparser::Operator;
 use wasmer::{
     ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
     MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
@@ -131,7 +131,6 @@ impl FunctionMiddleware for FunctionMetering {
             | Operator::CallIndirect { .. } // function call - branch source
             | Operator::Return // end of function - branch source
             => {
-                if self.accumulated_cost > 0 {
                     state.extend(&[
                         // Increment the points used counter.
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
@@ -143,15 +142,11 @@ impl FunctionMiddleware for FunctionMetering {
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
                         Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
                         Operator::I64GeU,
-                        Operator::If { ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType) },
-                        // TODO: insert breakpoint out of gas here
-                        Operator::Unreachable,
-                        Operator::End,
+                        // TODO: insert out of gas breakpoint
                     ]);
 
                     self.accumulated_cost = 0;
                 }
-            }
             _ => {}
         }
         state.push_operator(operator);

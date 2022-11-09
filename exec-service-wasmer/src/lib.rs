@@ -5,6 +5,7 @@ mod wasmer_metering;
 mod wasmer_metering_helpers;
 mod wasmer_service;
 mod wasmer_vm_hooks;
+mod wasmer_breakpoint;
 
 pub use wasmer_executor::*;
 pub use wasmer_instance::*;

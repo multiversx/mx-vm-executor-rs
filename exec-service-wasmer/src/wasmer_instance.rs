@@ -1,6 +1,6 @@
 use crate::{
-    wasmer_imports::generate_import_object, wasmer_metering::*, wasmer_vm_hooks::VMHooksWrapper,
-    WasmerExecutorData,
+    wasmer_breakpoint::*, wasmer_imports::generate_import_object, wasmer_metering::*,
+    wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
 use std::{rc::Rc, sync::Arc};
@@ -26,11 +26,17 @@ impl WasmerInstance {
             executor_data.opcode_cost.clone(),
         ));
 
+        let breakpoint = Arc::new(Breakpoint::new());
+
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
         executor_data.print_execution_info("Adding metering middleware ...");
         compiler.push_middleware(metering);
+        executor_data.print_execution_info("Adding breakpoint middleware ...");
+        compiler.push_middleware(breakpoint);
+
+        // TODO: chain middlewares
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -147,5 +153,13 @@ impl Instance for WasmerInstance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let pages = self.get_memory_ref().grow(wasmer::Pages(by_num_pages))?;
         Ok(pages.0)
+    }
+
+    fn set_breakpoint_value(&self, value: u64) {
+        set_breakpoint_value(&self.wasmer_instance, value)
+    }
+
+    fn get_breakpoint_value(&self) -> u64 {
+        get_breakpoint_value(&self.wasmer_instance)
     }
 }
