@@ -65,7 +65,6 @@ impl ModuleMiddleware for Metering {
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
-        println!("METERING: generation_function_middleware");
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             opcode_cost: self.opcode_cost.clone(),
@@ -75,7 +74,6 @@ impl ModuleMiddleware for Metering {
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
-        println!("METERING: transform_module_info");
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         if global_indexes.is_some() {
@@ -147,7 +145,6 @@ impl FunctionMiddleware for FunctionMetering {
             | Operator::CallIndirect { .. } // function call - branch source
             | Operator::Return // end of function - branch source
             => {
-                    println!("metering middleware");
                     state.extend(&[
                         // Increment the points used counter.
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },

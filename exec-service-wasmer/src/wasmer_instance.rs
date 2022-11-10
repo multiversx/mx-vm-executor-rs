@@ -9,8 +9,8 @@ use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
 pub struct WasmerInstance {
-    pub executor_data: Rc<WasmerExecutorData>,
-    pub wasmer_instance: wasmer::Instance,
+    pub(crate) executor_data: Rc<WasmerExecutorData>,
+    pub(crate) wasmer_instance: wasmer::Instance,
     memory_name: String,
 }
 
@@ -20,24 +20,11 @@ impl WasmerInstance {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        // Create breakpoint middelware
-        let breakpoint = Arc::new(Breakpoint::new());
-
-        // Create metering middleware
-        let metering = Arc::new(Metering::new(
-            compilation_options.gas_limit,
-            executor_data.opcode_cost.clone(),
-            breakpoint.clone(),
-        ));
-
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        executor_data.print_execution_info("Adding metering middleware ...");
-        compiler.push_middleware(metering);
-        executor_data.print_execution_info("Adding breakpoint middleware ...");
-        compiler.push_middleware(breakpoint);
+        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -93,6 +80,27 @@ fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<Stri
             "no memory declared in smart contract",
         )))
     }
+}
+
+fn push_middlewares(
+    compiler: &mut Singlepass,
+    compilation_options: &CompilationOptions,
+    executor_data: Rc<WasmerExecutorData>,
+) {
+    // Create breakpoint middelware
+    let breakpoint = Arc::new(Breakpoint::new());
+
+    // Create metering middleware
+    let metering = Arc::new(Metering::new(
+        compilation_options.gas_limit,
+        executor_data.opcode_cost.clone(),
+        breakpoint.clone(),
+    ));
+
+    executor_data.print_execution_info("Adding metering middleware ...");
+    compiler.push_middleware(metering);
+    executor_data.print_execution_info("Adding breakpoint middleware ...");
+    compiler.push_middleware(breakpoint);
 }
 
 impl Instance for WasmerInstance {

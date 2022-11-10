@@ -73,14 +73,12 @@ impl ModuleMiddleware for Breakpoint {
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
-        println!("BREAKPOINT: generation_function_middleware");
         Box::new(FunctionBreakpoint {
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
-        println!("BREAKPOINT: transform_module_info");
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         if global_indexes.is_some() {
@@ -128,7 +126,6 @@ impl FunctionMiddleware for FunctionBreakpoint {
         };
 
         if should_insert_breakpoint {
-            println!("breakpoints middleware");
             state.extend(&[
                 Operator::GlobalGet {
                     global_index: self.global_indexes.breakpoint_value().as_u32(),
