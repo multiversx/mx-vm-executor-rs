@@ -1,9 +1,10 @@
 use crate::get_opcode_cost;
+use crate::wasmer_breakpoint::{Breakpoint, BREAKPOINT_VALUE_OUT_OF_GAS};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
-use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
+use wasmer::wasmparser::Operator;
 use wasmer::{
     ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
     MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
@@ -27,17 +28,23 @@ impl MeteringGlobalIndexes {
 }
 
 #[derive(Debug)]
-pub struct Metering {
+pub(crate) struct Metering {
     points_limit: u64,
     opcode_cost: Arc<OpcodeCost>,
+    breakpoint: Arc<Breakpoint>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
 
 impl Metering {
-    pub fn new(points_limit: u64, opcode_cost: Arc<OpcodeCost>) -> Self {
+    pub(crate) fn new(
+        points_limit: u64,
+        opcode_cost: Arc<OpcodeCost>,
+        breakpoint: Arc<Breakpoint>,
+    ) -> Self {
         Self {
             points_limit,
             opcode_cost,
+            breakpoint,
             global_indexes: Mutex::new(None),
         }
     }
@@ -58,14 +65,17 @@ impl ModuleMiddleware for Metering {
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
+        println!("METERING: generation_function_middleware");
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             opcode_cost: self.opcode_cost.clone(),
+            breakpoint: self.breakpoint.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+        println!("METERING: transform_module_info");
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         if global_indexes.is_some() {
@@ -106,9 +116,11 @@ impl ModuleMiddleware for Metering {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct FunctionMetering {
     accumulated_cost: u64,
     opcode_cost: Arc<OpcodeCost>,
+    breakpoint: Arc<Breakpoint>,
     global_indexes: MeteringGlobalIndexes,
 }
 
@@ -135,6 +147,7 @@ impl FunctionMiddleware for FunctionMetering {
             | Operator::CallIndirect { .. } // function call - branch source
             | Operator::Return // end of function - branch source
             => {
+                    println!("metering middleware");
                     state.extend(&[
                         // Increment the points used counter.
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
@@ -146,13 +159,10 @@ impl FunctionMiddleware for FunctionMetering {
                         Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
                         Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
                         Operator::I64GeU,
-                        // TODO: insert BREAKPOINT_VALUE_OUT_OF_GAS
-                        Operator::If {
-                            ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
-                        },
-                        Operator::Unreachable,
-                        Operator::End,
                     ]);
+
+                    // Insert breakpoint BREAKPOINT_VALUE_OUT_OF_GAS if points_used >= points_limit
+                    state.extend(self.breakpoint.as_ref().insert_breakpoint(BREAKPOINT_VALUE_OUT_OF_GAS).iter());
 
                     self.accumulated_cost = 0;
                 }
@@ -164,7 +174,7 @@ impl FunctionMiddleware for FunctionMetering {
     }
 }
 
-pub fn set_points_limit(instance: &Instance, limit: u64) {
+pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_LIMIT)
@@ -173,7 +183,7 @@ pub fn set_points_limit(instance: &Instance, limit: u64) {
         .expect(format!("Can't set `{}` in Instance", METERING_POINTS_LIMIT).as_str())
 }
 
-pub fn set_points_used(instance: &Instance, points: u64) {
+pub(crate) fn set_points_used(instance: &Instance, points: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
@@ -182,7 +192,7 @@ pub fn set_points_used(instance: &Instance, points: u64) {
         .expect(format!("Can't set `{}` in Instance", METERING_POINTS_USED).as_str())
 }
 
-pub fn get_points_used(instance: &Instance) -> u64 {
+pub(crate) fn get_points_used(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(METERING_POINTS_USED)

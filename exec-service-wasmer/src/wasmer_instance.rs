@@ -20,17 +20,20 @@ impl WasmerInstance {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
+        // Create breakpoint middelware
+        let breakpoint = Arc::new(Breakpoint::new());
+
         // Create metering middleware
         let metering = Arc::new(Metering::new(
             compilation_options.gas_limit,
             executor_data.opcode_cost.clone(),
+            breakpoint.clone(),
         ));
-
-        let breakpoint = Arc::new(Breakpoint::new());
 
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
+        // Push middlewares
         executor_data.print_execution_info("Adding metering middleware ...");
         compiler.push_middleware(metering);
         executor_data.print_execution_info("Adding breakpoint middleware ...");

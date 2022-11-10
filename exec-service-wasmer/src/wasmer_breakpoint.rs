@@ -11,13 +11,12 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
-pub const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
+pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
 #[allow(dead_code)]
-pub const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
+pub(crate) const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
+pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 #[allow(dead_code)]
-pub const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
-#[allow(dead_code)]
-pub const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
+pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct BreakpointGlobalIndex(GlobalIndex);
@@ -29,15 +28,40 @@ impl BreakpointGlobalIndex {
 }
 
 #[derive(Debug)]
-pub struct Breakpoint {
+pub(crate) struct Breakpoint {
     global_indexes: Mutex<Option<BreakpointGlobalIndex>>,
 }
 
 impl Breakpoint {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             global_indexes: Mutex::new(None),
         }
+    }
+
+    pub(crate) fn insert_breakpoint<'b>(&self, value: u64) -> Vec<Operator<'b>> {
+        vec![
+            Operator::If {
+                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+            },
+            Operator::I64Const {
+                value: value as i64,
+            },
+            Operator::GlobalSet {
+                global_index: self.get_breakpoint_value(),
+            },
+            Operator::End,
+        ]
+    }
+
+    fn get_breakpoint_value(&self) -> u32 {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .breakpoint_value()
+            .as_u32()
     }
 }
 
@@ -49,15 +73,17 @@ impl ModuleMiddleware for Breakpoint {
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
+        println!("BREAKPOINT: generation_function_middleware");
         Box::new(FunctionBreakpoint {
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
-        let mut global_index = self.global_indexes.lock().unwrap();
+        println!("BREAKPOINT: transform_module_info");
+        let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        if global_index.is_some() {
+        if global_indexes.is_some() {
             panic!("Breakpoint::transform_module_info: Attempting to use a `Breakpoint` middleware from multiple modules.");
         }
 
@@ -74,7 +100,7 @@ impl ModuleMiddleware for Breakpoint {
             ExportIndex::Global(breakpoint_value_global_index),
         );
 
-        *global_index = Some(BreakpointGlobalIndex(breakpoint_value_global_index));
+        *global_indexes = Some(BreakpointGlobalIndex(breakpoint_value_global_index));
     }
 }
 
@@ -102,6 +128,7 @@ impl FunctionMiddleware for FunctionBreakpoint {
         };
 
         if should_insert_breakpoint {
+            println!("breakpoints middleware");
             state.extend(&[
                 Operator::GlobalGet {
                     global_index: self.global_indexes.breakpoint_value().as_u32(),
@@ -124,7 +151,7 @@ impl FunctionMiddleware for FunctionBreakpoint {
     }
 }
 
-pub fn set_breakpoint_value(instance: &Instance, value: u64) {
+pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
@@ -133,7 +160,7 @@ pub fn set_breakpoint_value(instance: &Instance, value: u64) {
         .expect(format!("Can't set `{}` in Instance", BREAKPOINT_VALUE).as_str())
 }
 
-pub fn get_breakpoint_value(instance: &Instance) -> u64 {
+pub(crate) fn get_breakpoint_value(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
