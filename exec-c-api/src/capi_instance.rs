@@ -143,11 +143,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
     let func_name_c = CStr::from_ptr(func_name_ptr);
     let func_name_r = func_name_c.to_str().unwrap();
 
-    if capi_instance.content.has_function(func_name_r) {
-        1
-    } else {
-        0
-    }
+    c_int::from(capi_instance.content.has_function(func_name_r))
 }
 
 /// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
