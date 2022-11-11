@@ -206,9 +206,6 @@ pub unsafe extern "C" fn vm_exported_function_names(
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instance_t) {
     if !instance.is_null() {
-        // unsafe {
         std::ptr::drop_in_place(instance);
-        // }
-        // unsafe { Box::from_raw(instance as *mut Instance) };
     }
 }
