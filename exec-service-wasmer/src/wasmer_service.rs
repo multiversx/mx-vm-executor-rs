@@ -39,6 +39,7 @@ impl ExecutorService for BasicExecutorService {
     ) -> Result<Box<dyn Executor>, ExecutorError> {
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
+            print_execution_info: false,
         };
         Ok(Box::new(WasmerExecutor {
             data: Rc::new(data),

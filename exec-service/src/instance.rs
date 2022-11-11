@@ -1,3 +1,5 @@
+use crate::ExecutorError;
+
 pub struct CompilationOptions {
     pub gas_limit: u64,
     pub unmetered_locals: usize,
@@ -16,4 +18,10 @@ pub trait Instance {
     fn has_function(&self, func_name: &str) -> bool;
 
     fn get_exported_function_names(&self) -> Vec<String>;
+
+    fn memory_length(&self) -> u64;
+
+    fn memory_ptr(&self) -> *mut u8;
+
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 }
