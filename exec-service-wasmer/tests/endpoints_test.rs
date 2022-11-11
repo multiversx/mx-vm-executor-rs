@@ -19,3 +19,15 @@ fn instance_endpoints_adder() {
         vec!["init", "add", "getSum", "callBack"]
     );
 }
+
+#[test]
+fn bad_init_param() {
+    let instance = common::test_instance(common::BAD_INIT_PARAM);
+    assert!(!instance.check_signatures());
+}
+
+#[test]
+fn bad_init_result() {
+    let instance = common::test_instance(common::BAD_INIT_RESULT);
+    assert!(!instance.check_signatures());
+}

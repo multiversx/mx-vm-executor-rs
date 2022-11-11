@@ -95,6 +95,17 @@ impl Instance for WasmerInstance {
     }
 
     fn check_signatures(&self) -> bool {
+        for (_, export) in self.wasmer_instance.exports.iter() {
+            if let Extern::Function(endpoint) = export {
+                if endpoint.param_arity() > 0 {
+                    return false;
+                }
+                if endpoint.result_arity() > 0 {
+                    return false;
+                }
+            }
+        }
+
         true
     }
 
