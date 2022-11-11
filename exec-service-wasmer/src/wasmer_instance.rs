@@ -32,7 +32,6 @@ impl WasmerInstance {
         executor_data.print_execution_info("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
-            // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
