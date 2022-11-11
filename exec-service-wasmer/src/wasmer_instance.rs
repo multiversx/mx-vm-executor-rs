@@ -14,7 +14,7 @@ pub struct WasmerInstance {
 }
 
 impl WasmerInstance {
-    pub(crate) fn new(
+    pub(crate) fn try_new_instance(
         executor_data: Rc<WasmerExecutorData>,
         wasm_bytes: &[u8],
         _compilation_options: &CompilationOptions,

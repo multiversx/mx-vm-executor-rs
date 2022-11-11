@@ -14,6 +14,11 @@ pub struct CapiExecutor {
     pub content: Box<dyn Executor>,
 }
 
+/// Creates a new VM executor.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_executor(
@@ -52,6 +57,10 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 /// of `wasmer_instance_context_data_get()`.
 ///
 /// This function does nothing if `instance` is a null pointer.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
@@ -70,12 +79,15 @@ pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
     }
 }
 
+/// Destroys a VM executor object.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub extern "C" fn vm_exec_executor_destroy(executor: *mut vm_exec_executor_t) {
+pub unsafe extern "C" fn vm_exec_executor_destroy(executor: *mut vm_exec_executor_t) {
     if !executor.is_null() {
-        unsafe {
-            std::ptr::drop_in_place(executor);
-        }
+        std::ptr::drop_in_place(executor);
     }
 }
