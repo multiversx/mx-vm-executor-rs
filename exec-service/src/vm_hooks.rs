@@ -7,6 +7,7 @@
 use std::ffi::c_void;
 
 #[rustfmt::skip]
+#[allow(clippy::too_many_arguments)]
 pub trait VMHooks: core::fmt::Debug + 'static {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void);
 
