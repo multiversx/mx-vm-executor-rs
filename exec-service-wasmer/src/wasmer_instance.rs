@@ -32,7 +32,6 @@ impl WasmerInstance {
         executor_data.print_execution_info("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
-            // vm_hooks: Rc::new(Box::new(VMHooksDefault)),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
@@ -96,6 +95,17 @@ impl Instance for WasmerInstance {
     }
 
     fn check_signatures(&self) -> bool {
+        for (_, export) in self.wasmer_instance.exports.iter() {
+            if let Extern::Function(endpoint) = export {
+                if endpoint.param_arity() > 0 {
+                    return false;
+                }
+                if endpoint.result_arity() > 0 {
+                    return false;
+                }
+            }
+        }
+
         true
     }
 
