@@ -80,7 +80,7 @@ impl ModuleMiddleware for OpcodeControl {
 
         module_info
             .global_initializers
-            .push(GlobalInit::I64Const(0 as i64));
+            .push(GlobalInit::I64Const(0));
 
         module_info.exports.insert(
             OPCODE_CONTROL_MEMORY_GROW.to_string(),
@@ -89,11 +89,11 @@ impl ModuleMiddleware for OpcodeControl {
 
         let memory_grow_cached_global_index = module_info
             .globals
-            .push(GlobalType::new(Type::I32, Mutability::Var));
+            .push(GlobalType::new(Type::I64, Mutability::Var));
 
         module_info
             .global_initializers
-            .push(GlobalInit::I32Const(0));
+            .push(GlobalInit::I64Const(0));
 
         module_info.exports.insert(
             OPCODE_CONTROL_MEMORY_GROW_CACHED.to_string(),

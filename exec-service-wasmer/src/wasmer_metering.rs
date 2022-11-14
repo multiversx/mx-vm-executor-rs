@@ -95,11 +95,11 @@ impl ModuleMiddleware for Metering {
 
         let points_used_global_index = module_info
             .globals
-            .push(GlobalType::new(Type::I32, Mutability::Var));
+            .push(GlobalType::new(Type::I64, Mutability::Var));
 
         module_info
             .global_initializers
-            .push(GlobalInit::I32Const(0));
+            .push(GlobalInit::I64Const(0));
 
         module_info.exports.insert(
             METERING_POINTS_USED.to_string(),
@@ -114,7 +114,6 @@ impl ModuleMiddleware for Metering {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct FunctionMetering {
     accumulated_cost: u64,
     opcode_cost: Arc<OpcodeCost>,
