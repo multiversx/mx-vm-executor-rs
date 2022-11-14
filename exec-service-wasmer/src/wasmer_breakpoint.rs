@@ -15,7 +15,6 @@ pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
 #[allow(dead_code)]
 pub(crate) const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
 pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
-#[allow(dead_code)]
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
 #[derive(Clone, Debug, MemoryUsage)]
