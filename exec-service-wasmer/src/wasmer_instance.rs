@@ -15,7 +15,7 @@ pub struct WasmerInstance {
 }
 
 impl WasmerInstance {
-    pub(crate) fn new(
+    pub(crate) fn try_new_instance(
         executor_data: Rc<WasmerExecutorData>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
@@ -105,6 +105,17 @@ impl Instance for WasmerInstance {
     }
 
     fn check_signatures(&self) -> bool {
+        for (_, export) in self.wasmer_instance.exports.iter() {
+            if let Extern::Function(endpoint) = export {
+                if endpoint.param_arity() > 0 {
+                    return false;
+                }
+                if endpoint.result_arity() > 0 {
+                    return false;
+                }
+            }
+        }
+
         true
     }
 

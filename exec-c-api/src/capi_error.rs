@@ -28,7 +28,10 @@ pub extern "C" fn vm_exec_last_error_length() -> c_int {
 ///  * The buffer is too smal to hold the error message.
 ///
 /// Note: The error message always has a trailing null character.
-/// ```
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_last_error_message(
     dest_buffer: *mut c_char,

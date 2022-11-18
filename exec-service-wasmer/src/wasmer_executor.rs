@@ -50,7 +50,7 @@ impl Executor for WasmerExecutor {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::new(self.data.clone(), wasm_bytes, compilation_options)
+        WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)
     }
 }
 

@@ -10,6 +10,10 @@ use std::ptr;
 /// Gets the size in bytes of the memory data.
 ///
 /// This function returns 0 if `memory` is a null pointer.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
@@ -26,6 +30,10 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
 ///
 /// Note that when the memory grows, it can be reallocated, and thus
 /// the returned pointer can be invalidated.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_memory_data(
@@ -46,6 +54,10 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data(
 /// `wasmer_result_t::WASMER_ERROR` otherwise. Use
 /// `wasmer_last_error_length()` with `wasmer_last_error_message()` to
 /// read the error message.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_memory_grow(

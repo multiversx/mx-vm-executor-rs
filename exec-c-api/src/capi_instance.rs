@@ -24,6 +24,13 @@ pub struct CapiInstance {
     pub(crate) content: Box<dyn Instance>,
 }
 
+/// Creates a new VM executor instance.
+///
+/// All of the context comes from the provided VM executor.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_new_instance(
@@ -73,6 +80,10 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 ///   * `instance` is a null pointer,
 ///   * `name` is a null pointer,
 ///   * `params` is a null pointer.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_call(
@@ -99,6 +110,13 @@ pub unsafe extern "C" fn vm_exec_instance_call(
     }
 }
 
+/// Checks that all public module functions (SC endpoints) have no arguments or results.
+///
+/// Still in the works.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_check_signatures(
@@ -107,6 +125,11 @@ pub unsafe extern "C" fn vm_check_signatures(
     vm_exec_result_t::VM_EXEC_OK
 }
 
+/// Checks whether SC has an endpoint with given name.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_has_function(
@@ -120,13 +143,14 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
     let func_name_c = CStr::from_ptr(func_name_ptr);
     let func_name_r = func_name_c.to_str().unwrap();
 
-    if capi_instance.content.has_function(func_name_r) {
-        1
-    } else {
-        0
-    }
+    c_int::from(capi_instance.content.has_function(func_name_r))
 }
 
+/// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exported_function_names_length(
@@ -143,6 +167,17 @@ pub unsafe extern "C" fn vm_exported_function_names_length(
     }
 }
 
+/// Returns all SC endpoint names, separated by pipes.
+///
+/// e.g. `"init|endpoint1|endpoint2"`
+///
+/// No endpoint order is assumed.
+///
+/// It is necessary to first call `vm_exported_function_names_length` and pre-allocate a buffer of this length.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exported_function_names(
@@ -163,13 +198,14 @@ pub unsafe extern "C" fn vm_exported_function_names(
 /// example.
 ///
 /// If `instance` is a null pointer, this function does nothing.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
-pub extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instance_t) {
+pub unsafe extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instance_t) {
     if !instance.is_null() {
-        unsafe {
-            std::ptr::drop_in_place(instance);
-        }
-        // unsafe { Box::from_raw(instance as *mut Instance) };
+        std::ptr::drop_in_place(instance);
     }
 }

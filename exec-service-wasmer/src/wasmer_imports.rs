@@ -4,6 +4,8 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+#![allow(clippy::too_many_arguments)]
+
 use wasmer::{imports, Function, ImportObject, Store};
 
 use crate::wasmer_vm_hooks::VMHooksWrapper;

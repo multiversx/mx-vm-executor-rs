@@ -3,7 +3,7 @@ extern crate cbindgen;
 use cbindgen::{Builder, Language};
 use std::{env, fs, path::PathBuf};
 
-const HEADER_FILE_NAME: &str = "vmexeccapi";
+const HEADER_FILE_NAME: &str = "libvmexeccapi";
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -17,7 +17,7 @@ fn main() {
     // Generate the C bindings in the `OUT_DIR`.
     out_wasmer_header_file.set_extension("h");
     Builder::new()
-        .with_crate(crate_dir.clone())
+        .with_crate(crate_dir)
         .with_language(Language::C)
         .generate()
         .expect("Unable to generate C bindings")
