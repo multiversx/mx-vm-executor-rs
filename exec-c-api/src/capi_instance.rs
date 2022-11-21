@@ -120,9 +120,19 @@ pub unsafe extern "C" fn vm_exec_instance_call(
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_check_signatures(
-    _instance: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_exec_instance_t,
 ) -> vm_exec_result_t {
-    vm_exec_result_t::VM_EXEC_OK
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
+    if capi_instance.content.check_signatures() {
+        vm_exec_result_t::VM_EXEC_OK
+    } else {
+        with_service(|service| {
+            service.update_last_error_str(
+                "non-zero number of params or results for at least one endpoint".to_string(),
+            )
+        });
+        vm_exec_result_t::VM_EXEC_ERROR
+    }
 }
 
 /// Checks whether SC has an endpoint with given name.
