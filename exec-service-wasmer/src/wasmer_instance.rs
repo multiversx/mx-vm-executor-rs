@@ -1,9 +1,10 @@
 use crate::{
-    wasmer_imports::generate_import_object, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
+    wasmer_imports::generate_import_object, wasmer_metering::*, wasmer_vm_hooks::VMHooksWrapper,
+    WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
-use std::rc::Rc;
-use wasmer::{Extern, Module, Store};
+use std::{rc::Rc, sync::Arc};
+use wasmer::{CompilerConfig, Extern, Module, Store};
 use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
@@ -17,10 +18,19 @@ impl WasmerInstance {
     pub(crate) fn try_new_instance(
         executor_data: Rc<WasmerExecutorData>,
         wasm_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
+        // Create metering middleware
+        let metering = Arc::new(Metering::new(
+            compilation_options.gas_limit,
+            executor_data.opcode_cost.clone(),
+        ));
+
         // Use Singlepass compiler with the default settings
-        let compiler = Singlepass::default();
+        let mut compiler = Singlepass::default();
+
+        executor_data.print_execution_info("Adding metering middleware ...");
+        compiler.push_middleware(metering);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -123,6 +133,18 @@ impl Instance for WasmerInstance {
             })
             .cloned()
             .collect()
+    }
+
+    fn set_points_limit(&self, limit: u64) {
+        set_points_limit(&self.wasmer_instance, limit)
+    }
+
+    fn set_points_used(&self, points: u64) {
+        set_points_used(&self.wasmer_instance, points)
+    }
+
+    fn get_points_used(&self) -> u64 {
+        get_points_used(&self.wasmer_instance)
     }
 
     fn memory_length(&self) -> u64 {
