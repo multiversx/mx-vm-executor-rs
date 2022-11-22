@@ -88,7 +88,7 @@ fn push_middlewares(
     executor_data: Rc<WasmerExecutorData>,
 ) {
     // Create breakpoint middelware
-    let breakpoint = Arc::new(Breakpoint::new());
+    let breakpoint = Arc::new(Breakpoints::new());
 
     // Create metering middleware
     let metering = Arc::new(Metering::new(
