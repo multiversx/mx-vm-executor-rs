@@ -15,7 +15,7 @@ pub struct CapiVMHooks {
 }
 
 impl CapiVMHooks {
-    pub unsafe fn new(c_func_pointers_ptr: vm_exec_vm_hook_c_func_pointers) -> Self {
+    pub fn new(c_func_pointers_ptr: vm_exec_vm_hook_c_func_pointers) -> Self {
         Self {
             vm_hooks_ptr: std::ptr::null_mut(),
             c_func_pointers_ptr,
