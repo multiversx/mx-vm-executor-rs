@@ -170,26 +170,26 @@ pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_LIMIT)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_LIMIT).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_LIMIT))
         .set(limit.into())
-        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_LIMIT).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_LIMIT))
 }
 
 pub(crate) fn set_points_used(instance: &Instance, points: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
         .set(points.into())
-        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_USED))
 }
 
 pub(crate) fn get_points_used(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
         .get()
         .try_into()
-        .expect(format!("`{}` from Instance has wrong type", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED))
 }

@@ -124,69 +124,66 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        match operator {
-            Operator::MemoryGrow { .. } => {
-                // Check if memory limit (memory_grow >= max_memory_grow)
-                state.extend(&[
-                    Operator::GlobalGet {
-                        global_index: self.global_indexes.memory_grow().as_u32(),
-                    },
-                    Operator::I64Const {
-                        value: self.max_memory_grow as i64,
-                    },
-                    Operator::I64GeU,
-                ]);
+        if let Operator::MemoryGrow { .. } = operator {
+            // Check if memory limit (memory_grow >= max_memory_grow)
+            state.extend(&[
+                Operator::GlobalGet {
+                    global_index: self.global_indexes.memory_grow().as_u32(),
+                },
+                Operator::I64Const {
+                    value: self.max_memory_grow as i64,
+                },
+                Operator::I64GeU,
+            ]);
 
-                // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow >= max_memory_grow
-                state.extend(
-                    self.breakpoints_middleware
-                        .as_ref()
-                        .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
-                        .iter(),
-                );
+            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow >= max_memory_grow
+            state.extend(
+                self.breakpoints_middleware
+                    .as_ref()
+                    .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
+                    .iter(),
+            );
 
-                // Increment the memory_grow counter
-                state.extend(&[
-                    Operator::GlobalGet {
-                        global_index: self.global_indexes.memory_grow().as_u32(),
-                    },
-                    Operator::I64Const { value: 1 as i64 },
-                    Operator::I64Add,
-                    Operator::GlobalSet {
-                        global_index: self.global_indexes.memory_grow().as_u32(),
-                    },
-                ]);
+            // Increment the memory_grow counter
+            state.extend(&[
+                Operator::GlobalGet {
+                    global_index: self.global_indexes.memory_grow().as_u32(),
+                },
+                Operator::I64Const { value: 1 },
+                Operator::I64Add,
+                Operator::GlobalSet {
+                    global_index: self.global_indexes.memory_grow().as_u32(),
+                },
+            ]);
 
-                // Cache the memory_grow counter
-                state.extend(&[Operator::GlobalSet {
+            // Cache the memory_grow counter
+            state.extend(&[Operator::GlobalSet {
+                global_index: self.global_indexes.memory_grow_cached().as_u32(),
+            }]);
+
+            // Check if memory limit (memory_grow_cached > max_memory_grow_delta)
+            state.extend(&[
+                Operator::GlobalGet {
                     global_index: self.global_indexes.memory_grow_cached().as_u32(),
-                }]);
+                },
+                Operator::I64Const {
+                    value: self.max_memory_grow_delta as i64,
+                },
+                Operator::I64GtU,
+            ]);
 
-                // Check if memory limit (memory_grow_cached > max_memory_grow_delta)
-                state.extend(&[
-                    Operator::GlobalGet {
-                        global_index: self.global_indexes.memory_grow_cached().as_u32(),
-                    },
-                    Operator::I64Const {
-                        value: self.max_memory_grow_delta as i64,
-                    },
-                    Operator::I64GtU,
-                ]);
+            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow_cached > max_memory_grow_delta
+            state.extend(
+                self.breakpoints_middleware
+                    .as_ref()
+                    .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
+                    .iter(),
+            );
 
-                // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow_cached > max_memory_grow_delta
-                state.extend(
-                    self.breakpoints_middleware
-                        .as_ref()
-                        .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
-                        .iter(),
-                );
-
-                // Retrieve cached memory_grow counter
-                state.extend(&[Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow_cached().as_u32(),
-                }]);
-            }
-            _ => {}
+            // Retrieve cached memory_grow counter
+            state.extend(&[Operator::GlobalGet {
+                global_index: self.global_indexes.memory_grow_cached().as_u32(),
+            }]);
         }
 
         state.push_operator(operator);
@@ -200,7 +197,7 @@ pub(crate) fn reset_memory_grow_counter(instance: &Instance) {
     instance
         .exports
         .get_global(OPCODE_CONTROL_MEMORY_GROW)
-        .expect(format!("Can't get `{}` from Instance", OPCODE_CONTROL_MEMORY_GROW).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", OPCODE_CONTROL_MEMORY_GROW))
         .set(0.into())
-        .expect(format!("Can't set `{}` in Instance", OPCODE_CONTROL_MEMORY_GROW).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", OPCODE_CONTROL_MEMORY_GROW))
 }

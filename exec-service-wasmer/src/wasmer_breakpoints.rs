@@ -115,12 +115,10 @@ impl FunctionMiddleware for FunctionBreakpoint {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        let should_insert_breakpoint_condition = match operator {
-            Operator::Call { .. } | Operator::CallIndirect { .. } => true,
-            _ => false,
-        };
-
-        if should_insert_breakpoint_condition {
+        if matches!(
+            operator,
+            Operator::Call { .. } | Operator::CallIndirect { .. }
+        ) {
             state.extend(&[
                 Operator::GlobalGet {
                     global_index: self.global_index.breakpoints_global_index().as_u32(),
@@ -147,17 +145,17 @@ pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
-        .expect(format!("Can't get `{}` from Instance", BREAKPOINT_VALUE).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", BREAKPOINT_VALUE))
         .set(value.into())
-        .expect(format!("Can't set `{}` in Instance", BREAKPOINT_VALUE).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", BREAKPOINT_VALUE))
 }
 
 pub(crate) fn get_breakpoint_value(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
-        .expect(format!("Can't get `{}` from Instance", BREAKPOINT_VALUE).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", BREAKPOINT_VALUE))
         .get()
         .try_into()
-        .expect(format!("`{}` from Instance has wrong type", BREAKPOINT_VALUE).as_str())
+        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", BREAKPOINT_VALUE))
 }
