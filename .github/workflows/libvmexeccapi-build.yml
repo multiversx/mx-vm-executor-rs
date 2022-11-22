@@ -24,11 +24,11 @@ jobs:
             make_target: capi-osx-amd64
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v2.5.0
       - name: Make
         run: make ${{ matrix.make_target }}
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3.1.1
         with:
           name: libs
           path: |
