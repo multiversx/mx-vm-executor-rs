@@ -2,6 +2,7 @@
 mod macros;
 
 mod basic_types;
+pub mod capi_breakpoint;
 pub mod capi_error;
 pub mod capi_executor;
 pub mod capi_instance;

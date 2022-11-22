@@ -4,6 +4,7 @@ use elrond_exec_service::{
 };
 use std::ffi::c_void;
 use std::rc::Rc;
+use std::sync::Arc;
 
 pub struct WasmerExecutor {
     pub data: Rc<WasmerExecutorData>,
@@ -11,7 +12,7 @@ pub struct WasmerExecutor {
 
 pub struct WasmerExecutorData {
     pub vm_hooks: Rc<Box<dyn VMHooks>>,
-    pub opcode_cost: Rc<OpcodeCost>,
+    pub opcode_cost: Arc<OpcodeCost>,
     pub print_execution_info: bool,
 }
 
@@ -34,7 +35,7 @@ impl Executor for WasmerExecutor {
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
         self.data.print_execution_info("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
-            if let Some(opcode_cost_mut) = Rc::get_mut(&mut data_mut.opcode_cost) {
+            if let Some(opcode_cost_mut) = Arc::get_mut(&mut data_mut.opcode_cost) {
                 *opcode_cost_mut = opcode_cost.clone();
                 return Ok(());
             }

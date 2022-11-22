@@ -1,6 +1,6 @@
 use crate::{
-    wasmer_imports::generate_import_object, wasmer_metering::*, wasmer_vm_hooks::VMHooksWrapper,
-    WasmerExecutorData,
+    wasmer_breakpoint::*, wasmer_imports::generate_import_object, wasmer_metering::*,
+    wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
 use std::{rc::Rc, sync::Arc};
@@ -9,8 +9,8 @@ use wasmer_compiler_singlepass::Singlepass;
 use wasmer_engine_universal::Universal;
 
 pub struct WasmerInstance {
-    pub executor_data: Rc<WasmerExecutorData>,
-    pub wasmer_instance: wasmer::Instance,
+    pub(crate) executor_data: Rc<WasmerExecutorData>,
+    pub(crate) wasmer_instance: wasmer::Instance,
     memory_name: String,
 }
 
@@ -20,17 +20,11 @@ impl WasmerInstance {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        // Create metering middleware
-        let metering = Arc::new(Metering::new(
-            compilation_options.gas_limit,
-            executor_data.opcode_cost.clone(),
-        ));
-
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
-        executor_data.print_execution_info("Adding metering middleware ...");
-        compiler.push_middleware(metering);
+        // Push middlewares
+        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -86,6 +80,27 @@ fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<Stri
             "no memory declared in smart contract",
         )))
     }
+}
+
+fn push_middlewares(
+    compiler: &mut Singlepass,
+    compilation_options: &CompilationOptions,
+    executor_data: Rc<WasmerExecutorData>,
+) {
+    // Create breakpoint middelware
+    let breakpoint = Arc::new(Breakpoints::new());
+
+    // Create metering middleware
+    let metering = Arc::new(Metering::new(
+        compilation_options.gas_limit,
+        executor_data.opcode_cost.clone(),
+        breakpoint.clone(),
+    ));
+
+    executor_data.print_execution_info("Adding metering middleware ...");
+    compiler.push_middleware(metering);
+    executor_data.print_execution_info("Adding breakpoint middleware ...");
+    compiler.push_middleware(breakpoint);
 }
 
 impl Instance for WasmerInstance {
@@ -158,5 +173,13 @@ impl Instance for WasmerInstance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let pages = self.get_memory_ref().grow(wasmer::Pages(by_num_pages))?;
         Ok(pages.0)
+    }
+
+    fn set_breakpoint_value(&self, value: u64) {
+        set_breakpoint_value(&self.wasmer_instance, value)
+    }
+
+    fn get_breakpoint_value(&self) -> u64 {
+        get_breakpoint_value(&self.wasmer_instance)
     }
 }
