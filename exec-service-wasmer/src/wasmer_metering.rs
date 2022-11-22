@@ -1,5 +1,5 @@
 use crate::get_opcode_cost;
-use crate::wasmer_breakpoint::{Breakpoint, BREAKPOINT_VALUE_OUT_OF_GAS};
+use crate::wasmer_breakpoint::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
@@ -31,7 +31,7 @@ impl MeteringGlobalIndexes {
 pub(crate) struct Metering {
     points_limit: u64,
     opcode_cost: Arc<OpcodeCost>,
-    breakpoint: Arc<Breakpoint>,
+    breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
 
@@ -39,12 +39,12 @@ impl Metering {
     pub(crate) fn new(
         points_limit: u64,
         opcode_cost: Arc<OpcodeCost>,
-        breakpoint: Arc<Breakpoint>,
+        breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             points_limit,
             opcode_cost,
-            breakpoint,
+            breakpoints_middleware,
             global_indexes: Mutex::new(None),
         }
     }
@@ -68,17 +68,13 @@ impl ModuleMiddleware for Metering {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             opcode_cost: self.opcode_cost.clone(),
-            breakpoint: self.breakpoint.clone(),
+            breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
-
-        if global_indexes.is_some() {
-            panic!("Metering::transform_module_info: Attempting to use a `Metering` middleware from multiple modules.");
-        }
 
         let points_limit_global_index = module_info
             .globals
@@ -117,7 +113,7 @@ impl ModuleMiddleware for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     opcode_cost: Arc<OpcodeCost>,
-    breakpoint: Arc<Breakpoint>,
+    breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
 
@@ -158,7 +154,7 @@ impl FunctionMiddleware for FunctionMetering {
                     ]);
 
                     // Insert breakpoint BREAKPOINT_VALUE_OUT_OF_GAS if points_used >= points_limit
-                    state.extend(self.breakpoint.as_ref().insert_breakpoint(BREAKPOINT_VALUE_OUT_OF_GAS).iter());
+                    state.extend(self.breakpoints_middleware.as_ref().generate_breakpoint_condition(BREAKPOINT_VALUE_OUT_OF_GAS).iter());
 
                     self.accumulated_cost = 0;
                 }
