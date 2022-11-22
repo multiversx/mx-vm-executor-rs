@@ -1,5 +1,5 @@
 use crate::{
-    wasmer_breakpoint::*, wasmer_imports::generate_import_object, wasmer_metering::*,
+    wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
@@ -88,7 +88,7 @@ fn push_middlewares(
     executor_data: Rc<WasmerExecutorData>,
 ) {
     // Create breakpoint middelware
-    let breakpoints_middleware = Arc::new(Breakpoint::new());
+    let breakpoints_middleware = Arc::new(Breakpoints::new());
 
     // Create opcode_control middleware
     let opcode_control_middleware = Arc::new(OpcodeControl::new(

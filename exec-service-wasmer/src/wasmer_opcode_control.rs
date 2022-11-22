@@ -10,7 +10,7 @@ use wasmer::{
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_breakpoint::{Breakpoint, BREAKPOINT_VALUE_MEMORY_LIMIT};
+use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
 
 const OPCODE_CONTROL_MEMORY_GROW: &str = "opcode_control_memory_grow";
 const OPCODE_CONTROL_MEMORY_GROW_CACHED: &str = "opcode_control_memory_grow_cached";
@@ -32,7 +32,7 @@ impl OpcodeControlGlobalIndexes {
 pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
-    breakpoints_middleware: Arc<Breakpoint>,
+    breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -40,7 +40,7 @@ impl OpcodeControl {
     pub(crate) fn new(
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
-        breakpoints_middleware: Arc<Breakpoint>,
+        breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             max_memory_grow,
@@ -62,7 +62,7 @@ impl ModuleMiddleware for OpcodeControl {
         Box::new(FunctionOpcodeControl {
             max_memory_grow: self.max_memory_grow,
             max_memory_grow_delta: self.max_memory_grow_delta,
-            breakpoint: self.breakpoints_middleware.clone(),
+            breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
@@ -114,7 +114,7 @@ impl MemoryUsage for OpcodeControl {
 struct FunctionOpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
-    breakpoint: Arc<Breakpoint>,
+    breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: OpcodeControlGlobalIndexes,
 }
 
@@ -139,9 +139,9 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 
                 // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow >= max_memory_grow
                 state.extend(
-                    self.breakpoint
+                    self.breakpoints_middleware
                         .as_ref()
-                        .insert_breakpoint(BREAKPOINT_VALUE_MEMORY_LIMIT)
+                        .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
                         .iter(),
                 );
 
@@ -175,9 +175,9 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 
                 // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow_cached > max_memory_grow_delta
                 state.extend(
-                    self.breakpoint
+                    self.breakpoints_middleware
                         .as_ref()
-                        .insert_breakpoint(BREAKPOINT_VALUE_MEMORY_LIMIT)
+                        .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
                         .iter(),
                 );
 

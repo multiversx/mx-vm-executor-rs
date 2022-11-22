@@ -1,5 +1,5 @@
 use crate::get_opcode_cost;
-use crate::wasmer_breakpoint::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
