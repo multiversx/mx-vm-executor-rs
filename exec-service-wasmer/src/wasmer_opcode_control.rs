@@ -32,7 +32,7 @@ impl OpcodeControlGlobalIndexes {
 pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
-    breakpoint: Arc<Breakpoint>,
+    breakpoints_middleware: Arc<Breakpoint>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -40,12 +40,12 @@ impl OpcodeControl {
     pub(crate) fn new(
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
-        breakpoint: Arc<Breakpoint>,
+        breakpoints_middleware: Arc<Breakpoint>,
     ) -> Self {
         Self {
             max_memory_grow,
             max_memory_grow_delta,
-            breakpoint,
+            breakpoints_middleware,
             global_indexes: Mutex::new(None),
         }
     }
@@ -62,17 +62,13 @@ impl ModuleMiddleware for OpcodeControl {
         Box::new(FunctionOpcodeControl {
             max_memory_grow: self.max_memory_grow,
             max_memory_grow_delta: self.max_memory_grow_delta,
-            breakpoint: self.breakpoint.clone(),
+            breakpoint: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
-
-        if global_indexes.is_some() {
-            panic!("OpcodeControl::transform_module_info: Attempting to use a `OpcodeControl` middleware from multiple modules.");
-        }
 
         let memory_grow_global_index = module_info
             .globals
@@ -200,7 +196,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 }
 
 #[allow(dead_code)]
-pub(crate) fn reset_memory_grow(instance: &Instance) {
+pub(crate) fn reset_memory_grow_counter(instance: &Instance) {
     instance
         .exports
         .get_global(OPCODE_CONTROL_MEMORY_GROW)

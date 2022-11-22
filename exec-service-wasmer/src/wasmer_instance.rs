@@ -88,28 +88,28 @@ fn push_middlewares(
     executor_data: Rc<WasmerExecutorData>,
 ) {
     // Create breakpoint middelware
-    let breakpoint = Arc::new(Breakpoint::new());
+    let breakpoints_middleware = Arc::new(Breakpoint::new());
 
     // Create opcode_control middleware
-    let opcode_control = Arc::new(OpcodeControl::new(
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
         compilation_options.max_memory_grow,
         compilation_options.max_memory_grow_delta,
-        breakpoint.clone(),
+        breakpoints_middleware.clone(),
     ));
 
     // Create metering middleware
-    let metering = Arc::new(Metering::new(
+    let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         executor_data.opcode_cost.clone(),
-        breakpoint.clone(),
+        breakpoints_middleware.clone(),
     ));
 
     executor_data.print_execution_info("Adding metering middleware ...");
-    compiler.push_middleware(metering);
+    compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding opcode_control middleware ...");
-    compiler.push_middleware(opcode_control);
+    compiler.push_middleware(opcode_control_middleware);
     executor_data.print_execution_info("Adding breakpoint middleware ...");
-    compiler.push_middleware(breakpoint);
+    compiler.push_middleware(breakpoints_middleware);
 }
 
 impl Instance for WasmerInstance {
