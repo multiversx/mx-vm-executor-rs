@@ -2,7 +2,7 @@ use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
 use crate::service_singleton::with_service;
 use crate::vm_exec_result_t;
 
-/// Gets the size in bytes of the memory data.
+/// Sets the runtime breakpoint value for the given instance.
 ///
 /// This function returns `vm_exec_result_t::WASMER_OK` upon success,
 /// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
@@ -22,7 +22,7 @@ pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
     vm_exec_result_t::VM_EXEC_OK
 }
 
-/// Gets the size in bytes of the memory data.
+/// Returns the runtime breakpoint value from the given instance.
 ///
 /// # Safety
 ///

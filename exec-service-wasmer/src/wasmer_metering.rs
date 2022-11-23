@@ -18,11 +18,11 @@ const METERING_POINTS_USED: &str = "metering_points_used";
 struct MeteringGlobalIndexes(GlobalIndex, GlobalIndex);
 
 impl MeteringGlobalIndexes {
-    fn points_limit(&self) -> GlobalIndex {
+    fn points_limit_global_index(&self) -> GlobalIndex {
         self.0
     }
 
-    fn points_used(&self) -> GlobalIndex {
+    fn points_used_global_index(&self) -> GlobalIndex {
         self.1
     }
 }
@@ -142,18 +142,18 @@ impl FunctionMiddleware for FunctionMetering {
             => {
                     state.extend(&[
                         // Increment the points used counter.
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index().as_u32() },
                         Operator::I64Const { value: self.accumulated_cost as i64 },
                         Operator::I64Add,
-                        Operator::GlobalSet { global_index: self.global_indexes.points_used().as_u32()},
+                        Operator::GlobalSet { global_index: self.global_indexes.points_used_global_index().as_u32()},
 
-                        // Check if out of gas (points_used >= points_limit)
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
-                        Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
+                        // Check if out of gas. (points_used >= points_limit)
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index().as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_limit_global_index().as_u32() },
                         Operator::I64GeU,
                     ]);
 
-                    // Insert breakpoint BREAKPOINT_VALUE_OUT_OF_GAS if points_used >= points_limit
+                    // Insert breakpoint BREAKPOINT_VALUE_OUT_OF_GAS.
                     state.extend(self.breakpoints_middleware.as_ref().generate_breakpoint_condition(BREAKPOINT_VALUE_OUT_OF_GAS).iter());
 
                     self.accumulated_cost = 0;

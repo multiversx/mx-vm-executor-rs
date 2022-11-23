@@ -21,7 +21,7 @@ pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 struct BreakpointsGlobalIndex(GlobalIndex);
 
 impl BreakpointsGlobalIndex {
-    fn breakpoints_global_index(&self) -> GlobalIndex {
+    fn breakpoint_value_global_index(&self) -> GlobalIndex {
         self.0
     }
 }
@@ -47,25 +47,31 @@ impl Breakpoints {
                 value: value as i64,
             },
             Operator::GlobalSet {
-                global_index: self.get_breakpoints_global_index(),
+                global_index: self.get_breakpoints_global_index().as_u32(),
             },
             Operator::End,
         ]
     }
 
-    fn get_breakpoints_global_index(&self) -> u32 {
+    fn get_breakpoints_global_index(&self) -> GlobalIndex {
         self.global_index
             .lock()
             .unwrap()
             .as_ref()
             .unwrap()
-            .breakpoints_global_index()
-            .as_u32()
+            .breakpoint_value_global_index()
     }
 }
 
 unsafe impl Send for Breakpoints {}
-unsafe impl Sync for Breakpoints {}
+unsafe impl Sync for Breakpoints {} 
+
+impl MemoryUsage for Breakpoints {
+    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
+        mem::size_of_val(self) + self.global_index.size_of_val(tracker)
+            - mem::size_of_val(&self.global_index)
+    }
+}
 
 impl ModuleMiddleware for Breakpoints {
     fn generate_function_middleware(
@@ -97,13 +103,6 @@ impl ModuleMiddleware for Breakpoints {
     }
 }
 
-impl MemoryUsage for Breakpoints {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_index.size_of_val(tracker)
-            - mem::size_of_val(&self.global_index)
-    }
-}
-
 #[derive(Debug)]
 struct FunctionBreakpoint {
     global_index: BreakpointsGlobalIndex,
@@ -121,7 +120,7 @@ impl FunctionMiddleware for FunctionBreakpoint {
         ) {
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self.global_index.breakpoints_global_index().as_u32(),
+                    global_index: self.global_index.breakpoint_value_global_index().as_u32(),
                 },
                 Operator::I64Const {
                     value: BREAKPOINT_VALUE_NO_BREAKPOINT as i64,

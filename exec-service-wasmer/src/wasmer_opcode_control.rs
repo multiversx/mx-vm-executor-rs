@@ -12,18 +12,18 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
 
-const OPCODE_CONTROL_MEMORY_GROW: &str = "opcode_control_memory_grow";
-const OPCODE_CONTROL_MEMORY_GROW_CACHED: &str = "opcode_control_memory_grow_cached";
+const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
+const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct OpcodeControlGlobalIndexes(GlobalIndex, GlobalIndex);
 
 impl OpcodeControlGlobalIndexes {
-    fn memory_grow(&self) -> GlobalIndex {
+    fn memory_grow_count_global_index(&self) -> GlobalIndex {
         self.0
     }
 
-    fn memory_grow_cached(&self) -> GlobalIndex {
+    fn operand_backup_global_index(&self) -> GlobalIndex {
         self.1
     }
 }
@@ -54,6 +54,13 @@ impl OpcodeControl {
 unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
 
+impl MemoryUsage for OpcodeControl {
+    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
+        mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
+            - mem::size_of_val(&self.global_indexes)
+    }
+}
+
 impl ModuleMiddleware for OpcodeControl {
     fn generate_function_middleware(
         &self,
@@ -70,7 +77,7 @@ impl ModuleMiddleware for OpcodeControl {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let memory_grow_global_index = module_info
+        let memory_grow_count_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I64, Mutability::Var));
 
@@ -79,11 +86,11 @@ impl ModuleMiddleware for OpcodeControl {
             .push(GlobalInit::I64Const(0));
 
         module_info.exports.insert(
-            OPCODE_CONTROL_MEMORY_GROW.to_string(),
-            ExportIndex::Global(memory_grow_global_index),
+            OPCODE_CONTROL_MEMORY_GROW_COUNT.to_string(),
+            ExportIndex::Global(memory_grow_count_global_index),
         );
 
-        let memory_grow_cached_global_index = module_info
+        let operand_backup_global_index = module_info
             .globals
             .push(GlobalType::new(Type::I64, Mutability::Var));
 
@@ -92,21 +99,14 @@ impl ModuleMiddleware for OpcodeControl {
             .push(GlobalInit::I64Const(0));
 
         module_info.exports.insert(
-            OPCODE_CONTROL_MEMORY_GROW_CACHED.to_string(),
-            ExportIndex::Global(memory_grow_cached_global_index),
+            OPCODE_CONTROL_OPERAND_BACKUP.to_string(),
+            ExportIndex::Global(operand_backup_global_index),
         );
 
         *global_indexes = Some(OpcodeControlGlobalIndexes(
-            memory_grow_global_index,
-            memory_grow_cached_global_index,
+            memory_grow_count_global_index,
+            operand_backup_global_index,
         ));
-    }
-}
-
-impl MemoryUsage for OpcodeControl {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
-            - mem::size_of_val(&self.global_indexes)
     }
 }
 
@@ -125,10 +125,14 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
         if let Operator::MemoryGrow { .. } = operator {
-            // Check if memory limit (memory_grow >= max_memory_grow)
+            // Before attempting anything with memory.grow, the current memory.grow
+            // count is checked against the self.max_memory_grow limit.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow().as_u32(),
+                    global_index: self
+                        .global_indexes
+                        .memory_grow_count_global_index()
+                        .as_u32(),
                 },
                 Operator::I64Const {
                     value: self.max_memory_grow as i64,
@@ -136,7 +140,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
                 Operator::I64GeU,
             ]);
 
-            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow >= max_memory_grow
+            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT.
             state.extend(
                 self.breakpoints_middleware
                     .as_ref()
@@ -144,27 +148,35 @@ impl FunctionMiddleware for FunctionOpcodeControl {
                     .iter(),
             );
 
-            // Increment the memory_grow counter
+            // Increment memory.grow counter.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow().as_u32(),
+                    global_index: self
+                        .global_indexes
+                        .memory_grow_count_global_index()
+                        .as_u32(),
                 },
                 Operator::I64Const { value: 1 },
                 Operator::I64Add,
                 Operator::GlobalSet {
-                    global_index: self.global_indexes.memory_grow().as_u32(),
+                    global_index: self
+                        .global_indexes
+                        .memory_grow_count_global_index()
+                        .as_u32(),
                 },
             ]);
 
-            // Cache the memory_grow counter
+            // Backup the top of the stack (the parameter for memory.grow) in order to
+            // duplicate it: once for the comparison against max_memory_grow_delta and
+            // again for memory.grow itself, assuming the comparison passes.
             state.extend(&[Operator::GlobalSet {
-                global_index: self.global_indexes.memory_grow_cached().as_u32(),
+                global_index: self.global_indexes.operand_backup_global_index().as_u32(),
             }]);
 
-            // Check if memory limit (memory_grow_cached > max_memory_grow_delta)
+            // Set up the comparison against max_memory_grow_delta.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow_cached().as_u32(),
+                    global_index: self.global_indexes.operand_backup_global_index().as_u32(),
                 },
                 Operator::I64Const {
                     value: self.max_memory_grow_delta as i64,
@@ -172,7 +184,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
                 Operator::I64GtU,
             ]);
 
-            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT if memory_grow_cached > max_memory_grow_delta
+            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT.
             state.extend(
                 self.breakpoints_middleware
                     .as_ref()
@@ -180,9 +192,9 @@ impl FunctionMiddleware for FunctionOpcodeControl {
                     .iter(),
             );
 
-            // Retrieve cached memory_grow counter
+            // Bring back the backed-up operand for memory.grow.
             state.extend(&[Operator::GlobalGet {
-                global_index: self.global_indexes.memory_grow_cached().as_u32(),
+                global_index: self.global_indexes.operand_backup_global_index().as_u32(),
             }]);
         }
 
@@ -193,11 +205,21 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 }
 
 #[allow(dead_code)]
-pub(crate) fn reset_memory_grow_counter(instance: &Instance) {
+pub(crate) fn reset_memory_grow_count(instance: &Instance) {
     instance
         .exports
-        .get_global(OPCODE_CONTROL_MEMORY_GROW)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", OPCODE_CONTROL_MEMORY_GROW))
+        .get_global(OPCODE_CONTROL_MEMORY_GROW_COUNT)
+        .unwrap_or_else(|_| {
+            panic!(
+                "Can't get `{}` from Instance",
+                OPCODE_CONTROL_MEMORY_GROW_COUNT
+            )
+        })
         .set(0.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", OPCODE_CONTROL_MEMORY_GROW))
+        .unwrap_or_else(|_| {
+            panic!(
+                "Can't set `{}` in Instance",
+                OPCODE_CONTROL_MEMORY_GROW_COUNT
+            )
+        })
 }

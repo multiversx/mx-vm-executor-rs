@@ -364,7 +364,7 @@ vm_exec_result_t vm_exec_instance_call(vm_exec_instance_t *instance_ptr, const c
 void vm_exec_instance_destroy(vm_exec_instance_t *instance);
 
 /**
- * Gets the size in bytes of the memory data.
+ * Returns the runtime breakpoint value from the given instance.
  *
  * # Safety
  *
@@ -432,7 +432,7 @@ vm_exec_result_t vm_exec_instance_memory_grow(vm_exec_instance_t *instance_ptr,
                                               uint32_t by_num_pages);
 
 /**
- * Gets the size in bytes of the memory data.
+ * Sets the runtime breakpoint value for the given instance.
  *
  * This function returns `vm_exec_result_t::WASMER_OK` upon success,
  * `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
