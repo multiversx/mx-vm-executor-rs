@@ -10,7 +10,10 @@ use wasmer::{
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
+use crate::{
+    wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
+    wasmer_metering::Metering,
+};
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
@@ -26,6 +29,7 @@ pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
+    metering_middleware: Arc<Metering>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -34,11 +38,13 @@ impl OpcodeControl {
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
         breakpoints_middleware: Arc<Breakpoints>,
+        metering_middleware: Arc<Metering>,
     ) -> Self {
         Self {
             max_memory_grow,
             max_memory_grow_delta,
             breakpoints_middleware,
+            metering_middleware,
             global_indexes: Mutex::new(None),
         }
     }
@@ -63,6 +69,7 @@ impl ModuleMiddleware for OpcodeControl {
             max_memory_grow: self.max_memory_grow,
             max_memory_grow_delta: self.max_memory_grow_delta,
             breakpoints_middleware: self.breakpoints_middleware.clone(),
+            metering_middleware: self.metering_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
@@ -101,6 +108,7 @@ struct FunctionOpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
+    metering_middleware: Arc<Metering>,
     global_indexes: OpcodeControlGlobalIndexes,
 }
 
@@ -146,6 +154,42 @@ impl FunctionOpcodeControl {
         self.breakpoints_middleware
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_MEMORY_LIMIT);
     }
+
+    fn inject_memory_grow_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        self.inject_memory_grow_limit_check(state);
+        self.inject_memory_grow_count_increment(state);
+
+        // Backup the top of the stack (the parameter for memory.grow) in order to
+        // duplicate it: once for the comparison against max_memory_grow_delta and
+        // again for memory.grow itself, assuming the comparison passes.
+        state.extend(&[Operator::GlobalSet {
+            global_index: self.global_indexes.operand_backup_global_index.as_u32(),
+        }]);
+
+        self.inject_memory_grow_delta_limit_check(state);
+
+        // Bring back the backed-up operand for memory.grow.
+        state.extend(&[Operator::GlobalGet {
+            global_index: self.global_indexes.operand_backup_global_index.as_u32(),
+        }]);
+    }
+
+    fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
+        if let Operator::GlobalSet { global_index } = operator {
+            if self
+                .metering_middleware
+                .get_metering_globals_indexes()
+                .contains(&global_index)
+            {
+                return Err(MiddlewareError::new(
+                    "opcode_control_middleware",
+                    "invalid global set",
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl FunctionMiddleware for FunctionOpcodeControl {
@@ -155,23 +199,10 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
         if matches!(operator, Operator::MemoryGrow { .. }) {
-            self.inject_memory_grow_limit_check(state);
-            self.inject_memory_grow_count_increment(state);
-
-            // Backup the top of the stack (the parameter for memory.grow) in order to
-            // duplicate it: once for the comparison against max_memory_grow_delta and
-            // again for memory.grow itself, assuming the comparison passes.
-            state.extend(&[Operator::GlobalSet {
-                global_index: self.global_indexes.operand_backup_global_index.as_u32(),
-            }]);
-
-            self.inject_memory_grow_delta_limit_check(state);
-
-            // Bring back the backed-up operand for memory.grow.
-            state.extend(&[Operator::GlobalGet {
-                global_index: self.global_indexes.operand_backup_global_index.as_u32(),
-            }]);
+            self.inject_memory_grow_check(state);
         }
+
+        self.check_invalid_global_set(&operator)?;
 
         state.push_operator(operator);
 

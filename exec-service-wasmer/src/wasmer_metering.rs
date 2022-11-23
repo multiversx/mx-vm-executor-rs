@@ -41,6 +41,31 @@ impl Metering {
             global_indexes: Mutex::new(None),
         }
     }
+
+    fn get_points_limit_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .points_limit_global_index
+    }
+
+    fn get_points_used_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .points_used_global_index
+    }
+
+    pub(crate) fn get_metering_globals_indexes(&self) -> Vec<u32> {
+        vec![
+            self.get_points_limit_global_index().as_u32(),
+            self.get_points_used_global_index().as_u32(),
+        ]
+    }
 }
 
 unsafe impl Send for Metering {}
