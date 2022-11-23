@@ -111,44 +111,59 @@ struct FunctionOpcodeControl {
     global_indexes: OpcodeControlGlobalIndexes,
 }
 
+impl FunctionOpcodeControl {
+    fn inject_memory_grow_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
+            },
+            Operator::I64Const {
+                value: self.max_memory_grow as i64,
+            },
+            Operator::I64GeU,
+        ]);
+        self.breakpoints_middleware
+            .inject_breakpoint_condition(state, BREAKPOINT_VALUE_MEMORY_LIMIT);
+    }
+
+    fn inject_memory_grow_count_increment<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
+            },
+            Operator::I64Const { value: 1 },
+            Operator::I64Add,
+            Operator::GlobalSet {
+                global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
+            },
+        ]);
+    }
+
+    fn inject_memory_grow_delta_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.operand_backup_global_index.as_u32(),
+            },
+            Operator::I64Const {
+                value: self.max_memory_grow_delta as i64,
+            },
+            Operator::I64GtU,
+        ]);
+
+        self.breakpoints_middleware
+            .inject_breakpoint_condition(state, BREAKPOINT_VALUE_MEMORY_LIMIT);
+    }
+}
+
 impl FunctionMiddleware for FunctionOpcodeControl {
     fn feed<'b>(
         &mut self,
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        if let Operator::MemoryGrow { .. } = operator {
-            // Before attempting anything with memory.grow, the current memory.grow
-            // count is checked against the self.max_memory_grow limit.
-            state.extend(&[
-                Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
-                },
-                Operator::I64Const {
-                    value: self.max_memory_grow as i64,
-                },
-                Operator::I64GeU,
-            ]);
-
-            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT.
-            state.extend(
-                self.breakpoints_middleware
-                    .as_ref()
-                    .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
-                    .iter(),
-            );
-
-            // Increment memory.grow counter.
-            state.extend(&[
-                Operator::GlobalGet {
-                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
-                },
-                Operator::I64Const { value: 1 },
-                Operator::I64Add,
-                Operator::GlobalSet {
-                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
-                },
-            ]);
+        if matches!(operator, Operator::MemoryGrow { .. }) {
+            self.inject_memory_grow_limit_check(state);
+            self.inject_memory_grow_count_increment(state);
 
             // Backup the top of the stack (the parameter for memory.grow) in order to
             // duplicate it: once for the comparison against max_memory_grow_delta and
@@ -157,24 +172,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
                 global_index: self.global_indexes.operand_backup_global_index.as_u32(),
             }]);
 
-            // Set up the comparison against max_memory_grow_delta.
-            state.extend(&[
-                Operator::GlobalGet {
-                    global_index: self.global_indexes.operand_backup_global_index.as_u32(),
-                },
-                Operator::I64Const {
-                    value: self.max_memory_grow_delta as i64,
-                },
-                Operator::I64GtU,
-            ]);
-
-            // Insert breakpoint BREAKPOINT_VALUE_MEMORY_LIMIT.
-            state.extend(
-                self.breakpoints_middleware
-                    .as_ref()
-                    .generate_breakpoint_condition(BREAKPOINT_VALUE_MEMORY_LIMIT)
-                    .iter(),
-            );
+            self.inject_memory_grow_delta_limit_check(state);
 
             // Bring back the backed-up operand for memory.grow.
             state.extend(&[Operator::GlobalGet {

@@ -34,19 +34,23 @@ impl Breakpoints {
         }
     }
 
-    pub(crate) fn generate_breakpoint_condition<'b>(&self, value: u64) -> Vec<Operator<'b>> {
-        vec![
+    pub(crate) fn inject_breakpoint_condition<'b>(
+        &self,
+        state: &mut MiddlewareReaderState<'b>,
+        breakpoint_value: u64,
+    ) {
+        state.extend(&[
             Operator::If {
                 ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
             },
             Operator::I64Const {
-                value: value as i64,
+                value: breakpoint_value as i64,
             },
             Operator::GlobalSet {
                 global_index: self.get_breakpoint_value_global_index().as_u32(),
             },
             Operator::End,
-        ]
+        ]);
     }
 
     fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
@@ -74,7 +78,7 @@ impl ModuleMiddleware for Breakpoints {
         &self,
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
-        Box::new(FunctionBreakpoint {
+        Box::new(FunctionBreakpoints {
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
@@ -102,11 +106,30 @@ impl ModuleMiddleware for Breakpoints {
 }
 
 #[derive(Debug)]
-struct FunctionBreakpoint {
+struct FunctionBreakpoints {
     global_indexes: BreakpointsGlobalIndexes,
 }
 
-impl FunctionMiddleware for FunctionBreakpoint {
+impl FunctionBreakpoints {
+    fn inject_breakpoint_condition_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.breakpoint_value_global_index.as_u32(),
+            },
+            Operator::I64Const {
+                value: BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
+            },
+            Operator::I64Ne,
+            Operator::If {
+                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+            },
+            Operator::Unreachable,
+            Operator::End,
+        ]);
+    }
+}
+
+impl FunctionMiddleware for FunctionBreakpoints {
     fn feed<'b>(
         &mut self,
         operator: Operator<'b>,
@@ -116,20 +139,7 @@ impl FunctionMiddleware for FunctionBreakpoint {
             operator,
             Operator::Call { .. } | Operator::CallIndirect { .. }
         ) {
-            state.extend(&[
-                Operator::GlobalGet {
-                    global_index: self.global_indexes.breakpoint_value_global_index.as_u32(),
-                },
-                Operator::I64Const {
-                    value: BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
-                },
-                Operator::I64Ne,
-                Operator::If {
-                    ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
-                },
-                Operator::Unreachable,
-                Operator::End,
-            ]);
+            self.inject_breakpoint_condition_check(state)
         }
 
         state.push_operator(operator);
