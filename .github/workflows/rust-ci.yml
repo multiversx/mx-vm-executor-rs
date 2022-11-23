@@ -11,8 +11,8 @@ jobs:
     name: Rust tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.5.0
-      - uses: actions-rs/toolchain@v1.0.6
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
           default: true
           toolchain: stable
@@ -23,13 +23,13 @@ jobs:
     name: Clippy linter check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2.5.0
-      - uses: actions-rs/toolchain@v1.0.6
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           components: clippy
           default: true
-      - uses: actions-rs/clippy-check@v1.0.7
+      - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
