@@ -181,6 +181,12 @@ impl FunctionOpcodeControl {
                 .get_metering_globals_indexes()
                 .contains(&global_index)
             {
+                println!("invalid global set");
+                println!("global_index {}", global_index);
+                println!(
+                    "metering indexes: {:?}",
+                    self.metering_middleware.get_metering_globals_indexes()
+                );
                 return Err(MiddlewareError::new(
                     "opcode_control_middleware",
                     "invalid global set",
