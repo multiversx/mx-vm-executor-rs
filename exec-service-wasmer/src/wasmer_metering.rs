@@ -69,35 +69,27 @@ impl ModuleMiddleware for Metering {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let points_limit_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
+        let mut create_global_index = |key: &str, init: i64| {
+            let global_index = module_info
+                .globals
+                .push(GlobalType::new(Type::I64, Mutability::Var));
 
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(self.points_limit as i64));
+            module_info
+                .global_initializers
+                .push(GlobalInit::I64Const(init));
 
-        module_info.exports.insert(
-            METERING_POINTS_LIMIT.to_string(),
-            ExportIndex::Global(points_limit_global_index),
-        );
+            module_info
+                .exports
+                .insert(key.to_string(), ExportIndex::Global(global_index));
 
-        let points_used_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
+            global_index
+        };
 
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(0));
-
-        module_info.exports.insert(
-            METERING_POINTS_USED.to_string(),
-            ExportIndex::Global(points_used_global_index),
-        );
+        let points_limit = self.points_limit as i64;
 
         *global_indexes = Some(MeteringGlobalIndexes {
-            points_limit_global_index,
-            points_used_global_index,
+            points_limit_global_index: create_global_index(METERING_POINTS_LIMIT, points_limit),
+            points_used_global_index: create_global_index(METERING_POINTS_USED, 0),
         });
     }
 }

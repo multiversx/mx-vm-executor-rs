@@ -70,35 +70,28 @@ impl ModuleMiddleware for OpcodeControl {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let memory_grow_count_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
+        let mut create_global_index = |key: &str, init: i64| {
+            let global_index = module_info
+                .globals
+                .push(GlobalType::new(Type::I64, Mutability::Var));
 
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(0));
+            module_info
+                .global_initializers
+                .push(GlobalInit::I64Const(init));
 
-        module_info.exports.insert(
-            OPCODE_CONTROL_MEMORY_GROW_COUNT.to_string(),
-            ExportIndex::Global(memory_grow_count_global_index),
-        );
+            module_info
+                .exports
+                .insert(key.to_string(), ExportIndex::Global(global_index));
 
-        let operand_backup_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
-
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(0));
-
-        module_info.exports.insert(
-            OPCODE_CONTROL_OPERAND_BACKUP.to_string(),
-            ExportIndex::Global(operand_backup_global_index),
-        );
+            global_index
+        };
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
-            memory_grow_count_global_index,
-            operand_backup_global_index,
+            memory_grow_count_global_index: create_global_index(
+                OPCODE_CONTROL_MEMORY_GROW_COUNT,
+                0,
+            ),
+            operand_backup_global_index: create_global_index(OPCODE_CONTROL_OPERAND_BACKUP, 0),
         });
     }
 }
