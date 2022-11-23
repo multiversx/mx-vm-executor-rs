@@ -108,7 +108,7 @@ fn push_middlewares(
     compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
-    executor_data.print_execution_info("Adding breakpoint middleware ...");
+    executor_data.print_execution_info("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 }
 
