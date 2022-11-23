@@ -16,16 +16,9 @@ const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
 
 #[derive(Clone, Debug, MemoryUsage)]
-struct OpcodeControlGlobalIndexes(GlobalIndex, GlobalIndex);
-
-impl OpcodeControlGlobalIndexes {
-    fn memory_grow_count_global_index(&self) -> GlobalIndex {
-        self.0
-    }
-
-    fn operand_backup_global_index(&self) -> GlobalIndex {
-        self.1
-    }
+struct OpcodeControlGlobalIndexes {
+    memory_grow_count_global_index: GlobalIndex,
+    operand_backup_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
@@ -103,10 +96,10 @@ impl ModuleMiddleware for OpcodeControl {
             ExportIndex::Global(operand_backup_global_index),
         );
 
-        *global_indexes = Some(OpcodeControlGlobalIndexes(
+        *global_indexes = Some(OpcodeControlGlobalIndexes {
             memory_grow_count_global_index,
             operand_backup_global_index,
-        ));
+        });
     }
 }
 
@@ -129,10 +122,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
             // count is checked against the self.max_memory_grow limit.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self
-                        .global_indexes
-                        .memory_grow_count_global_index()
-                        .as_u32(),
+                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
                 },
                 Operator::I64Const {
                     value: self.max_memory_grow as i64,
@@ -151,18 +141,12 @@ impl FunctionMiddleware for FunctionOpcodeControl {
             // Increment memory.grow counter.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self
-                        .global_indexes
-                        .memory_grow_count_global_index()
-                        .as_u32(),
+                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
                 },
                 Operator::I64Const { value: 1 },
                 Operator::I64Add,
                 Operator::GlobalSet {
-                    global_index: self
-                        .global_indexes
-                        .memory_grow_count_global_index()
-                        .as_u32(),
+                    global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
                 },
             ]);
 
@@ -170,13 +154,13 @@ impl FunctionMiddleware for FunctionOpcodeControl {
             // duplicate it: once for the comparison against max_memory_grow_delta and
             // again for memory.grow itself, assuming the comparison passes.
             state.extend(&[Operator::GlobalSet {
-                global_index: self.global_indexes.operand_backup_global_index().as_u32(),
+                global_index: self.global_indexes.operand_backup_global_index.as_u32(),
             }]);
 
             // Set up the comparison against max_memory_grow_delta.
             state.extend(&[
                 Operator::GlobalGet {
-                    global_index: self.global_indexes.operand_backup_global_index().as_u32(),
+                    global_index: self.global_indexes.operand_backup_global_index.as_u32(),
                 },
                 Operator::I64Const {
                     value: self.max_memory_grow_delta as i64,
@@ -194,7 +178,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 
             // Bring back the backed-up operand for memory.grow.
             state.extend(&[Operator::GlobalGet {
-                global_index: self.global_indexes.operand_backup_global_index().as_u32(),
+                global_index: self.global_indexes.operand_backup_global_index.as_u32(),
             }]);
         }
 

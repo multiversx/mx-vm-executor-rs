@@ -15,16 +15,9 @@ const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
 
 #[derive(Clone, Debug, MemoryUsage)]
-struct MeteringGlobalIndexes(GlobalIndex, GlobalIndex);
-
-impl MeteringGlobalIndexes {
-    fn points_limit_global_index(&self) -> GlobalIndex {
-        self.0
-    }
-
-    fn points_used_global_index(&self) -> GlobalIndex {
-        self.1
-    }
+struct MeteringGlobalIndexes {
+    points_limit_global_index: GlobalIndex,
+    points_used_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
@@ -102,10 +95,10 @@ impl ModuleMiddleware for Metering {
             ExportIndex::Global(points_used_global_index),
         );
 
-        *global_indexes = Some(MeteringGlobalIndexes(
+        *global_indexes = Some(MeteringGlobalIndexes {
             points_limit_global_index,
             points_used_global_index,
-        ));
+        });
     }
 }
 
@@ -141,15 +134,15 @@ impl FunctionMiddleware for FunctionMetering {
             | Operator::Return // end of function - branch source
             => {
                     state.extend(&[
-                        // Increment the points used counter.
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index().as_u32() },
+                        // Increment points_used counter by self.accumulated_cost.
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index.as_u32() },
                         Operator::I64Const { value: self.accumulated_cost as i64 },
                         Operator::I64Add,
-                        Operator::GlobalSet { global_index: self.global_indexes.points_used_global_index().as_u32()},
+                        Operator::GlobalSet { global_index: self.global_indexes.points_used_global_index.as_u32()},
 
                         // Check if out of gas. (points_used >= points_limit)
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index().as_u32() },
-                        Operator::GlobalGet { global_index: self.global_indexes.points_limit_global_index().as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_used_global_index.as_u32() },
+                        Operator::GlobalGet { global_index: self.global_indexes.points_limit_global_index.as_u32() },
                         Operator::I64GeU,
                     ]);
 
