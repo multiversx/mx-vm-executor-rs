@@ -1,4 +1,5 @@
 use crate::get_opcode_cost;
+#[allow(unused_imports)]
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
@@ -34,6 +35,9 @@ impl Metering {
         opcode_cost: Arc<OpcodeCost>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
+        unsafe {
+            LIMIT_POINTS = points_limit;
+        }
         Self {
             points_limit,
             opcode_cost,
@@ -133,6 +137,10 @@ impl FunctionMetering {
     }
 }
 
+#[allow(dead_code)]
+static mut ACCUMULATED_POINTS: u64 = 0;
+static mut LIMIT_POINTS: u64 = 0;
+
 impl FunctionMiddleware for FunctionMetering {
     fn feed<'b>(
         &mut self,
@@ -156,6 +164,15 @@ impl FunctionMiddleware for FunctionMetering {
                 | Operator::CallIndirect { .. }
                 | Operator::Return
         ) {
+            // println!("incrementing with {} points", self.accumulated_cost);
+            // unsafe {
+            //     ACCUMULATED_POINTS += self.accumulated_cost;
+            //     println!("ACCUMULATED_POINTS: {}", ACCUMULATED_POINTS);
+            //     println!("LIMIT_POINTS: {}", LIMIT_POINTS);
+            //     if ACCUMULATED_POINTS >= LIMIT_POINTS {
+            //         println!("----- OUT OF GAS -----");
+            //     }
+            // }
             self.inject_points_used_increment(state);
             self.inject_out_of_gas_check(state);
 
@@ -169,6 +186,7 @@ impl FunctionMiddleware for FunctionMetering {
 }
 
 pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
+    // println!("setting points_limit: {}", limit);
     instance
         .exports
         .get_global(METERING_POINTS_LIMIT)
@@ -178,6 +196,7 @@ pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
 }
 
 pub(crate) fn set_points_used(instance: &Instance, points: u64) {
+    // println!("setting points_used: {}", points);
     instance
         .exports
         .get_global(METERING_POINTS_USED)
@@ -187,11 +206,13 @@ pub(crate) fn set_points_used(instance: &Instance, points: u64) {
 }
 
 pub(crate) fn get_points_used(instance: &Instance) -> u64 {
-    instance
+    let point_used = instance
         .exports
         .get_global(METERING_POINTS_USED)
         .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
         .get()
         .try_into()
-        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED))
+        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED));
+    // println!("getting points_used: {}", point_used);
+    point_used
 }

@@ -12,8 +12,6 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
 pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
-#[allow(dead_code)]
-pub(crate) const BREAKPOINT_VALUE_EXECUTION_FAILED: u64 = 1;
 pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
@@ -135,20 +133,28 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        if matches!(
+        let must_add = if matches!(
             operator,
             Operator::Call { .. } | Operator::CallIndirect { .. }
         ) {
-            self.inject_breakpoint_condition_check(state)
-        }
+            true
+        } else {
+            false
+        };
 
         state.push_operator(operator);
+
+        if must_add {
+            // println!("-------- INJECT BREAKPOOINT");
+            self.inject_breakpoint_condition_check(state)
+        }
 
         Ok(())
     }
 }
 
 pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
+    // println!("----- SETTING BREAKPOINT VALUE: {}", value);
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
@@ -158,6 +164,7 @@ pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
 }
 
 pub(crate) fn get_breakpoint_value(instance: &Instance) -> u64 {
+    // println!("----- GETTING BREAKPOINT VALUE");
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)

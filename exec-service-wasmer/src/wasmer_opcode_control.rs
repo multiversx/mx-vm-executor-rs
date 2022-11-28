@@ -30,6 +30,7 @@ pub(crate) struct OpcodeControl {
 }
 
 impl OpcodeControl {
+    #[allow(dead_code)]
     pub(crate) fn new(
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
