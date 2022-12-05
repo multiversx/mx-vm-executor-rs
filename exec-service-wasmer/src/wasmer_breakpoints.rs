@@ -133,14 +133,10 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        let must_add_breakpoint = if matches!(
+        let must_add_breakpoint = matches!(
             operator,
             Operator::Call { .. } | Operator::CallIndirect { .. }
-        ) {
-            true
-        } else {
-            false
-        };
+        );
 
         state.push_operator(operator);
 
