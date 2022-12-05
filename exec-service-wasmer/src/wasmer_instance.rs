@@ -237,14 +237,16 @@ impl Instance for WasmerInstance {
         cache_bytes_len: *mut u32,
     ) -> Result<(), String> {
         let module = self.wasmer_instance.module();
-        match module.serialize() {
-            Ok(bytes) => unsafe {
-                *cache_bytes_ptr = bytes.as_ptr();
-                *cache_bytes_len = bytes.len() as u32;
-                std::mem::forget(bytes);
-                Ok(())
-            },
-            Err(err) => Err(err.to_string()),
+        unsafe {
+            match module.serialize() {
+                Ok(bytes) => {
+                    *cache_bytes_ptr = bytes.as_ptr();
+                    *cache_bytes_len = bytes.len() as u32;
+                    std::mem::forget(bytes);
+                    Ok(())
+                }
+                Err(err) => Err(err.to_string()),
+            }
         }
     }
 }
