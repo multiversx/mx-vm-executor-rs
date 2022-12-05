@@ -133,7 +133,7 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        let must_add = if matches!(
+        let must_add_breakpoint = if matches!(
             operator,
             Operator::Call { .. } | Operator::CallIndirect { .. }
         ) {
@@ -144,8 +144,7 @@ impl FunctionMiddleware for FunctionBreakpoints {
 
         state.push_operator(operator);
 
-        if must_add {
-            // println!("-------- INJECT BREAKPOOINT");
+        if must_add_breakpoint {
             self.inject_breakpoint_condition_check(state)
         }
 
@@ -154,7 +153,6 @@ impl FunctionMiddleware for FunctionBreakpoints {
 }
 
 pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
-    // println!("----- SETTING BREAKPOINT VALUE: {}", value);
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)
@@ -164,7 +162,6 @@ pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
 }
 
 pub(crate) fn get_breakpoint_value(instance: &Instance) -> u64 {
-    // println!("----- GETTING BREAKPOINT VALUE");
     instance
         .exports
         .get_global(BREAKPOINT_VALUE)

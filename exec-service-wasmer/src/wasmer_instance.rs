@@ -1,4 +1,3 @@
-#[allow(unused_imports)]
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
