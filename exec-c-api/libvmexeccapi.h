@@ -34,6 +34,10 @@ typedef struct {
 } vm_exec_executor_t;
 
 typedef struct {
+
+} vm_exec_compilation_options_t;
+
+typedef struct {
   int64_t (*get_gas_left_func_ptr)(void *context);
   void (*get_sc_address_func_ptr)(void *context, int32_t result_offset);
   void (*get_owner_address_func_ptr)(void *context, int32_t result_offset);
@@ -285,10 +289,6 @@ typedef struct {
 
 typedef struct {
 
-} vm_exec_compilation_options_t;
-
-typedef struct {
-
 } vm_exec_opcode_cost_t;
 
 /**
@@ -329,6 +329,17 @@ vm_exec_result_t vm_exec_executor_set_vm_hooks_ptr(vm_exec_executor_t *executor_
                                                    void *vm_hooks_ptr);
 
 /**
+ * Caches an instance.
+ *
+ * # Safety
+ *
+ * C API function, works with raw object pointers.
+ */
+vm_exec_result_t vm_exec_instance_cache(const vm_exec_instance_t *instance_ptr,
+                                        uint8_t *cache_bytes_ptr,
+                                        uint32_t cache_bytes_len);
+
+/**
  * Calls an exported function of a WebAssembly instance by `name`
  * with the provided parameters. The exported function results are
  * stored on the provided `results` pointer.
@@ -362,6 +373,32 @@ vm_exec_result_t vm_exec_instance_call(vm_exec_instance_t *instance_ptr, const c
  * C API function, works with raw object pointers.
  */
 void vm_exec_instance_destroy(vm_exec_instance_t *instance);
+
+/**
+ * Disable rkyv.
+ *
+ * C API function
+ */
+void vm_exec_instance_disable_rkyv(void);
+
+/**
+ * Enable rkyv.
+ *
+ * C API function
+ */
+void vm_exec_instance_enable_rkyv(void);
+
+/**
+ * Retrieves an instance from cache.
+ *
+ * # Safety
+ *
+ * C API function, works with raw object pointers.
+ */
+vm_exec_result_t vm_exec_instance_from_cache(vm_exec_instance_t **instance_ptr_ptr,
+                                             uint8_t *cache_bytes_ptr,
+                                             uint32_t cache_bytes_len,
+                                             const vm_exec_compilation_options_t *options_ptr);
 
 /**
  * Returns the runtime breakpoint value from the given instance.
