@@ -7,7 +7,12 @@ pub trait Executor {
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError>;
     fn new_instance(
         &self,
-        bytes: &[u8],
+        wasm_bytes: &[u8],
+        compilation_options: &CompilationOptions,
+    ) -> Result<Box<dyn Instance>, ExecutorError>;
+    fn new_instance_from_cache(
+        &self,
+        cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError>;
 }

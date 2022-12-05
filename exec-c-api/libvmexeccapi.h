@@ -336,8 +336,8 @@ vm_exec_result_t vm_exec_executor_set_vm_hooks_ptr(vm_exec_executor_t *executor_
  * C API function, works with raw object pointers.
  */
 vm_exec_result_t vm_exec_instance_cache(const vm_exec_instance_t *instance_ptr,
-                                        uint8_t *cache_bytes_ptr,
-                                        uint32_t cache_bytes_len);
+                                        const uint8_t **cache_bytes_ptr,
+                                        uint32_t *cache_bytes_len);
 
 /**
  * Calls an exported function of a WebAssembly instance by `name`
@@ -375,27 +375,16 @@ vm_exec_result_t vm_exec_instance_call(vm_exec_instance_t *instance_ptr, const c
 void vm_exec_instance_destroy(vm_exec_instance_t *instance);
 
 /**
- * Disable rkyv.
+ * Creates a new VM executor instance from cache.
  *
- * C API function
- */
-void vm_exec_instance_disable_rkyv(void);
-
-/**
- * Enable rkyv.
- *
- * C API function
- */
-void vm_exec_instance_enable_rkyv(void);
-
-/**
- * Retrieves an instance from cache.
+ * All of the context comes from the provided VM executor.
  *
  * # Safety
  *
  * C API function, works with raw object pointers.
  */
-vm_exec_result_t vm_exec_instance_from_cache(vm_exec_instance_t **instance_ptr_ptr,
+vm_exec_result_t vm_exec_instance_from_cache(vm_exec_executor_t *executor_ptr,
+                                             vm_exec_instance_t **instance_ptr_ptr,
                                              uint8_t *cache_bytes_ptr,
                                              uint32_t cache_bytes_len,
                                              const vm_exec_compilation_options_t *options_ptr);

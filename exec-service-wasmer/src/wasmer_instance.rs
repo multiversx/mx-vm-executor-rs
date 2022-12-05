@@ -52,6 +52,43 @@ impl WasmerInstance {
         }))
     }
 
+    pub(crate) fn try_new_instance_from_cache(
+        executor_data: Rc<WasmerExecutorData>,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
+        // Use Singlepass compiler with the default settings
+        let mut compiler = Singlepass::default();
+
+        // Push middlewares
+        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
+
+        // Create the store
+        let store = Store::new(&Universal::new(compiler).engine());
+
+        executor_data.print_execution_info("Deserializing module ...");
+        let module = unsafe { Module::deserialize(&store, cache_bytes) }?;
+
+        // Create an empty import object.
+        executor_data.print_execution_info("Converting imports ...");
+        let vm_hooks_wrapper = VMHooksWrapper {
+            vm_hooks: executor_data.vm_hooks.clone(),
+        };
+        let import_object = generate_import_object(&store, &vm_hooks_wrapper);
+
+        executor_data.print_execution_info("Instantiating module ...");
+        let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit);
+
+        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+
+        Ok(Box::new(WasmerInstance {
+            executor_data,
+            wasmer_instance,
+            memory_name,
+        }))
+    }
+
     fn get_memory_ref(&self) -> &wasmer::Memory {
         self.wasmer_instance
             .exports
@@ -192,5 +229,22 @@ impl Instance for WasmerInstance {
 
     fn get_breakpoint_value(&self) -> u64 {
         get_breakpoint_value(&self.wasmer_instance)
+    }
+
+    fn cache(
+        &self,
+        cache_bytes_ptr: *mut *const u8,
+        cache_bytes_len: *mut u32,
+    ) -> Result<(), String> {
+        let module = self.wasmer_instance.module();
+        match module.serialize() {
+            Ok(bytes) => unsafe {
+                *cache_bytes_ptr = bytes.as_ptr();
+                *cache_bytes_len = bytes.len() as u32;
+                std::mem::forget(bytes);
+                Ok(())
+            },
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
