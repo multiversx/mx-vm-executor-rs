@@ -52,7 +52,7 @@ impl WasmerInstance {
         }))
     }
 
-    pub(crate) fn try_new_instance_from_cache(
+    pub(crate) unsafe fn try_new_instance_from_cache(
         executor_data: Rc<WasmerExecutorData>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
@@ -67,7 +67,7 @@ impl WasmerInstance {
         let store = Store::new(&Universal::new(compiler).engine());
 
         executor_data.print_execution_info("Deserializing module ...");
-        let module = unsafe { Module::deserialize(&store, cache_bytes) }?;
+        let module = Module::deserialize(&store, cache_bytes)?;
 
         // Create an empty import object.
         executor_data.print_execution_info("Converting imports ...");
@@ -231,22 +231,20 @@ impl Instance for WasmerInstance {
         get_breakpoint_value(&self.wasmer_instance)
     }
 
-    fn cache(
+    unsafe fn cache(
         &self,
         cache_bytes_ptr: *mut *const u8,
         cache_bytes_len: *mut u32,
     ) -> Result<(), String> {
         let module = self.wasmer_instance.module();
-        unsafe {
-            match module.serialize() {
-                Ok(bytes) => {
-                    *cache_bytes_ptr = bytes.as_ptr();
-                    *cache_bytes_len = bytes.len() as u32;
-                    std::mem::forget(bytes);
-                    Ok(())
-                }
-                Err(err) => Err(err.to_string()),
+        match module.serialize() {
+            Ok(bytes) => {
+                *cache_bytes_ptr = bytes.as_ptr();
+                *cache_bytes_len = bytes.len() as u32;
+                std::mem::forget(bytes);
+                Ok(())
             }
+            Err(err) => Err(err.to_string()),
         }
     }
 }
