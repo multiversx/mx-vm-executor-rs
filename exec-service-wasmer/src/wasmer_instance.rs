@@ -4,9 +4,9 @@ use crate::{
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
 use std::{rc::Rc, sync::Arc};
+use wasmer::Singlepass;
+use wasmer::Universal;
 use wasmer::{CompilerConfig, Extern, Module, Store};
-use wasmer_compiler_singlepass::Singlepass;
-use wasmer_engine_universal::Universal;
 
 pub struct WasmerInstance {
     pub(crate) executor_data: Rc<WasmerExecutorData>,
@@ -229,6 +229,10 @@ impl Instance for WasmerInstance {
 
     fn get_breakpoint_value(&self) -> u64 {
         get_breakpoint_value(&self.wasmer_instance)
+    }
+
+    fn reset(&self) -> Result<(), String> {
+        Ok(())
     }
 
     unsafe fn cache(
