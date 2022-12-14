@@ -163,12 +163,7 @@ impl Instance for WasmerInstance {
 
         match func.call(&[]) {
             Ok(_) => Ok(()),
-            Err(err) => {
-                self.executor_data.print_execution_info(
-                    format!("Rust instance call RuntimeError -> {}", err.message()).as_str(),
-                );
-                Err(err.to_string())
-            }
+            Err(err) => Err(err.to_string()),
         }
     }
 
@@ -236,7 +231,7 @@ impl Instance for WasmerInstance {
         get_breakpoint_value(&self.wasmer_instance)
     }
 
-    unsafe fn cache(
+    fn cache(
         &self,
         cache_bytes_ptr: *mut *const u8,
         cache_bytes_len: *mut u32,
@@ -244,8 +239,10 @@ impl Instance for WasmerInstance {
         let module = self.wasmer_instance.module();
         match module.serialize() {
             Ok(bytes) => {
-                *cache_bytes_ptr = bytes.as_ptr();
-                *cache_bytes_len = bytes.len() as u32;
+                unsafe {
+                    *cache_bytes_ptr = bytes.as_ptr();
+                    *cache_bytes_len = bytes.len() as u32;
+                }
                 std::mem::forget(bytes);
                 Ok(())
             }
@@ -253,8 +250,7 @@ impl Instance for WasmerInstance {
         }
     }
 
-    unsafe fn reset(&self) -> Result<(), String> {
-        println!("[Resetting WARM Instance]");
+    fn reset(&self) -> Result<(), String> {
         self.wasmer_instance.reset()
     }
 }

@@ -10,8 +10,7 @@ pub trait Executor {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError>;
-
-    unsafe fn new_instance_from_cache(
+    fn new_instance_from_cache(
         &self,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,

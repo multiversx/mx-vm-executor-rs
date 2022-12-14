@@ -23,11 +23,10 @@ pub trait Instance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
     fn set_breakpoint_value(&self, value: u64);
     fn get_breakpoint_value(&self) -> u64;
-
-    unsafe fn cache(
+    fn cache(
         &self,
         cache_bytes_ptr: *mut *const u8,
         cache_bytes_len: *mut u32,
     ) -> Result<(), String>;
-    unsafe fn reset(&self) -> Result<(), String>;
+    fn reset(&self) -> Result<(), String>;
 }

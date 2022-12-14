@@ -54,16 +54,18 @@ impl Executor for WasmerExecutor {
         WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)
     }
 
-    unsafe fn new_instance_from_cache(
+    fn new_instance_from_cache(
         &self,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::try_new_instance_from_cache(
-            self.data.clone(),
-            cache_bytes,
-            compilation_options,
-        )
+        unsafe {
+            WasmerInstance::try_new_instance_from_cache(
+                self.data.clone(),
+                cache_bytes,
+                compilation_options,
+            )
+        }
     }
 }
 
