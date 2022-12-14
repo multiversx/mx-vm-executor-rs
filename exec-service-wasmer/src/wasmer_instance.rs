@@ -241,6 +241,8 @@ impl Instance for WasmerInstance {
             Ok(bytes) => {
                 unsafe {
                     *cache_bytes_ptr = bytes.as_ptr();
+                }
+                unsafe {
                     *cache_bytes_len = bytes.len() as u32;
                 }
                 std::mem::forget(bytes);
