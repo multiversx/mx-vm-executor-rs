@@ -231,7 +231,11 @@ impl Instance for WasmerInstance {
         get_breakpoint_value(&self.wasmer_instance)
     }
 
-    fn cache(
+    fn reset(&self) -> Result<(), String> {
+        self.wasmer_instance.reset()
+    }
+
+    unsafe fn cache(
         &self,
         cache_bytes_ptr: *mut *const u8,
         cache_bytes_len: *mut u32,
@@ -239,20 +243,12 @@ impl Instance for WasmerInstance {
         let module = self.wasmer_instance.module();
         match module.serialize() {
             Ok(bytes) => {
-                unsafe {
-                    *cache_bytes_ptr = bytes.as_ptr();
-                }
-                unsafe {
-                    *cache_bytes_len = bytes.len() as u32;
-                }
+                *cache_bytes_ptr = bytes.as_ptr();
+                *cache_bytes_len = bytes.len() as u32;
                 std::mem::forget(bytes);
                 Ok(())
             }
             Err(err) => Err(err.to_string()),
         }
-    }
-
-    fn reset(&self) -> Result<(), String> {
-        self.wasmer_instance.reset()
     }
 }
