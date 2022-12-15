@@ -220,7 +220,7 @@ pub unsafe extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instanc
     }
 }
 
-/// Resets an instance, cleaning memories and globals
+/// Resets an instance, cleaning memories and globals.
 ///
 /// # Safety
 ///
