@@ -4,10 +4,12 @@ use std::sync::Mutex;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
 use wasmer::{
-    ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
-    MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
+    FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
+
+use crate::wasmer_helpers::create_global_index;
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -16,19 +18,19 @@ pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
 #[derive(Clone, Debug, MemoryUsage)]
-struct BreakpointsGlobalIndexes {
+struct BreakpointsGlobalIndex {
     breakpoint_value_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
 pub(crate) struct Breakpoints {
-    global_indexes: Mutex<Option<BreakpointsGlobalIndexes>>,
+    global_index: Mutex<Option<BreakpointsGlobalIndex>>,
 }
 
 impl Breakpoints {
     pub(crate) fn new() -> Self {
         Self {
-            global_indexes: Mutex::new(None),
+            global_index: Mutex::new(None),
         }
     }
 
@@ -52,7 +54,7 @@ impl Breakpoints {
     }
 
     fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
-        self.global_indexes
+        self.global_index
             .lock()
             .unwrap()
             .as_ref()
@@ -66,8 +68,8 @@ unsafe impl Sync for Breakpoints {}
 
 impl MemoryUsage for Breakpoints {
     fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
-            - mem::size_of_val(&self.global_indexes)
+        mem::size_of_val(self) + self.global_index.size_of_val(tracker)
+            - mem::size_of_val(&self.global_index)
     }
 }
 
@@ -77,42 +79,33 @@ impl ModuleMiddleware for Breakpoints {
         _local_function_index: LocalFunctionIndex,
     ) -> Box<dyn FunctionMiddleware> {
         Box::new(FunctionBreakpoints {
-            global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
+            global_index: self.global_index.lock().unwrap().clone().unwrap(),
         })
     }
 
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
-        let mut global_indexes = self.global_indexes.lock().unwrap();
+        let mut global_index = self.global_index.lock().unwrap();
 
-        let breakpoint_value_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
-
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(BREAKPOINT_VALUE_NO_BREAKPOINT as i64));
-
-        module_info.exports.insert(
-            BREAKPOINT_VALUE.to_string(),
-            ExportIndex::Global(breakpoint_value_global_index),
-        );
-
-        *global_indexes = Some(BreakpointsGlobalIndexes {
-            breakpoint_value_global_index,
+        *global_index = Some(BreakpointsGlobalIndex {
+            breakpoint_value_global_index: create_global_index(
+                module_info,
+                BREAKPOINT_VALUE,
+                BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
+            ),
         });
     }
 }
 
 #[derive(Debug)]
 struct FunctionBreakpoints {
-    global_indexes: BreakpointsGlobalIndexes,
+    global_index: BreakpointsGlobalIndex,
 }
 
 impl FunctionBreakpoints {
     fn inject_breakpoint_condition_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
         state.extend(&[
             Operator::GlobalGet {
-                global_index: self.global_indexes.breakpoint_value_global_index.as_u32(),
+                global_index: self.global_index.breakpoint_value_global_index.as_u32(),
             },
             Operator::I64Const {
                 value: BREAKPOINT_VALUE_NO_BREAKPOINT as i64,

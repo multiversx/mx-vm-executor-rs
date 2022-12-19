@@ -47,7 +47,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
-    let wasm_bytes: &[u8] = slice::from_raw_parts_mut(wasm_bytes_ptr, wasm_bytes_len as usize);
+    let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
     let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
     let instance_result = capi_executor
         .content

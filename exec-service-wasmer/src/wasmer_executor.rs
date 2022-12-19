@@ -16,6 +16,14 @@ pub struct WasmerExecutorData {
     pub print_execution_info: bool,
 }
 
+impl WasmerExecutorData {
+    pub(crate) fn print_execution_info(&self, message: &str) {
+        if self.print_execution_info {
+            println!("{}", message);
+        }
+    }
+}
+
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         self.data
@@ -59,20 +67,10 @@ impl Executor for WasmerExecutor {
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        unsafe {
-            WasmerInstance::try_new_instance_from_cache(
-                self.data.clone(),
-                cache_bytes,
-                compilation_options,
-            )
-        }
-    }
-}
-
-impl WasmerExecutorData {
-    pub fn print_execution_info(&self, message: &str) {
-        if self.print_execution_info {
-            println!("{}", message);
-        }
+        WasmerInstance::try_new_instance_from_cache(
+            self.data.clone(),
+            cache_bytes,
+            compilation_options,
+        )
     }
 }

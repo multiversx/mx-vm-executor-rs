@@ -23,11 +23,14 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
 ) -> vm_exec_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
 
-    let result = capi_instance
-        .content
-        .cache(cache_bytes_ptr, cache_bytes_len);
+    let result = capi_instance.content.cache();
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(bytes) => {
+            *cache_bytes_ptr = bytes.as_ptr();
+            *cache_bytes_len = bytes.len() as u32;
+            std::mem::forget(bytes);
+            vm_exec_result_t::VM_EXEC_OK
+        }
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
             vm_exec_result_t::VM_EXEC_ERROR
@@ -60,7 +63,7 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
-    let cache_bytes: &[u8] = slice::from_raw_parts_mut(cache_bytes_ptr, cache_bytes_len as usize);
+    let cache_bytes: &[u8] = slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize);
     let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
     let instance_result = capi_executor
         .content

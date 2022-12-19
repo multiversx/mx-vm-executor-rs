@@ -5,12 +5,15 @@ use std::{
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
-    wasmparser::Operator, ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance,
-    LocalFunctionIndex, MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
+    wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
+    MiddlewareReaderState, ModuleMiddleware,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
+use crate::{
+    wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
+    wasmer_helpers::create_global_index,
+};
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
@@ -70,28 +73,17 @@ impl ModuleMiddleware for OpcodeControl {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let mut create_global_index = |key: &str, init: i64| {
-            let global_index = module_info
-                .globals
-                .push(GlobalType::new(Type::I64, Mutability::Var));
-
-            module_info
-                .global_initializers
-                .push(GlobalInit::I64Const(init));
-
-            module_info
-                .exports
-                .insert(key.to_string(), ExportIndex::Global(global_index));
-
-            global_index
-        };
-
         *global_indexes = Some(OpcodeControlGlobalIndexes {
             memory_grow_count_global_index: create_global_index(
+                module_info,
                 OPCODE_CONTROL_MEMORY_GROW_COUNT,
                 0,
             ),
-            operand_backup_global_index: create_global_index(OPCODE_CONTROL_OPERAND_BACKUP, 0),
+            operand_backup_global_index: create_global_index(
+                module_info,
+                OPCODE_CONTROL_OPERAND_BACKUP,
+                0,
+            ),
         });
     }
 }
@@ -177,24 +169,4 @@ impl FunctionMiddleware for FunctionOpcodeControl {
 
         Ok(())
     }
-}
-
-#[allow(dead_code)]
-pub(crate) fn reset_memory_grow_count(instance: &Instance) {
-    instance
-        .exports
-        .get_global(OPCODE_CONTROL_MEMORY_GROW_COUNT)
-        .unwrap_or_else(|_| {
-            panic!(
-                "Can't get `{}` from Instance",
-                OPCODE_CONTROL_MEMORY_GROW_COUNT
-            )
-        })
-        .set(0.into())
-        .unwrap_or_else(|_| {
-            panic!(
-                "Can't set `{}` in Instance",
-                OPCODE_CONTROL_MEMORY_GROW_COUNT
-            )
-        })
 }

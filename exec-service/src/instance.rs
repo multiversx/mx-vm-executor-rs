@@ -51,13 +51,5 @@ pub trait Instance {
     fn reset(&self) -> Result<(), String>;
 
     /// Caches an instance.
-    ///
-    /// # Safety
-    ///
-    /// Works with raw object pointers.
-    unsafe fn cache(
-        &self,
-        cache_bytes_ptr: *mut *const u8,
-        cache_bytes_len: *mut u32,
-    ) -> Result<(), String>;
+    fn cache(&self) -> Result<Vec<u8>, String>;
 }
