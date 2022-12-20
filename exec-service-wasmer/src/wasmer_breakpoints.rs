@@ -118,6 +118,19 @@ impl FunctionBreakpoints {
             Operator::End,
         ]);
     }
+
+    fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
+        if let Operator::GlobalSet { global_index } = *operator {
+            if global_index == self.global_index.breakpoint_value_global_index.as_u32() {
+                return Err(MiddlewareError::new(
+                    "breakpoints_middleware",
+                    "invalid global set",
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl FunctionMiddleware for FunctionBreakpoints {
@@ -126,6 +139,9 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
+        // Check for invalid access of breakpoints global
+        self.check_invalid_global_set(&operator)?;
+
         let must_add_breakpoint = matches!(
             operator,
             Operator::Call { .. } | Operator::CallIndirect { .. }
