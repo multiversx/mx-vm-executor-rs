@@ -42,7 +42,7 @@ impl WasmerInstance {
         executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit);
-
+        
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
 
         Ok(Box::new(WasmerInstance {
