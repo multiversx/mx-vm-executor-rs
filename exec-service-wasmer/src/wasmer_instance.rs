@@ -131,17 +131,17 @@ fn push_middlewares(
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
-    // Create opcode_control middleware
-    let opcode_control_middleware = Arc::new(OpcodeControl::new(
-        compilation_options.max_memory_grow,
-        compilation_options.max_memory_grow_delta,
-        breakpoints_middleware.clone(),
-    ));
-
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         executor_data.opcode_cost.clone(),
+        breakpoints_middleware.clone(),
+    ));
+
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
     ));
 

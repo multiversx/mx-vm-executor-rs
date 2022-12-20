@@ -120,6 +120,21 @@ impl FunctionMetering {
         self.breakpoints_middleware
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_OUT_OF_GAS);
     }
+
+    fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
+        if let Operator::GlobalSet { global_index } = *operator {
+            if global_index == self.global_indexes.points_limit_global_index.as_u32()
+                || global_index == self.global_indexes.points_used_global_index.as_u32()
+            {
+                return Err(MiddlewareError::new(
+                    "metering_middleware",
+                    "invalid global set",
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -128,6 +143,9 @@ impl FunctionMiddleware for FunctionMetering {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
+        // Check for invalid access of metering globals
+        self.check_invalid_global_set(&operator)?;
+
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
