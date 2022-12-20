@@ -33,10 +33,10 @@ pub trait Instance {
     fn get_points_used(&self) -> Result<u64, String>;
 
     /// Gets the size in bytes of the memory data.
-    fn memory_length(&self) -> u64;
+    fn memory_length(&self) -> Result<u64, String>;
 
     /// Gets a pointer to the beginning of the contiguous memory data bytes.
-    fn memory_ptr(&self) -> *mut u8;
+    fn memory_ptr(&self) -> Result<*mut u8, String>;
 
     /// Grows a memory by the given number of pages (of 65Kb each).
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;

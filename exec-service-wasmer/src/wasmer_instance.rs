@@ -92,13 +92,12 @@ impl WasmerInstance {
         }))
     }
 
-    fn get_memory_ref(&self) -> &wasmer::Memory {
-        self.wasmer_instance
-            .exports
-            .get_memory(&self.memory_name)
-            .unwrap_or_else(|_| {
-                panic!("memory name not found, should not happen since it was already checked")
-            })
+    fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
+        let result = self.wasmer_instance.exports.get_memory(&self.memory_name);
+        match result {
+            Ok(memory) => Ok(memory),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
 
@@ -213,17 +212,31 @@ impl Instance for WasmerInstance {
         get_points_used(&self.wasmer_instance)
     }
 
-    fn memory_length(&self) -> u64 {
-        self.get_memory_ref().data_size()
+    fn memory_length(&self) -> Result<u64, String> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => Ok(memory.data_size()),
+            Err(err) => Err(err),
+        }
     }
 
-    fn memory_ptr(&self) -> *mut u8 {
-        self.get_memory_ref().data_ptr()
+    fn memory_ptr(&self) -> Result<*mut u8, String> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => Ok(memory.data_ptr()),
+            Err(err) => Err(err),
+        }
     }
 
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        let pages = self.get_memory_ref().grow(wasmer::Pages(by_num_pages))?;
-        Ok(pages.0)
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => {
+                let pages = memory.grow(wasmer::Pages(by_num_pages))?;
+                Ok(pages.0)
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 
     fn set_breakpoint_value(&self, value: u64) -> Result<(), String> {

@@ -20,7 +20,14 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
     instance_ptr: *mut vm_exec_instance_t,
 ) -> u64 {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
-    capi_instance.content.memory_length()
+    let result = capi_instance.content.memory_length();
+    match result {
+        Ok(length) => length,
+        Err(err) => {
+            with_service(|service| service.update_last_error_str(err));
+            0
+        }
+    }
 }
 
 /// Gets a pointer to the beginning of the contiguous memory data
@@ -45,7 +52,14 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data(
         "instance ptr is null",
         ptr::null_mut()
     );
-    capi_instance.content.memory_ptr()
+    let result = capi_instance.content.memory_ptr();
+    match result {
+        Ok(data) => data,
+        Err(err) => {
+            with_service(|service| service.update_last_error_str(err));
+            ptr::null_mut()
+        }
+    }
 }
 
 /// Grows a memory by the given number of pages (of 65Kb each).
