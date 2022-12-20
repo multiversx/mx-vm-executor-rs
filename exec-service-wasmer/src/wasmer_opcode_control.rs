@@ -157,6 +157,21 @@ impl FunctionOpcodeControl {
             global_index: self.global_indexes.operand_backup_global_index.as_u32(),
         }]);
     }
+
+    fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
+        if let Operator::GlobalSet { global_index } = *operator {
+            if global_index == self.global_indexes.memory_grow_count_global_index.as_u32()
+                || global_index == self.global_indexes.operand_backup_global_index.as_u32()
+            {
+                return Err(MiddlewareError::new(
+                    "opcode_control_middleware",
+                    "invalid global set",
+                ));
+            }
+        }
+
+        Ok(())
+    }
 }
 
 impl FunctionMiddleware for FunctionOpcodeControl {
@@ -165,6 +180,9 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
+        // Check for invalid access of opcode_control globals
+        self.check_invalid_global_set(&operator)?;
+
         if matches!(operator, Operator::MemoryGrow { .. }) {
             self.inject_memory_grow_check(state);
         }
