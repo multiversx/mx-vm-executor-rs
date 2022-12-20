@@ -41,8 +41,8 @@ impl WasmerInstance {
 
         executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
-        set_points_limit(&wasmer_instance, compilation_options.gas_limit);
-        
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
+
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
 
         Ok(Box::new(WasmerInstance {
@@ -81,7 +81,7 @@ impl WasmerInstance {
 
         executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
-        set_points_limit(&wasmer_instance, compilation_options.gas_limit);
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
 
@@ -201,15 +201,15 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    fn set_points_limit(&self, limit: u64) {
+    fn set_points_limit(&self, limit: u64) -> Result<(), String> {
         set_points_limit(&self.wasmer_instance, limit)
     }
 
-    fn set_points_used(&self, points: u64) {
+    fn set_points_used(&self, points: u64) -> Result<(), String> {
         set_points_used(&self.wasmer_instance, points)
     }
 
-    fn get_points_used(&self) -> u64 {
+    fn get_points_used(&self) -> Result<u64, String> {
         get_points_used(&self.wasmer_instance)
     }
 
@@ -226,11 +226,11 @@ impl Instance for WasmerInstance {
         Ok(pages.0)
     }
 
-    fn set_breakpoint_value(&self, value: u64) {
+    fn set_breakpoint_value(&self, value: u64) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value)
     }
 
-    fn get_breakpoint_value(&self) -> u64 {
+    fn get_breakpoint_value(&self) -> Result<u64, String> {
         get_breakpoint_value(&self.wasmer_instance)
     }
 

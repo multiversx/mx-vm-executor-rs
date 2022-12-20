@@ -24,13 +24,13 @@ pub trait Instance {
     fn get_exported_function_names(&self) -> Vec<String>;
 
     /// Sets the number of points(gas) limit for the given instance.
-    fn set_points_limit(&self, limit: u64);
+    fn set_points_limit(&self, limit: u64) -> Result<(), String>;
 
     /// Sets the number of points(gas) for the given instance.
-    fn set_points_used(&self, points: u64);
+    fn set_points_used(&self, points: u64) -> Result<(), String>;
 
     /// Returns the number of points(gas) used by the given instance.
-    fn get_points_used(&self) -> u64;
+    fn get_points_used(&self) -> Result<u64, String>;
 
     /// Gets the size in bytes of the memory data.
     fn memory_length(&self) -> u64;
@@ -42,10 +42,10 @@ pub trait Instance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&self, value: u64);
+    fn set_breakpoint_value(&self, value: u64) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> u64;
+    fn get_breakpoint_value(&self) -> Result<u64, String>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), String>;

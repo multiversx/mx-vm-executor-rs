@@ -175,30 +175,44 @@ impl FunctionMiddleware for FunctionMetering {
     }
 }
 
-pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
-    instance
-        .exports
-        .get_global(METERING_POINTS_LIMIT)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_LIMIT))
-        .set(limit.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_LIMIT))
+pub(crate) fn set_points_limit(instance: &Instance, limit: u64) -> Result<(), String> {
+    let result = instance.exports.get_global(METERING_POINTS_LIMIT);
+    match result {
+        Ok(global) => {
+            let result = global.set(limit.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
-pub(crate) fn set_points_used(instance: &Instance, points: u64) {
-    instance
-        .exports
-        .get_global(METERING_POINTS_USED)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
-        .set(points.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_USED))
+pub(crate) fn set_points_used(instance: &Instance, points: u64) -> Result<(), String> {
+    let result = instance.exports.get_global(METERING_POINTS_USED);
+    match result {
+        Ok(global) => {
+            let result = global.set(points.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
-pub(crate) fn get_points_used(instance: &Instance) -> u64 {
-    instance
-        .exports
-        .get_global(METERING_POINTS_USED)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
-        .get()
-        .try_into()
-        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED))
+pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
+    let result = instance.exports.get_global(METERING_POINTS_USED);
+    match result {
+        Ok(global) => {
+            let result = global.get().try_into();
+            match result {
+                Ok(points) => Ok(points),
+                Err(err) => Err(err.to_string()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }

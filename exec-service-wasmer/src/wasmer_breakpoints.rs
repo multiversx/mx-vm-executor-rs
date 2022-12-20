@@ -141,21 +141,30 @@ impl FunctionMiddleware for FunctionBreakpoints {
     }
 }
 
-pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) {
-    instance
-        .exports
-        .get_global(BREAKPOINT_VALUE)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", BREAKPOINT_VALUE))
-        .set(value.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", BREAKPOINT_VALUE))
+pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) -> Result<(), String> {
+    let result = instance.exports.get_global(BREAKPOINT_VALUE);
+    match result {
+        Ok(global) => {
+            let result = global.set(value.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
-pub(crate) fn get_breakpoint_value(instance: &Instance) -> u64 {
-    instance
-        .exports
-        .get_global(BREAKPOINT_VALUE)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", BREAKPOINT_VALUE))
-        .get()
-        .try_into()
-        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", BREAKPOINT_VALUE))
+pub(crate) fn get_breakpoint_value(instance: &Instance) -> Result<u64, String> {
+    let result = instance.exports.get_global(BREAKPOINT_VALUE);
+    match result {
+        Ok(global) => {
+            let result = global.get().try_into();
+            match result {
+                Ok(value) => Ok(value),
+                Err(err) => Err(err.to_string()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
