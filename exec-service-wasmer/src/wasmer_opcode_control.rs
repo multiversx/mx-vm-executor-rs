@@ -29,7 +29,7 @@ pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
-    protected_globals: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
+    protected_middlewares: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -38,13 +38,13 @@ impl OpcodeControl {
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
         breakpoints_middleware: Arc<Breakpoints>,
-        protected_globals: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
+        protected_middlewares: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
     ) -> Self {
         Self {
             max_memory_grow,
             max_memory_grow_delta,
             breakpoints_middleware,
-            protected_globals,
+            protected_middlewares,
             global_indexes: Mutex::new(None),
         }
     }
@@ -69,7 +69,7 @@ impl OpcodeControl {
 
     fn get_protected_globals(&self) -> Vec<u32> {
         let mut protected_globals = self.protected_globals();
-        for middleware in &self.protected_globals {
+        for middleware in &self.protected_middlewares {
             protected_globals.extend(middleware.protected_globals())
         }
         protected_globals
