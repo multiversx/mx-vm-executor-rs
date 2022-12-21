@@ -47,7 +47,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
-    let wasm_bytes: &[u8] = slice::from_raw_parts_mut(wasm_bytes_ptr, wasm_bytes_len as usize);
+    let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
     let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
     let instance_result = capi_executor
         .content
@@ -217,5 +217,27 @@ pub unsafe extern "C" fn vm_exported_function_names(
 pub unsafe extern "C" fn vm_exec_instance_destroy(instance: *mut vm_exec_instance_t) {
     if !instance.is_null() {
         std::ptr::drop_in_place(instance);
+    }
+}
+
+/// Resets an instance, cleaning memories and globals.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exec_instance_reset(
+    instance_ptr: *mut vm_exec_instance_t,
+) -> vm_exec_result_t {
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
+
+    let result = capi_instance.content.reset();
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
     }
 }

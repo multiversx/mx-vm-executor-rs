@@ -18,8 +18,14 @@ pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
     value: u64,
 ) -> vm_exec_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
-    capi_instance.content.set_breakpoint_value(value);
-    vm_exec_result_t::VM_EXEC_OK
+    let result = capi_instance.content.set_breakpoint_value(value);
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
 }
 
 /// Returns the runtime breakpoint value from the given instance.
@@ -34,5 +40,12 @@ pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
 ) -> u64 {
     let capi_instance =
         cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
-    capi_instance.content.get_breakpoint_value()
+    let result = capi_instance.content.get_breakpoint_value();
+    match result {
+        Ok(value) => value,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            0
+        }
+    }
 }

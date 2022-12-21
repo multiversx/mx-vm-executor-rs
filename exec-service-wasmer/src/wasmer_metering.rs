@@ -1,13 +1,14 @@
 use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::Operator;
 use wasmer::{
-    ExportIndex, FunctionMiddleware, GlobalInit, GlobalType, Instance, LocalFunctionIndex,
-    MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Mutability, Type,
+    FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
@@ -41,6 +42,24 @@ impl Metering {
             global_indexes: Mutex::new(None),
         }
     }
+
+    fn get_points_limit_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .points_limit_global_index
+    }
+
+    fn get_points_used_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .points_used_global_index
+    }
 }
 
 unsafe impl Send for Metering {}
@@ -69,28 +88,25 @@ impl ModuleMiddleware for Metering {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let mut create_global_index = |key: &str, init: i64| {
-            let global_index = module_info
-                .globals
-                .push(GlobalType::new(Type::I64, Mutability::Var));
-
-            module_info
-                .global_initializers
-                .push(GlobalInit::I64Const(init));
-
-            module_info
-                .exports
-                .insert(key.to_string(), ExportIndex::Global(global_index));
-
-            global_index
-        };
-
         let points_limit = self.points_limit as i64;
 
         *global_indexes = Some(MeteringGlobalIndexes {
-            points_limit_global_index: create_global_index(METERING_POINTS_LIMIT, points_limit),
-            points_used_global_index: create_global_index(METERING_POINTS_USED, 0),
+            points_limit_global_index: create_global_index(
+                module_info,
+                METERING_POINTS_LIMIT,
+                points_limit,
+            ),
+            points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
         });
+    }
+}
+
+impl MiddlewareWithProtectedGlobals for Metering {
+    fn protected_globals(&self) -> Vec<u32> {
+        vec![
+            self.get_points_limit_global_index().as_u32(),
+            self.get_points_used_global_index().as_u32(),
+        ]
     }
 }
 
@@ -168,30 +184,44 @@ impl FunctionMiddleware for FunctionMetering {
     }
 }
 
-pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
-    instance
-        .exports
-        .get_global(METERING_POINTS_LIMIT)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_LIMIT))
-        .set(limit.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_LIMIT))
+pub(crate) fn set_points_limit(instance: &Instance, limit: u64) -> Result<(), String> {
+    let result = instance.exports.get_global(METERING_POINTS_LIMIT);
+    match result {
+        Ok(global) => {
+            let result = global.set(limit.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
-pub(crate) fn set_points_used(instance: &Instance, points: u64) {
-    instance
-        .exports
-        .get_global(METERING_POINTS_USED)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
-        .set(points.into())
-        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_USED))
+pub(crate) fn set_points_used(instance: &Instance, points: u64) -> Result<(), String> {
+    let result = instance.exports.get_global(METERING_POINTS_USED);
+    match result {
+        Ok(global) => {
+            let result = global.set(points.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
-pub(crate) fn get_points_used(instance: &Instance) -> u64 {
-    instance
-        .exports
-        .get_global(METERING_POINTS_USED)
-        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
-        .get()
-        .try_into()
-        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED))
+pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
+    let result = instance.exports.get_global(METERING_POINTS_USED);
+    match result {
+        Ok(global) => {
+            let result = global.get().try_into();
+            match result {
+                Ok(points) => Ok(points),
+                Err(err) => Err(err.to_string()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }

@@ -52,8 +52,14 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
     limit: u64,
 ) -> vm_exec_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
-    capi_instance.content.set_points_limit(limit);
-    vm_exec_result_t::VM_EXEC_OK
+    let result = capi_instance.content.set_points_limit(limit);
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
 }
 
 /// Sets the number of points(gas) for the given instance.
@@ -72,8 +78,14 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
     points: u64,
 ) -> vm_exec_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
-    capi_instance.content.set_points_used(points);
-    vm_exec_result_t::VM_EXEC_OK
+    let result = capi_instance.content.set_points_used(points);
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
 }
 
 /// Returns the number of points(gas) used by the given instance.
@@ -88,5 +100,12 @@ pub unsafe extern "C" fn vm_exec_instance_get_points_used(
 ) -> u64 {
     let capi_instance =
         cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
-    capi_instance.content.get_points_used()
+    let result = capi_instance.content.get_points_used();
+    match result {
+        Ok(points) => points,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message));
+            0
+        }
+    }
 }

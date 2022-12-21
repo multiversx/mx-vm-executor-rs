@@ -4,9 +4,9 @@ use crate::{
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
 use std::{rc::Rc, sync::Arc};
+use wasmer::Singlepass;
+use wasmer::Universal;
 use wasmer::{CompilerConfig, Extern, Module, Store};
-use wasmer_compiler_singlepass::Singlepass;
-use wasmer_engine_universal::Universal;
 
 pub struct WasmerInstance {
     pub(crate) executor_data: Rc<WasmerExecutorData>,
@@ -41,6 +41,7 @@ impl WasmerInstance {
 
         executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
 
@@ -51,13 +52,52 @@ impl WasmerInstance {
         }))
     }
 
-    fn get_memory_ref(&self) -> &wasmer::Memory {
-        self.wasmer_instance
-            .exports
-            .get_memory(&self.memory_name)
-            .unwrap_or_else(|_| {
-                panic!("memory name not found, should not happen since it was already checked")
-            })
+    pub(crate) fn try_new_instance_from_cache(
+        executor_data: Rc<WasmerExecutorData>,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
+        // Use Singlepass compiler with the default settings
+        let mut compiler = Singlepass::default();
+
+        // Push middlewares
+        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
+
+        // Create the store
+        let store = Store::new(&Universal::new(compiler).engine());
+
+        executor_data.print_execution_info("Deserializing module ...");
+        let module;
+        unsafe {
+            module = Module::deserialize(&store, cache_bytes)?;
+        };
+
+        // Create an empty import object.
+        executor_data.print_execution_info("Converting imports ...");
+        let vm_hooks_wrapper = VMHooksWrapper {
+            vm_hooks: executor_data.vm_hooks.clone(),
+        };
+        let import_object = generate_import_object(&store, &vm_hooks_wrapper);
+
+        executor_data.print_execution_info("Instantiating module ...");
+        let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
+
+        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+
+        Ok(Box::new(WasmerInstance {
+            executor_data,
+            wasmer_instance,
+            memory_name,
+        }))
+    }
+
+    fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
+        let result = self.wasmer_instance.exports.get_memory(&self.memory_name);
+        match result {
+            Ok(memory) => Ok(memory),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
 
@@ -87,15 +127,8 @@ fn push_middlewares(
     compilation_options: &CompilationOptions,
     executor_data: Rc<WasmerExecutorData>,
 ) {
-    // Create breakpoint middelware
+    // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
-
-    // Create opcode_control middleware
-    let opcode_control_middleware = Arc::new(OpcodeControl::new(
-        compilation_options.max_memory_grow,
-        compilation_options.max_memory_grow_delta,
-        breakpoints_middleware.clone(),
-    ));
 
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
@@ -104,10 +137,18 @@ fn push_middlewares(
         breakpoints_middleware.clone(),
     ));
 
-    executor_data.print_execution_info("Adding metering middleware ...");
-    compiler.push_middleware(metering_middleware);
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
+        breakpoints_middleware.clone(),
+        vec![breakpoints_middleware.clone(), metering_middleware.clone()],
+    ));
+
     executor_data.print_execution_info("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
+    executor_data.print_execution_info("Adding metering middleware ...");
+    compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 }
@@ -123,9 +164,10 @@ impl Instance for WasmerInstance {
             .get_function(func_name)
             .map_err(|_| "function not found".to_string())?;
 
-        let _ = func.call(&[]);
-
-        Ok(())
+        match func.call(&[]) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string()),
+        }
     }
 
     fn check_signatures(&self) -> bool {
@@ -159,36 +201,62 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    fn set_points_limit(&self, limit: u64) {
+    fn set_points_limit(&self, limit: u64) -> Result<(), String> {
         set_points_limit(&self.wasmer_instance, limit)
     }
 
-    fn set_points_used(&self, points: u64) {
+    fn set_points_used(&self, points: u64) -> Result<(), String> {
         set_points_used(&self.wasmer_instance, points)
     }
 
-    fn get_points_used(&self) -> u64 {
+    fn get_points_used(&self) -> Result<u64, String> {
         get_points_used(&self.wasmer_instance)
     }
 
-    fn memory_length(&self) -> u64 {
-        self.get_memory_ref().data_size()
+    fn memory_length(&self) -> Result<u64, String> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => Ok(memory.data_size()),
+            Err(err) => Err(err),
+        }
     }
 
-    fn memory_ptr(&self) -> *mut u8 {
-        self.get_memory_ref().data_ptr()
+    fn memory_ptr(&self) -> Result<*mut u8, String> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => Ok(memory.data_ptr()),
+            Err(err) => Err(err),
+        }
     }
 
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        let pages = self.get_memory_ref().grow(wasmer::Pages(by_num_pages))?;
-        Ok(pages.0)
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => {
+                let pages = memory.grow(wasmer::Pages(by_num_pages))?;
+                Ok(pages.0)
+            }
+            Err(err) => Err(err.into()),
+        }
     }
 
-    fn set_breakpoint_value(&self, value: u64) {
+    fn set_breakpoint_value(&self, value: u64) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value)
     }
 
-    fn get_breakpoint_value(&self) -> u64 {
+    fn get_breakpoint_value(&self) -> Result<u64, String> {
         get_breakpoint_value(&self.wasmer_instance)
+    }
+
+    fn reset(&self) -> Result<(), String> {
+        self.wasmer_instance.reset()
+    }
+
+    fn cache(&self) -> Result<Vec<u8>, String> {
+        let module = self.wasmer_instance.module();
+        match module.serialize() {
+            Ok(bytes) => Ok(bytes),
+            Err(err) => Err(err.to_string()),
+        }
     }
 }
