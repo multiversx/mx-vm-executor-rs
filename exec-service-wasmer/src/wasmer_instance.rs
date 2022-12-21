@@ -142,12 +142,13 @@ fn push_middlewares(
         compilation_options.max_memory_grow,
         compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
+        metering_middleware.clone(),
     ));
 
-    executor_data.print_execution_info("Adding metering middleware ...");
-    compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
+    executor_data.print_execution_info("Adding metering middleware ...");
+    compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 }

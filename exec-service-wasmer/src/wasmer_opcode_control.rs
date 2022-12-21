@@ -13,6 +13,7 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 use crate::{
     wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
     wasmer_helpers::create_global_index,
+    wasmer_metering::Metering,
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
@@ -29,6 +30,7 @@ pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
+    metering_middleware: Arc<Metering>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -37,11 +39,13 @@ impl OpcodeControl {
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
         breakpoints_middleware: Arc<Breakpoints>,
+        metering_middleware: Arc<Metering>,
     ) -> Self {
         Self {
             max_memory_grow,
             max_memory_grow_delta,
             breakpoints_middleware,
+            metering_middleware,
             global_indexes: Mutex::new(None),
         }
     }
@@ -66,6 +70,7 @@ impl ModuleMiddleware for OpcodeControl {
             max_memory_grow: self.max_memory_grow,
             max_memory_grow_delta: self.max_memory_grow_delta,
             breakpoints_middleware: self.breakpoints_middleware.clone(),
+            metering_middleware: self.metering_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
@@ -93,6 +98,7 @@ struct FunctionOpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
+    metering_middleware: Arc<Metering>,
     global_indexes: OpcodeControlGlobalIndexes,
 }
 
@@ -160,6 +166,35 @@ impl FunctionOpcodeControl {
 
     fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
         if let Operator::GlobalSet { global_index } = *operator {
+            if global_index
+                == self
+                    .breakpoints_middleware
+                    .get_breakpoint_value_global_index()
+                    .as_u32()
+            {
+                return Err(MiddlewareError::new(
+                    "breakpoints_middleware",
+                    "invalid global set",
+                ));
+            }
+
+            if global_index
+                == self
+                    .metering_middleware
+                    .get_points_limit_global_index()
+                    .as_u32()
+                || global_index
+                    == self
+                        .metering_middleware
+                        .get_points_used_global_index()
+                        .as_u32()
+            {
+                return Err(MiddlewareError::new(
+                    "metering_middleware",
+                    "invalid global set",
+                ));
+            }
+
             if global_index == self.global_indexes.memory_grow_count_global_index.as_u32()
                 || global_index == self.global_indexes.operand_backup_global_index.as_u32()
             {
@@ -180,7 +215,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        // Check for invalid access of opcode_control globals
+        // Check for invalid access of middlewares globals
         self.check_invalid_global_set(&operator)?;
 
         if matches!(operator, Operator::MemoryGrow { .. }) {
