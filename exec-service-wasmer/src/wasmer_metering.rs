@@ -1,5 +1,5 @@
 use crate::get_opcode_cost;
-use crate::wasmer_breakpoint::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
@@ -15,16 +15,9 @@ const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
 
 #[derive(Clone, Debug, MemoryUsage)]
-struct MeteringGlobalIndexes(GlobalIndex, GlobalIndex);
-
-impl MeteringGlobalIndexes {
-    fn points_limit(&self) -> GlobalIndex {
-        self.0
-    }
-
-    fn points_used(&self) -> GlobalIndex {
-        self.1
-    }
+struct MeteringGlobalIndexes {
+    points_limit_global_index: GlobalIndex,
+    points_used_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
@@ -76,46 +69,68 @@ impl ModuleMiddleware for Metering {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let points_limit_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I64, Mutability::Var));
+        let mut create_global_index = |key: &str, init: i64| {
+            let global_index = module_info
+                .globals
+                .push(GlobalType::new(Type::I64, Mutability::Var));
 
-        module_info
-            .global_initializers
-            .push(GlobalInit::I64Const(self.points_limit as i64));
+            module_info
+                .global_initializers
+                .push(GlobalInit::I64Const(init));
 
-        module_info.exports.insert(
-            METERING_POINTS_LIMIT.to_string(),
-            ExportIndex::Global(points_limit_global_index),
-        );
+            module_info
+                .exports
+                .insert(key.to_string(), ExportIndex::Global(global_index));
 
-        let points_used_global_index = module_info
-            .globals
-            .push(GlobalType::new(Type::I32, Mutability::Var));
+            global_index
+        };
 
-        module_info
-            .global_initializers
-            .push(GlobalInit::I32Const(0));
+        let points_limit = self.points_limit as i64;
 
-        module_info.exports.insert(
-            METERING_POINTS_USED.to_string(),
-            ExportIndex::Global(points_used_global_index),
-        );
-
-        *global_indexes = Some(MeteringGlobalIndexes(
-            points_limit_global_index,
-            points_used_global_index,
-        ));
+        *global_indexes = Some(MeteringGlobalIndexes {
+            points_limit_global_index: create_global_index(METERING_POINTS_LIMIT, points_limit),
+            points_used_global_index: create_global_index(METERING_POINTS_USED, 0),
+        });
     }
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
 struct FunctionMetering {
     accumulated_cost: u64,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
+}
+
+impl FunctionMetering {
+    fn inject_points_used_increment<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+            Operator::I64Const {
+                value: self.accumulated_cost as i64,
+            },
+            Operator::I64Add,
+            Operator::GlobalSet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+        ]);
+    }
+
+    fn inject_out_of_gas_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+        state.extend(&[
+            Operator::GlobalGet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+            Operator::GlobalGet {
+                global_index: self.global_indexes.points_limit_global_index.as_u32(),
+            },
+            Operator::I64GeU,
+        ]);
+        self.breakpoints_middleware
+            .inject_breakpoint_condition(state, BREAKPOINT_VALUE_OUT_OF_GAS);
+    }
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -127,40 +142,26 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        self.accumulated_cost += get_opcode_cost(&operator, self.opcode_cost.as_ref()) as u64;
+        self.accumulated_cost += get_opcode_cost(&operator, &self.opcode_cost) as u64;
 
-        // Possible sources and targets of a branch. Finalize the cost of the previous basic block and perform necessary checks.
-        match operator {
-            Operator::Loop { .. } // loop headers are branch targets
-            | Operator::End // block ends are branch targets
-            | Operator::Else // "else" is the "end" of an if branch
-            | Operator::Br { .. } // branch source
-            | Operator::BrTable { .. } // branch source
-            | Operator::BrIf { .. } // branch source
-            | Operator::Call { .. } // function call - branch source
-            | Operator::CallIndirect { .. } // function call - branch source
-            | Operator::Return // end of function - branch source
-            => {
-                    state.extend(&[
-                        // Increment the points used counter.
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
-                        Operator::I64Const { value: self.accumulated_cost as i64 },
-                        Operator::I64Add,
-                        Operator::GlobalSet { global_index: self.global_indexes.points_used().as_u32()},
+        if matches!(
+            operator,
+            Operator::Loop { .. }
+                | Operator::End
+                | Operator::Else
+                | Operator::Br { .. }
+                | Operator::BrTable { .. }
+                | Operator::BrIf { .. }
+                | Operator::Call { .. }
+                | Operator::CallIndirect { .. }
+                | Operator::Return
+        ) {
+            self.inject_points_used_increment(state);
+            self.inject_out_of_gas_check(state);
 
-                        // Check if out of gas (points_used >= points_limit)
-                        Operator::GlobalGet { global_index: self.global_indexes.points_used().as_u32() },
-                        Operator::GlobalGet { global_index: self.global_indexes.points_limit().as_u32() },
-                        Operator::I64GeU,
-                    ]);
-
-                    // Insert breakpoint BREAKPOINT_VALUE_OUT_OF_GAS if points_used >= points_limit
-                    state.extend(self.breakpoints_middleware.as_ref().generate_breakpoint_condition(BREAKPOINT_VALUE_OUT_OF_GAS).iter());
-
-                    self.accumulated_cost = 0;
-                }
-            _ => {}
+            self.accumulated_cost = 0;
         }
+
         state.push_operator(operator);
 
         Ok(())
@@ -171,26 +172,26 @@ pub(crate) fn set_points_limit(instance: &Instance, limit: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_LIMIT)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_LIMIT).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_LIMIT))
         .set(limit.into())
-        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_LIMIT).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_LIMIT))
 }
 
 pub(crate) fn set_points_used(instance: &Instance, points: u64) {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
         .set(points.into())
-        .expect(format!("Can't set `{}` in Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't set `{}` in Instance", METERING_POINTS_USED))
 }
 
 pub(crate) fn get_points_used(instance: &Instance) -> u64 {
     instance
         .exports
         .get_global(METERING_POINTS_USED)
-        .expect(format!("Can't get `{}` from Instance", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("Can't get `{}` from Instance", METERING_POINTS_USED))
         .get()
         .try_into()
-        .expect(format!("`{}` from Instance has wrong type", METERING_POINTS_USED).as_str())
+        .unwrap_or_else(|_| panic!("`{}` from Instance has wrong type", METERING_POINTS_USED))
 }

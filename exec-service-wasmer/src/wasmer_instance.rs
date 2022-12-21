@@ -1,6 +1,6 @@
 use crate::{
-    wasmer_breakpoint::*, wasmer_imports::generate_import_object, wasmer_metering::*,
-    wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
+    wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
+    wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
 use std::{rc::Rc, sync::Arc};
@@ -88,19 +88,28 @@ fn push_middlewares(
     executor_data: Rc<WasmerExecutorData>,
 ) {
     // Create breakpoint middelware
-    let breakpoint = Arc::new(Breakpoints::new());
+    let breakpoints_middleware = Arc::new(Breakpoints::new());
+
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
+        breakpoints_middleware.clone(),
+    ));
 
     // Create metering middleware
-    let metering = Arc::new(Metering::new(
+    let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         executor_data.opcode_cost.clone(),
-        breakpoint.clone(),
+        breakpoints_middleware.clone(),
     ));
 
     executor_data.print_execution_info("Adding metering middleware ...");
-    compiler.push_middleware(metering);
-    executor_data.print_execution_info("Adding breakpoint middleware ...");
-    compiler.push_middleware(breakpoint);
+    compiler.push_middleware(metering_middleware);
+    executor_data.print_execution_info("Adding opcode_control middleware ...");
+    compiler.push_middleware(opcode_control_middleware);
+    executor_data.print_execution_info("Adding breakpoints middleware ...");
+    compiler.push_middleware(breakpoints_middleware);
 }
 
 impl Instance for WasmerInstance {

@@ -8,7 +8,15 @@ use elrond_exec_service::OpcodeCost;
 #[repr(C)]
 pub struct vm_exec_opcode_cost_t;
 
-// vm_exec_set_opcode_costs sets the opcode costs for the given executor.
+/// Sets the opcode costs for the given executor.
+///
+/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
+/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// `wasmer_last_error_message()` to get the generated error message.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_set_opcode_costs(
@@ -28,7 +36,15 @@ pub unsafe extern "C" fn vm_exec_set_opcode_costs(
     }
 }
 
-// vm_exec_instance_set_points_limit sets the number of points(gas) limit for the given instance.
+/// Sets the number of points(gas) limit for the given instance.
+///
+/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
+/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// `wasmer_last_error_message()` to get the generated error message.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
@@ -40,7 +56,15 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
     vm_exec_result_t::VM_EXEC_OK
 }
 
-// vm_exec_instance_set_points_used sets the number of points(gas) for the given instance.
+/// Sets the number of points(gas) for the given instance.
+///
+/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
+/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// `wasmer_last_error_message()` to get the generated error message.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_set_points_used(
@@ -52,7 +76,11 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
     vm_exec_result_t::VM_EXEC_OK
 }
 
-// vm_exec_instance_get_points_used returns the number of points(gas) used by the given instance.
+/// Returns the number of points(gas) used by the given instance.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 pub unsafe extern "C" fn vm_exec_instance_get_points_used(
