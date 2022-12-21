@@ -1,6 +1,10 @@
 use wasmer::{ExportIndex, GlobalInit, GlobalType, Mutability, Type};
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
+pub trait MiddlewareWithProtectedGlobals {
+    fn protected_globals(&self) -> Vec<u32>;
+}
+
 pub(crate) fn create_global_index(
     module_info: &mut ModuleInfo,
     key: &str,

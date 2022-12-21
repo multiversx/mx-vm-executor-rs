@@ -1,6 +1,6 @@
 use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
-use crate::wasmer_helpers::create_global_index;
+use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
 use elrond_exec_service::OpcodeCost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
@@ -43,7 +43,7 @@ impl Metering {
         }
     }
 
-    pub(crate) fn get_points_limit_global_index(&self) -> GlobalIndex {
+    fn get_points_limit_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -52,7 +52,7 @@ impl Metering {
             .points_limit_global_index
     }
 
-    pub(crate) fn get_points_used_global_index(&self) -> GlobalIndex {
+    fn get_points_used_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -98,6 +98,15 @@ impl ModuleMiddleware for Metering {
             ),
             points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
         });
+    }
+}
+
+impl MiddlewareWithProtectedGlobals for Metering {
+    fn protected_globals(&self) -> Vec<u32> {
+        vec![
+            self.get_points_limit_global_index().as_u32(),
+            self.get_points_used_global_index().as_u32(),
+        ]
     }
 }
 

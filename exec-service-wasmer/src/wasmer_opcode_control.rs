@@ -12,7 +12,7 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
     wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    wasmer_helpers::create_global_index,
+    wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
     wasmer_metering::Metering,
 };
 
@@ -49,6 +49,31 @@ impl OpcodeControl {
             global_indexes: Mutex::new(None),
         }
     }
+
+    fn get_memory_grow_count_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .memory_grow_count_global_index
+    }
+
+    fn get_operand_backup_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .operand_backup_global_index
+    }
+
+    fn get_protected_globals(&self) -> Vec<u32> {
+        let mut protected_globals = self.protected_globals();
+        protected_globals.extend(self.breakpoints_middleware.protected_globals());
+        protected_globals.extend(self.metering_middleware.protected_globals());
+        protected_globals
+    }
 }
 
 unsafe impl Send for OpcodeControl {}
@@ -70,7 +95,7 @@ impl ModuleMiddleware for OpcodeControl {
             max_memory_grow: self.max_memory_grow,
             max_memory_grow_delta: self.max_memory_grow_delta,
             breakpoints_middleware: self.breakpoints_middleware.clone(),
-            metering_middleware: self.metering_middleware.clone(),
+            protected_globals: self.get_protected_globals(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
     }
@@ -93,12 +118,21 @@ impl ModuleMiddleware for OpcodeControl {
     }
 }
 
+impl MiddlewareWithProtectedGlobals for OpcodeControl {
+    fn protected_globals(&self) -> Vec<u32> {
+        vec![
+            self.get_memory_grow_count_global_index().as_u32(),
+            self.get_operand_backup_global_index().as_u32(),
+        ]
+    }
+}
+
 #[derive(Debug)]
 struct FunctionOpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
-    metering_middleware: Arc<Metering>,
+    protected_globals: Vec<u32>,
     global_indexes: OpcodeControlGlobalIndexes,
 }
 
@@ -164,43 +198,15 @@ impl FunctionOpcodeControl {
         }]);
     }
 
-    fn check_invalid_global_set<'b>(&self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
+    fn check_protected_globals_invalid_access<'b>(
+        &self,
+        operator: &Operator<'b>,
+    ) -> Result<(), MiddlewareError> {
         if let Operator::GlobalSet { global_index } = *operator {
-            if global_index
-                == self
-                    .breakpoints_middleware
-                    .get_breakpoint_value_global_index()
-                    .as_u32()
-            {
-                return Err(MiddlewareError::new(
-                    "breakpoints_middleware",
-                    "invalid global set",
-                ));
-            }
-
-            if global_index
-                == self
-                    .metering_middleware
-                    .get_points_limit_global_index()
-                    .as_u32()
-                || global_index
-                    == self
-                        .metering_middleware
-                        .get_points_used_global_index()
-                        .as_u32()
-            {
-                return Err(MiddlewareError::new(
-                    "metering_middleware",
-                    "invalid global set",
-                ));
-            }
-
-            if global_index == self.global_indexes.memory_grow_count_global_index.as_u32()
-                || global_index == self.global_indexes.operand_backup_global_index.as_u32()
-            {
+            if self.protected_globals.contains(&global_index) {
                 return Err(MiddlewareError::new(
                     "opcode_control_middleware",
-                    "invalid global set",
+                    "protected globals invalid access",
                 ));
             }
         }
@@ -215,8 +221,8 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        // Check for invalid access of middlewares globals
-        self.check_invalid_global_set(&operator)?;
+        // Check for protected globals invalid access
+        self.check_protected_globals_invalid_access(&operator)?;
 
         if matches!(operator, Operator::MemoryGrow { .. }) {
             self.inject_memory_grow_check(state);
