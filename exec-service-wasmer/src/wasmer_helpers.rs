@@ -5,6 +5,12 @@ pub trait MiddlewareWithProtectedGlobals {
     fn protected_globals(&self) -> Vec<u32>;
 }
 
+impl std::fmt::Debug for dyn MiddlewareWithProtectedGlobals {
+    fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        Ok(())
+    }
+}
+
 pub(crate) fn create_global_index(
     module_info: &mut ModuleInfo,
     key: &str,

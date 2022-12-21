@@ -142,7 +142,7 @@ fn push_middlewares(
         compilation_options.max_memory_grow,
         compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
-        metering_middleware.clone(),
+        vec![breakpoints_middleware.clone(), metering_middleware.clone()],
     ));
 
     executor_data.print_execution_info("Adding opcode_control middleware ...");

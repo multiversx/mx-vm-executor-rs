@@ -13,7 +13,6 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 use crate::{
     wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
     wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
-    wasmer_metering::Metering,
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
@@ -30,7 +29,7 @@ pub(crate) struct OpcodeControl {
     max_memory_grow: usize,
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
-    metering_middleware: Arc<Metering>,
+    protected_globals: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
 }
 
@@ -39,13 +38,13 @@ impl OpcodeControl {
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
         breakpoints_middleware: Arc<Breakpoints>,
-        metering_middleware: Arc<Metering>,
+        protected_globals: Vec<Arc<dyn MiddlewareWithProtectedGlobals>>,
     ) -> Self {
         Self {
             max_memory_grow,
             max_memory_grow_delta,
             breakpoints_middleware,
-            metering_middleware,
+            protected_globals,
             global_indexes: Mutex::new(None),
         }
     }
@@ -70,8 +69,9 @@ impl OpcodeControl {
 
     fn get_protected_globals(&self) -> Vec<u32> {
         let mut protected_globals = self.protected_globals();
-        protected_globals.extend(self.breakpoints_middleware.protected_globals());
-        protected_globals.extend(self.metering_middleware.protected_globals());
+        for middleware in &self.protected_globals {
+            protected_globals.extend(middleware.protected_globals())
+        }
         protected_globals
     }
 }
