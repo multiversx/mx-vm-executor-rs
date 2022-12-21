@@ -41,6 +41,7 @@ impl WasmerInstance {
 
         executor_data.print_execution_info("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
+        set_points_limit(&wasmer_instance, compilation_options.gas_limit);
 
         let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
 
@@ -87,20 +88,20 @@ fn push_middlewares(
     compilation_options: &CompilationOptions,
     executor_data: Rc<WasmerExecutorData>,
 ) {
-    // Create breakpoint middelware
+    // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
-
-    // Create opcode_control middleware
-    let opcode_control_middleware = Arc::new(OpcodeControl::new(
-        compilation_options.max_memory_grow,
-        compilation_options.max_memory_grow_delta,
-        breakpoints_middleware.clone(),
-    ));
 
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         executor_data.opcode_cost.clone(),
+        breakpoints_middleware.clone(),
+    ));
+
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
     ));
 
@@ -123,9 +124,10 @@ impl Instance for WasmerInstance {
             .get_function(func_name)
             .map_err(|_| "function not found".to_string())?;
 
-        let _ = func.call(&[]);
-
-        Ok(())
+        match func.call(&[]) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(err.to_string()),
+        }
     }
 
     fn check_signatures(&self) -> bool {
