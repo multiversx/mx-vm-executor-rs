@@ -6,91 +6,93 @@
 
 use std::ffi::c_void;
 
+use crate::{MemLength, MemPtr};
+
 #[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
 pub trait VMHooks: core::fmt::Debug + 'static {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void);
 
     fn get_gas_left(&self) -> i64;
-    fn get_sc_address(&self, result_offset: i32);
-    fn get_owner_address(&self, result_offset: i32);
-    fn get_shard_of_address(&self, address_offset: i32) -> i32;
-    fn is_smart_contract(&self, address_offset: i32) -> i32;
-    fn signal_error(&self, message_offset: i32, message_length: i32);
-    fn get_external_balance(&self, address_offset: i32, result_offset: i32);
-    fn get_block_hash(&self, nonce: i64, result_offset: i32) -> i32;
-    fn get_esdt_balance(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_offset: i32) -> i32;
-    fn get_esdt_nft_name_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32;
-    fn get_esdt_nft_attribute_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32;
-    fn get_esdt_nft_uri_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32;
-    fn get_esdt_token_data(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, value_handle: i32, properties_offset: i32, hash_offset: i32, name_offset: i32, attributes_offset: i32, creator_offset: i32, royalties_handle: i32, uris_offset: i32) -> i32;
+    fn get_sc_address(&self, result_offset: MemPtr);
+    fn get_owner_address(&self, result_offset: MemPtr);
+    fn get_shard_of_address(&self, address_offset: MemPtr) -> i32;
+    fn is_smart_contract(&self, address_offset: MemPtr) -> i32;
+    fn signal_error(&self, message_offset: MemPtr, message_length: MemLength);
+    fn get_external_balance(&self, address_offset: MemPtr, result_offset: MemPtr);
+    fn get_block_hash(&self, nonce: i64, result_offset: MemPtr) -> i32;
+    fn get_esdt_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32;
+    fn get_esdt_nft_name_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
+    fn get_esdt_nft_attribute_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
+    fn get_esdt_nft_uri_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
+    fn get_esdt_token_data(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32;
     fn get_esdt_local_roles(&self, token_id_handle: i32) -> i64;
     fn validate_token_identifier(&self, token_id_handle: i32) -> i32;
-    fn transfer_value(&self, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) -> i32;
-    fn transfer_value_execute(&self, dest_offset: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn transfer_esdt_execute(&self, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn transfer_esdt_nft_execute(&self, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, nonce: i64, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn multi_transfer_esdt_nft_execute(&self, dest_offset: i32, num_token_transfers: i32, token_transfers_args_length_offset: i32, token_transfer_data_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn create_async_call(&self, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32;
-    fn set_async_context_callback(&self, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32;
-    fn upgrade_contract(&self, dest_offset: i32, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32);
-    fn upgrade_from_source_contract(&self, dest_offset: i32, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32);
-    fn delete_contract(&self, dest_offset: i32, gas_limit: i64, num_arguments: i32, arguments_length_offset: i32, data_offset: i32);
-    fn async_call(&self, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32);
+    fn transfer_value(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32;
+    fn transfer_value_execute(&self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn transfer_esdt_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn transfer_esdt_nft_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn multi_transfer_esdt_nft_execute(&self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn create_async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32;
+    fn set_async_context_callback(&self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32;
+    fn upgrade_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
+    fn upgrade_from_source_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
+    fn delete_contract(&self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
+    fn async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength);
     fn get_argument_length(&self, id: i32) -> i32;
-    fn get_argument(&self, id: i32, arg_offset: i32) -> i32;
-    fn get_function(&self, function_offset: i32) -> i32;
+    fn get_argument(&self, id: i32, arg_offset: MemPtr) -> i32;
+    fn get_function(&self, function_offset: MemPtr) -> i32;
     fn get_num_arguments(&self) -> i32;
-    fn storage_store(&self, key_offset: i32, key_length: i32, data_offset: i32, data_length: i32) -> i32;
-    fn storage_load_length(&self, key_offset: i32, key_length: i32) -> i32;
-    fn storage_load_from_address(&self, address_offset: i32, key_offset: i32, key_length: i32, data_offset: i32) -> i32;
-    fn storage_load(&self, key_offset: i32, key_length: i32, data_offset: i32) -> i32;
-    fn set_storage_lock(&self, key_offset: i32, key_length: i32, lock_timestamp: i64) -> i32;
-    fn get_storage_lock(&self, key_offset: i32, key_length: i32) -> i64;
-    fn is_storage_locked(&self, key_offset: i32, key_length: i32) -> i32;
-    fn clear_storage_lock(&self, key_offset: i32, key_length: i32) -> i32;
-    fn get_caller(&self, result_offset: i32);
+    fn storage_store(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32;
+    fn storage_load_length(&self, key_offset: MemPtr, key_length: MemLength) -> i32;
+    fn storage_load_from_address(&self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32;
+    fn storage_load(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32;
+    fn set_storage_lock(&self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32;
+    fn get_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i64;
+    fn is_storage_locked(&self, key_offset: MemPtr, key_length: MemLength) -> i32;
+    fn clear_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i32;
+    fn get_caller(&self, result_offset: MemPtr);
     fn check_no_payment(&self);
-    fn get_call_value(&self, result_offset: i32) -> i32;
-    fn get_esdt_value(&self, result_offset: i32) -> i32;
-    fn get_esdt_value_by_index(&self, result_offset: i32, index: i32) -> i32;
-    fn get_esdt_token_name(&self, result_offset: i32) -> i32;
-    fn get_esdt_token_name_by_index(&self, result_offset: i32, index: i32) -> i32;
+    fn get_call_value(&self, result_offset: MemPtr) -> i32;
+    fn get_esdt_value(&self, result_offset: MemPtr) -> i32;
+    fn get_esdt_value_by_index(&self, result_offset: MemPtr, index: i32) -> i32;
+    fn get_esdt_token_name(&self, result_offset: MemPtr) -> i32;
+    fn get_esdt_token_name_by_index(&self, result_offset: MemPtr, index: i32) -> i32;
     fn get_esdt_token_nonce(&self) -> i64;
     fn get_esdt_token_nonce_by_index(&self, index: i32) -> i64;
-    fn get_current_esdt_nft_nonce(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32) -> i64;
+    fn get_current_esdt_nft_nonce(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64;
     fn get_esdt_token_type(&self) -> i32;
     fn get_esdt_token_type_by_index(&self, index: i32) -> i32;
     fn get_num_esdt_transfers(&self) -> i32;
-    fn get_call_value_token_name(&self, call_value_offset: i32, token_name_offset: i32) -> i32;
-    fn get_call_value_token_name_by_index(&self, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32;
-    fn write_log(&self, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32);
-    fn write_event_log(&self, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32);
+    fn get_call_value_token_name(&self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32;
+    fn get_call_value_token_name_by_index(&self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32;
+    fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32);
+    fn write_event_log(&self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength);
     fn get_block_timestamp(&self) -> i64;
     fn get_block_nonce(&self) -> i64;
     fn get_block_round(&self) -> i64;
     fn get_block_epoch(&self) -> i64;
-    fn get_block_random_seed(&self, pointer: i32);
-    fn get_state_root_hash(&self, pointer: i32);
+    fn get_block_random_seed(&self, pointer: MemPtr);
+    fn get_state_root_hash(&self, pointer: MemPtr);
     fn get_prev_block_timestamp(&self) -> i64;
     fn get_prev_block_nonce(&self) -> i64;
     fn get_prev_block_round(&self) -> i64;
     fn get_prev_block_epoch(&self) -> i64;
-    fn get_prev_block_random_seed(&self, pointer: i32);
-    fn finish(&self, pointer: i32, length: i32);
-    fn execute_on_same_context(&self, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn execute_on_dest_context(&self, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn execute_read_only(&self, gas_limit: i64, address_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn create_contract(&self, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, result_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
-    fn deploy_from_source_contract(&self, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, result_address_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32;
+    fn get_prev_block_random_seed(&self, pointer: MemPtr);
+    fn finish(&self, pointer: MemPtr, length: MemLength);
+    fn execute_on_same_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn execute_on_dest_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn execute_read_only(&self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn create_contract(&self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
+    fn deploy_from_source_contract(&self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
     fn get_num_return_data(&self) -> i32;
     fn get_return_data_size(&self, result_id: i32) -> i32;
-    fn get_return_data(&self, result_id: i32, data_offset: i32) -> i32;
+    fn get_return_data(&self, result_id: i32, data_offset: MemPtr) -> i32;
     fn clean_return_data(&self);
     fn delete_from_return_data(&self, result_id: i32);
-    fn get_original_tx_hash(&self, data_offset: i32);
-    fn get_current_tx_hash(&self, data_offset: i32);
-    fn get_prev_tx_hash(&self, data_offset: i32);
+    fn get_original_tx_hash(&self, data_offset: MemPtr);
+    fn get_current_tx_hash(&self, data_offset: MemPtr);
+    fn get_prev_tx_hash(&self, data_offset: MemPtr);
     fn managed_sc_address(&self, destination_handle: i32);
     fn managed_owner_address(&self, destination_handle: i32);
     fn managed_caller(&self, destination_handle: i32);
@@ -105,7 +107,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32);
-    fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32;
+    fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32;
     fn managed_get_callback_closure(&self, callback_closure_handle: i32);
     fn managed_upgrade_from_source_contract(&self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32);
     fn managed_upgrade_contract(&self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32);
@@ -145,20 +147,20 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn big_float_get_const_e(&self, destination_handle: i32);
     fn big_int_get_unsigned_argument(&self, id: i32, destination_handle: i32);
     fn big_int_get_signed_argument(&self, id: i32, destination_handle: i32);
-    fn big_int_storage_store_unsigned(&self, key_offset: i32, key_length: i32, source_handle: i32) -> i32;
-    fn big_int_storage_load_unsigned(&self, key_offset: i32, key_length: i32, destination_handle: i32) -> i32;
+    fn big_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32;
+    fn big_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32;
     fn big_int_get_call_value(&self, destination_handle: i32);
     fn big_int_get_esdt_call_value(&self, destination: i32);
     fn big_int_get_esdt_call_value_by_index(&self, destination_handle: i32, index: i32);
-    fn big_int_get_external_balance(&self, address_offset: i32, result: i32);
-    fn big_int_get_esdt_external_balance(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_handle: i32);
+    fn big_int_get_external_balance(&self, address_offset: MemPtr, result: i32);
+    fn big_int_get_esdt_external_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32);
     fn big_int_new(&self, small_value: i64) -> i32;
     fn big_int_unsigned_byte_length(&self, reference_handle: i32) -> i32;
     fn big_int_signed_byte_length(&self, reference_handle: i32) -> i32;
-    fn big_int_get_unsigned_bytes(&self, reference_handle: i32, byte_offset: i32) -> i32;
-    fn big_int_get_signed_bytes(&self, reference_handle: i32, byte_offset: i32) -> i32;
-    fn big_int_set_unsigned_bytes(&self, destination_handle: i32, byte_offset: i32, byte_length: i32);
-    fn big_int_set_signed_bytes(&self, destination_handle: i32, byte_offset: i32, byte_length: i32);
+    fn big_int_get_unsigned_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32;
+    fn big_int_get_signed_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32;
+    fn big_int_set_unsigned_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength);
+    fn big_int_set_signed_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength);
     fn big_int_is_int64(&self, destination_handle: i32) -> i32;
     fn big_int_get_int64(&self, destination_handle: i32) -> i64;
     fn big_int_set_int64(&self, destination_handle: i32, value: i64);
@@ -186,16 +188,16 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn big_int_finish_signed(&self, reference_handle: i32);
     fn big_int_to_string(&self, big_int_handle: i32, destination_handle: i32);
     fn mbuffer_new(&self) -> i32;
-    fn mbuffer_new_from_bytes(&self, data_offset: i32, data_length: i32) -> i32;
+    fn mbuffer_new_from_bytes(&self, data_offset: MemPtr, data_length: MemLength) -> i32;
     fn mbuffer_get_length(&self, m_buffer_handle: i32) -> i32;
-    fn mbuffer_get_bytes(&self, m_buffer_handle: i32, result_offset: i32) -> i32;
-    fn mbuffer_get_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: i32) -> i32;
+    fn mbuffer_get_bytes(&self, m_buffer_handle: i32, result_offset: MemPtr) -> i32;
+    fn mbuffer_get_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32;
     fn mbuffer_copy_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32;
     fn mbuffer_eq(&self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32;
-    fn mbuffer_set_bytes(&self, m_buffer_handle: i32, data_offset: i32, data_length: i32) -> i32;
-    fn mbuffer_set_byte_slice(&self, m_buffer_handle: i32, starting_position: i32, data_length: i32, data_offset: i32) -> i32;
+    fn mbuffer_set_bytes(&self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32;
+    fn mbuffer_set_byte_slice(&self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32;
     fn mbuffer_append(&self, accumulator_handle: i32, data_handle: i32) -> i32;
-    fn mbuffer_append_bytes(&self, accumulator_handle: i32, data_offset: i32, data_length: i32) -> i32;
+    fn mbuffer_append_bytes(&self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32;
     fn mbuffer_to_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_to_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_from_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
@@ -212,48 +214,48 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn small_int_get_signed_argument(&self, id: i32) -> i64;
     fn small_int_finish_unsigned(&self, value: i64);
     fn small_int_finish_signed(&self, value: i64);
-    fn small_int_storage_store_unsigned(&self, key_offset: i32, key_length: i32, value: i64) -> i32;
-    fn small_int_storage_store_signed(&self, key_offset: i32, key_length: i32, value: i64) -> i32;
-    fn small_int_storage_load_unsigned(&self, key_offset: i32, key_length: i32) -> i64;
-    fn small_int_storage_load_signed(&self, key_offset: i32, key_length: i32) -> i64;
+    fn small_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
+    fn small_int_storage_store_signed(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
+    fn small_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength) -> i64;
+    fn small_int_storage_load_signed(&self, key_offset: MemPtr, key_length: MemLength) -> i64;
     fn int64get_argument(&self, id: i32) -> i64;
     fn int64finish(&self, value: i64);
-    fn int64storage_store(&self, key_offset: i32, key_length: i32, value: i64) -> i32;
-    fn int64storage_load(&self, key_offset: i32, key_length: i32) -> i64;
-    fn sha256(&self, data_offset: i32, length: i32, result_offset: i32) -> i32;
+    fn int64storage_store(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
+    fn int64storage_load(&self, key_offset: MemPtr, key_length: MemLength) -> i64;
+    fn sha256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
     fn managed_sha256(&self, input_handle: i32, output_handle: i32) -> i32;
-    fn keccak256(&self, data_offset: i32, length: i32, result_offset: i32) -> i32;
+    fn keccak256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
     fn managed_keccak256(&self, input_handle: i32, output_handle: i32) -> i32;
-    fn ripemd160(&self, data_offset: i32, length: i32, result_offset: i32) -> i32;
+    fn ripemd160(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
     fn managed_ripemd160(&self, input_handle: i32, output_handle: i32) -> i32;
-    fn verify_bls(&self, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32;
+    fn verify_bls(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
     fn managed_verify_bls(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn verify_ed25519(&self, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32;
+    fn verify_ed25519(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
     fn managed_verify_ed25519(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn verify_custom_secp256k1(&self, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32, hash_type: i32) -> i32;
+    fn verify_custom_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32;
     fn managed_verify_custom_secp256k1(&self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32;
-    fn verify_secp256k1(&self, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32;
+    fn verify_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
     fn managed_verify_secp256k1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn encode_secp256k1_der_signature(&self, r_offset: i32, r_length: i32, s_offset: i32, s_length: i32, sig_offset: i32) -> i32;
+    fn encode_secp256k1_der_signature(&self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32;
     fn managed_encode_secp256k1_der_signature(&self, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32;
     fn add_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32);
     fn double_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32);
     fn is_on_curve_ec(&self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32;
-    fn scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32;
+    fn scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
     fn managed_scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: i32, length: i32) -> i32;
+    fn scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32;
     fn managed_scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32;
-    fn marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32;
+    fn marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
     fn managed_marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32;
+    fn marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
     fn managed_marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32;
+    fn unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
     fn managed_unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32;
+    fn unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
     fn managed_unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: i32) -> i32;
+    fn generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
     fn managed_generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn create_ec(&self, data_offset: i32, data_length: i32) -> i32;
+    fn create_ec(&self, data_offset: MemPtr, data_length: MemLength) -> i32;
     fn managed_create_ec(&self, data_handle: i32) -> i32;
     fn get_curve_length_ec(&self, ec_handle: i32) -> i32;
     fn get_priv_key_byte_length_ec(&self, ec_handle: i32) -> i32;
@@ -275,58 +277,58 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_sc_address(&self, result_offset: i32) {
+    fn get_sc_address(&self, result_offset: MemPtr) {
         println!("Called: get_sc_address");
     }
 
-    fn get_owner_address(&self, result_offset: i32) {
+    fn get_owner_address(&self, result_offset: MemPtr) {
         println!("Called: get_owner_address");
     }
 
-    fn get_shard_of_address(&self, address_offset: i32) -> i32 {
+    fn get_shard_of_address(&self, address_offset: MemPtr) -> i32 {
         println!("Called: get_shard_of_address");
         0
     }
 
-    fn is_smart_contract(&self, address_offset: i32) -> i32 {
+    fn is_smart_contract(&self, address_offset: MemPtr) -> i32 {
         println!("Called: is_smart_contract");
         0
     }
 
-    fn signal_error(&self, message_offset: i32, message_length: i32) {
+    fn signal_error(&self, message_offset: MemPtr, message_length: MemLength) {
         println!("Called: signal_error");
     }
 
-    fn get_external_balance(&self, address_offset: i32, result_offset: i32) {
+    fn get_external_balance(&self, address_offset: MemPtr, result_offset: MemPtr) {
         println!("Called: get_external_balance");
     }
 
-    fn get_block_hash(&self, nonce: i64, result_offset: i32) -> i32 {
+    fn get_block_hash(&self, nonce: i64, result_offset: MemPtr) -> i32 {
         println!("Called: get_block_hash");
         0
     }
 
-    fn get_esdt_balance(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_offset: i32) -> i32 {
+    fn get_esdt_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32 {
         println!("Called: get_esdt_balance");
         0
     }
 
-    fn get_esdt_nft_name_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    fn get_esdt_nft_name_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         println!("Called: get_esdt_nft_name_length");
         0
     }
 
-    fn get_esdt_nft_attribute_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    fn get_esdt_nft_attribute_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         println!("Called: get_esdt_nft_attribute_length");
         0
     }
 
-    fn get_esdt_nft_uri_length(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    fn get_esdt_nft_uri_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         println!("Called: get_esdt_nft_uri_length");
         0
     }
 
-    fn get_esdt_token_data(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, value_handle: i32, properties_offset: i32, hash_offset: i32, name_offset: i32, attributes_offset: i32, creator_offset: i32, royalties_handle: i32, uris_offset: i32) -> i32 {
+    fn get_esdt_token_data(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32 {
         println!("Called: get_esdt_token_data");
         0
     }
@@ -341,54 +343,54 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn transfer_value(&self, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) -> i32 {
+    fn transfer_value(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32 {
         println!("Called: transfer_value");
         0
     }
 
-    fn transfer_value_execute(&self, dest_offset: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn transfer_value_execute(&self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: transfer_value_execute");
         0
     }
 
-    fn transfer_esdt_execute(&self, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn transfer_esdt_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: transfer_esdt_execute");
         0
     }
 
-    fn transfer_esdt_nft_execute(&self, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, nonce: i64, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn transfer_esdt_nft_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: transfer_esdt_nft_execute");
         0
     }
 
-    fn multi_transfer_esdt_nft_execute(&self, dest_offset: i32, num_token_transfers: i32, token_transfers_args_length_offset: i32, token_transfer_data_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn multi_transfer_esdt_nft_execute(&self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: multi_transfer_esdt_nft_execute");
         0
     }
 
-    fn create_async_call(&self, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32 {
+    fn create_async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
         println!("Called: create_async_call");
         0
     }
 
-    fn set_async_context_callback(&self, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32 {
+    fn set_async_context_callback(&self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
         println!("Called: set_async_context_callback");
         0
     }
 
-    fn upgrade_contract(&self, dest_offset: i32, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    fn upgrade_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         println!("Called: upgrade_contract");
     }
 
-    fn upgrade_from_source_contract(&self, dest_offset: i32, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    fn upgrade_from_source_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         println!("Called: upgrade_from_source_contract");
     }
 
-    fn delete_contract(&self, dest_offset: i32, gas_limit: i64, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    fn delete_contract(&self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         println!("Called: delete_contract");
     }
 
-    fn async_call(&self, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) {
+    fn async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) {
         println!("Called: async_call");
     }
 
@@ -397,12 +399,12 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_argument(&self, id: i32, arg_offset: i32) -> i32 {
+    fn get_argument(&self, id: i32, arg_offset: MemPtr) -> i32 {
         println!("Called: get_argument");
         0
     }
 
-    fn get_function(&self, function_offset: i32) -> i32 {
+    fn get_function(&self, function_offset: MemPtr) -> i32 {
         println!("Called: get_function");
         0
     }
@@ -412,47 +414,47 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn storage_store(&self, key_offset: i32, key_length: i32, data_offset: i32, data_length: i32) -> i32 {
+    fn storage_store(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32 {
         println!("Called: storage_store");
         0
     }
 
-    fn storage_load_length(&self, key_offset: i32, key_length: i32) -> i32 {
+    fn storage_load_length(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         println!("Called: storage_load_length");
         0
     }
 
-    fn storage_load_from_address(&self, address_offset: i32, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
+    fn storage_load_from_address(&self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
         println!("Called: storage_load_from_address");
         0
     }
 
-    fn storage_load(&self, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
+    fn storage_load(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
         println!("Called: storage_load");
         0
     }
 
-    fn set_storage_lock(&self, key_offset: i32, key_length: i32, lock_timestamp: i64) -> i32 {
+    fn set_storage_lock(&self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32 {
         println!("Called: set_storage_lock");
         0
     }
 
-    fn get_storage_lock(&self, key_offset: i32, key_length: i32) -> i64 {
+    fn get_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         println!("Called: get_storage_lock");
         0
     }
 
-    fn is_storage_locked(&self, key_offset: i32, key_length: i32) -> i32 {
+    fn is_storage_locked(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         println!("Called: is_storage_locked");
         0
     }
 
-    fn clear_storage_lock(&self, key_offset: i32, key_length: i32) -> i32 {
+    fn clear_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         println!("Called: clear_storage_lock");
         0
     }
 
-    fn get_caller(&self, result_offset: i32) {
+    fn get_caller(&self, result_offset: MemPtr) {
         println!("Called: get_caller");
     }
 
@@ -460,27 +462,27 @@ impl VMHooks for VMHooksDefault {
         println!("Called: check_no_payment");
     }
 
-    fn get_call_value(&self, result_offset: i32) -> i32 {
+    fn get_call_value(&self, result_offset: MemPtr) -> i32 {
         println!("Called: get_call_value");
         0
     }
 
-    fn get_esdt_value(&self, result_offset: i32) -> i32 {
+    fn get_esdt_value(&self, result_offset: MemPtr) -> i32 {
         println!("Called: get_esdt_value");
         0
     }
 
-    fn get_esdt_value_by_index(&self, result_offset: i32, index: i32) -> i32 {
+    fn get_esdt_value_by_index(&self, result_offset: MemPtr, index: i32) -> i32 {
         println!("Called: get_esdt_value_by_index");
         0
     }
 
-    fn get_esdt_token_name(&self, result_offset: i32) -> i32 {
+    fn get_esdt_token_name(&self, result_offset: MemPtr) -> i32 {
         println!("Called: get_esdt_token_name");
         0
     }
 
-    fn get_esdt_token_name_by_index(&self, result_offset: i32, index: i32) -> i32 {
+    fn get_esdt_token_name_by_index(&self, result_offset: MemPtr, index: i32) -> i32 {
         println!("Called: get_esdt_token_name_by_index");
         0
     }
@@ -495,7 +497,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_current_esdt_nft_nonce(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32) -> i64 {
+    fn get_current_esdt_nft_nonce(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64 {
         println!("Called: get_current_esdt_nft_nonce");
         0
     }
@@ -515,21 +517,21 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_call_value_token_name(&self, call_value_offset: i32, token_name_offset: i32) -> i32 {
+    fn get_call_value_token_name(&self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32 {
         println!("Called: get_call_value_token_name");
         0
     }
 
-    fn get_call_value_token_name_by_index(&self, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32 {
+    fn get_call_value_token_name_by_index(&self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32 {
         println!("Called: get_call_value_token_name_by_index");
         0
     }
 
-    fn write_log(&self, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32) {
+    fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
         println!("Called: write_log");
     }
 
-    fn write_event_log(&self, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32) {
+    fn write_event_log(&self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) {
         println!("Called: write_event_log");
     }
 
@@ -553,11 +555,11 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_block_random_seed(&self, pointer: i32) {
+    fn get_block_random_seed(&self, pointer: MemPtr) {
         println!("Called: get_block_random_seed");
     }
 
-    fn get_state_root_hash(&self, pointer: i32) {
+    fn get_state_root_hash(&self, pointer: MemPtr) {
         println!("Called: get_state_root_hash");
     }
 
@@ -581,35 +583,35 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_prev_block_random_seed(&self, pointer: i32) {
+    fn get_prev_block_random_seed(&self, pointer: MemPtr) {
         println!("Called: get_prev_block_random_seed");
     }
 
-    fn finish(&self, pointer: i32, length: i32) {
+    fn finish(&self, pointer: MemPtr, length: MemLength) {
         println!("Called: finish");
     }
 
-    fn execute_on_same_context(&self, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn execute_on_same_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: execute_on_same_context");
         0
     }
 
-    fn execute_on_dest_context(&self, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn execute_on_dest_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: execute_on_dest_context");
         0
     }
 
-    fn execute_read_only(&self, gas_limit: i64, address_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn execute_read_only(&self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: execute_read_only");
         0
     }
 
-    fn create_contract(&self, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, result_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn create_contract(&self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: create_contract");
         0
     }
 
-    fn deploy_from_source_contract(&self, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, result_address_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    fn deploy_from_source_contract(&self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         println!("Called: deploy_from_source_contract");
         0
     }
@@ -624,7 +626,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn get_return_data(&self, result_id: i32, data_offset: i32) -> i32 {
+    fn get_return_data(&self, result_id: i32, data_offset: MemPtr) -> i32 {
         println!("Called: get_return_data");
         0
     }
@@ -637,15 +639,15 @@ impl VMHooks for VMHooksDefault {
         println!("Called: delete_from_return_data");
     }
 
-    fn get_original_tx_hash(&self, data_offset: i32) {
+    fn get_original_tx_hash(&self, data_offset: MemPtr) {
         println!("Called: get_original_tx_hash");
     }
 
-    fn get_current_tx_hash(&self, data_offset: i32) {
+    fn get_current_tx_hash(&self, data_offset: MemPtr) {
         println!("Called: get_current_tx_hash");
     }
 
-    fn get_prev_tx_hash(&self, data_offset: i32) {
+    fn get_prev_tx_hash(&self, data_offset: MemPtr) {
         println!("Called: get_prev_tx_hash");
     }
 
@@ -705,7 +707,7 @@ impl VMHooks for VMHooksDefault {
         println!("Called: managed_async_call");
     }
 
-    fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
+    fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
         println!("Called: managed_create_async_call");
         0
     }
@@ -882,12 +884,12 @@ impl VMHooks for VMHooksDefault {
         println!("Called: big_int_get_signed_argument");
     }
 
-    fn big_int_storage_store_unsigned(&self, key_offset: i32, key_length: i32, source_handle: i32) -> i32 {
+    fn big_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32 {
         println!("Called: big_int_storage_store_unsigned");
         0
     }
 
-    fn big_int_storage_load_unsigned(&self, key_offset: i32, key_length: i32, destination_handle: i32) -> i32 {
+    fn big_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32 {
         println!("Called: big_int_storage_load_unsigned");
         0
     }
@@ -904,11 +906,11 @@ impl VMHooks for VMHooksDefault {
         println!("Called: big_int_get_esdt_call_value_by_index");
     }
 
-    fn big_int_get_external_balance(&self, address_offset: i32, result: i32) {
+    fn big_int_get_external_balance(&self, address_offset: MemPtr, result: i32) {
         println!("Called: big_int_get_external_balance");
     }
 
-    fn big_int_get_esdt_external_balance(&self, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_handle: i32) {
+    fn big_int_get_esdt_external_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) {
         println!("Called: big_int_get_esdt_external_balance");
     }
 
@@ -927,21 +929,21 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn big_int_get_unsigned_bytes(&self, reference_handle: i32, byte_offset: i32) -> i32 {
+    fn big_int_get_unsigned_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
         println!("Called: big_int_get_unsigned_bytes");
         0
     }
 
-    fn big_int_get_signed_bytes(&self, reference_handle: i32, byte_offset: i32) -> i32 {
+    fn big_int_get_signed_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
         println!("Called: big_int_get_signed_bytes");
         0
     }
 
-    fn big_int_set_unsigned_bytes(&self, destination_handle: i32, byte_offset: i32, byte_length: i32) {
+    fn big_int_set_unsigned_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
         println!("Called: big_int_set_unsigned_bytes");
     }
 
-    fn big_int_set_signed_bytes(&self, destination_handle: i32, byte_offset: i32, byte_length: i32) {
+    fn big_int_set_signed_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
         println!("Called: big_int_set_signed_bytes");
     }
 
@@ -1059,7 +1061,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn mbuffer_new_from_bytes(&self, data_offset: i32, data_length: i32) -> i32 {
+    fn mbuffer_new_from_bytes(&self, data_offset: MemPtr, data_length: MemLength) -> i32 {
         println!("Called: mbuffer_new_from_bytes");
         0
     }
@@ -1069,12 +1071,12 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn mbuffer_get_bytes(&self, m_buffer_handle: i32, result_offset: i32) -> i32 {
+    fn mbuffer_get_bytes(&self, m_buffer_handle: i32, result_offset: MemPtr) -> i32 {
         println!("Called: mbuffer_get_bytes");
         0
     }
 
-    fn mbuffer_get_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: i32) -> i32 {
+    fn mbuffer_get_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32 {
         println!("Called: mbuffer_get_byte_slice");
         0
     }
@@ -1089,12 +1091,12 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn mbuffer_set_bytes(&self, m_buffer_handle: i32, data_offset: i32, data_length: i32) -> i32 {
+    fn mbuffer_set_bytes(&self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
         println!("Called: mbuffer_set_bytes");
         0
     }
 
-    fn mbuffer_set_byte_slice(&self, m_buffer_handle: i32, starting_position: i32, data_length: i32, data_offset: i32) -> i32 {
+    fn mbuffer_set_byte_slice(&self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32 {
         println!("Called: mbuffer_set_byte_slice");
         0
     }
@@ -1104,7 +1106,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn mbuffer_append_bytes(&self, accumulator_handle: i32, data_offset: i32, data_length: i32) -> i32 {
+    fn mbuffer_append_bytes(&self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
         println!("Called: mbuffer_append_bytes");
         0
     }
@@ -1186,22 +1188,22 @@ impl VMHooks for VMHooksDefault {
         println!("Called: small_int_finish_signed");
     }
 
-    fn small_int_storage_store_unsigned(&self, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    fn small_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         println!("Called: small_int_storage_store_unsigned");
         0
     }
 
-    fn small_int_storage_store_signed(&self, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    fn small_int_storage_store_signed(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         println!("Called: small_int_storage_store_signed");
         0
     }
 
-    fn small_int_storage_load_unsigned(&self, key_offset: i32, key_length: i32) -> i64 {
+    fn small_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         println!("Called: small_int_storage_load_unsigned");
         0
     }
 
-    fn small_int_storage_load_signed(&self, key_offset: i32, key_length: i32) -> i64 {
+    fn small_int_storage_load_signed(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         println!("Called: small_int_storage_load_signed");
         0
     }
@@ -1215,17 +1217,17 @@ impl VMHooks for VMHooksDefault {
         println!("Called: int64finish");
     }
 
-    fn int64storage_store(&self, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    fn int64storage_store(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         println!("Called: int64storage_store");
         0
     }
 
-    fn int64storage_load(&self, key_offset: i32, key_length: i32) -> i64 {
+    fn int64storage_load(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         println!("Called: int64storage_load");
         0
     }
 
-    fn sha256(&self, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    fn sha256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         println!("Called: sha256");
         0
     }
@@ -1235,7 +1237,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn keccak256(&self, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    fn keccak256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         println!("Called: keccak256");
         0
     }
@@ -1245,7 +1247,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn ripemd160(&self, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    fn ripemd160(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         println!("Called: ripemd160");
         0
     }
@@ -1255,7 +1257,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn verify_bls(&self, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    fn verify_bls(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         println!("Called: verify_bls");
         0
     }
@@ -1265,7 +1267,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn verify_ed25519(&self, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    fn verify_ed25519(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         println!("Called: verify_ed25519");
         0
     }
@@ -1275,7 +1277,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn verify_custom_secp256k1(&self, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32, hash_type: i32) -> i32 {
+    fn verify_custom_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32 {
         println!("Called: verify_custom_secp256k1");
         0
     }
@@ -1285,7 +1287,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn verify_secp256k1(&self, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    fn verify_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         println!("Called: verify_secp256k1");
         0
     }
@@ -1295,7 +1297,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn encode_secp256k1_der_signature(&self, r_offset: i32, r_length: i32, s_offset: i32, s_length: i32, sig_offset: i32) -> i32 {
+    fn encode_secp256k1_der_signature(&self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32 {
         println!("Called: encode_secp256k1_der_signature");
         0
     }
@@ -1318,7 +1320,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    fn scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         println!("Called: scalar_base_mult_ec");
         0
     }
@@ -1328,7 +1330,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: i32, length: i32) -> i32 {
+    fn scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         println!("Called: scalar_mult_ec");
         0
     }
@@ -1338,7 +1340,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    fn marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         println!("Called: marshal_ec");
         0
     }
@@ -1348,7 +1350,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    fn marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         println!("Called: marshal_compressed_ec");
         0
     }
@@ -1358,7 +1360,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    fn unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         println!("Called: unmarshal_ec");
         0
     }
@@ -1368,7 +1370,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    fn unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         println!("Called: unmarshal_compressed_ec");
         0
     }
@@ -1378,7 +1380,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    fn generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         println!("Called: generate_key_ec");
         0
     }
@@ -1388,7 +1390,7 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn create_ec(&self, data_offset: i32, data_length: i32) -> i32 {
+    fn create_ec(&self, data_offset: MemPtr, data_length: MemLength) -> i32 {
         println!("Called: create_ec");
         0
     }

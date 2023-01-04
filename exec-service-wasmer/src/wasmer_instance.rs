@@ -3,6 +3,7 @@ use crate::{
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
+use elrond_exec_service::{MemLength, MemPtr};
 use std::{rc::Rc, sync::Arc};
 use wasmer::Singlepass;
 use wasmer::Universal;
@@ -226,6 +227,29 @@ impl Instance for WasmerInstance {
         match result {
             Ok(memory) => Ok(memory.data_ptr()),
             Err(err) => Err(err),
+        }
+    }
+
+    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => unsafe {
+                let mem_data = memory.data_unchecked();
+                Ok(&mem_data[mem_ptr as usize ..= (mem_ptr + mem_length) as usize])
+            },
+            Err(err) => Err(err.into()),
+        }
+    }
+
+    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => unsafe {
+                let mem_data = memory.data_unchecked_mut();
+                mem_data[mem_ptr as usize .. mem_ptr as usize + data.len()].copy_from_slice(data);
+                Ok(())
+            },
+            Err(err) => Err(err.into()),
         }
     }
 
