@@ -160,11 +160,16 @@ impl FunctionMiddleware for FunctionMetering {
         // corner cases.
         self.accumulated_cost += get_opcode_cost(&operator, &self.opcode_cost) as u64;
 
+        println!("{:#?}", operator);
+
         if matches!(
             operator,
             Operator::Loop { .. }
+                | Operator::Block { .. }
                 | Operator::End
+                | Operator::If { .. }
                 | Operator::Else
+                | Operator::Unreachable
                 | Operator::Br { .. }
                 | Operator::BrTable { .. }
                 | Operator::BrIf { .. }
