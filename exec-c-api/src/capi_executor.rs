@@ -4,8 +4,8 @@ use crate::{
     capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers, capi_vm_hooks::CapiVMHooks,
     service_singleton::with_service, vm_exec_result_t,
 };
-use elrond_exec_service::Executor;
 use libc::c_void;
+use mx_vm_executor::Executor;
 
 #[repr(C)]
 pub struct vm_exec_executor_t;

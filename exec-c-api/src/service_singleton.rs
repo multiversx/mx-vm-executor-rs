@@ -1,5 +1,5 @@
-use elrond_exec_service::ExecutorService;
-use elrond_exec_service_wasmer::BasicExecutorService;
+use mx_vm_executor::ExecutorService;
+use mx_vm_executor_wasmer::BasicExecutorService;
 use std::cell::RefCell;
 
 thread_local! {

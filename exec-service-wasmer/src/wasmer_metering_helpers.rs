@@ -4,7 +4,7 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-use elrond_exec_service::OpcodeCost;
+use mx_vm_executor::OpcodeCost;
 use wasmer::wasmparser::Operator;
 
 pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> u32 {

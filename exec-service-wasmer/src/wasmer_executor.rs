@@ -1,5 +1,5 @@
 use crate::WasmerInstance;
-use elrond_exec_service::{
+use mx_vm_executor::{
     CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
 };
 use std::ffi::c_void;

@@ -1,5 +1,5 @@
 [package]
-name = "elrond-vm-exec-c-api"
+name = "mx-vm-executor-c-api"
 version = "0.0.1"
 edition = "2021"
 
@@ -7,8 +7,8 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-elrond-exec-service = { path = "../exec-service" }
-elrond-exec-service-wasmer = { path = "../exec-service-wasmer" }
+mx-vm-executor = { path = "../exec-service" }
+mx-vm-executor-wasmer = { path = "../exec-service-wasmer" }
 
 lazy_static = "1.4"
 libc = { version = "^0.2", default-features = false }

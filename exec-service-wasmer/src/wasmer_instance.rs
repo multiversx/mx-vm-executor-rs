@@ -2,8 +2,8 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
-use elrond_exec_service::{MemLength, MemPtr};
+use mx_vm_executor::{CompilationOptions, ExecutorError, Instance, ServiceError};
+use mx_vm_executor::{MemLength, MemPtr};
 use std::{rc::Rc, sync::Arc};
 use wasmer::Singlepass;
 use wasmer::Universal;
@@ -235,7 +235,7 @@ impl Instance for WasmerInstance {
         match result {
             Ok(memory) => unsafe {
                 let mem_data = memory.data_unchecked();
-                Ok(&mem_data[mem_ptr as usize ..= (mem_ptr + mem_length) as usize])
+                Ok(&mem_data[mem_ptr as usize..=(mem_ptr + mem_length) as usize])
             },
             Err(err) => Err(err.into()),
         }
@@ -246,7 +246,7 @@ impl Instance for WasmerInstance {
         match result {
             Ok(memory) => unsafe {
                 let mem_data = memory.data_unchecked_mut();
-                mem_data[mem_ptr as usize .. mem_ptr as usize + data.len()].copy_from_slice(data);
+                mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
                 Ok(())
             },
             Err(err) => Err(err.into()),

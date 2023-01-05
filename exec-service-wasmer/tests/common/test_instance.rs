@@ -1,5 +1,5 @@
-use elrond_exec_service::{CompilationOptions, ExecutorService, Instance, VMHooksDefault};
-use elrond_exec_service_wasmer::BasicExecutorService;
+use mx_vm_executor::{CompilationOptions, ExecutorService, Instance, VMHooksDefault};
+use mx_vm_executor_wasmer::BasicExecutorService;
 use wasmer::wat2wasm;
 
 const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use elrond_exec_service::{MemLength, MemPtr, VMHooks};
+use mx_vm_executor::{MemLength, MemPtr, VMHooks};
 use wasmer::WasmerEnv;
 
 #[derive(Clone, Debug)]

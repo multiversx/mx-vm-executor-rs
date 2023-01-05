@@ -5,8 +5,8 @@ use crate::{
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
-use elrond_exec_service::{CompilationOptions, Instance};
 use libc::{c_char, c_int};
+use mx_vm_executor::{CompilationOptions, Instance};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.

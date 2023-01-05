@@ -1,14 +1,14 @@
 .PHONY: clean
 
 capi:
-	cargo build -p elrond-vm-exec-c-api --release
+	cargo build -p mx-vm-executor-c-api --release
 
 capi-linux-amd64: capi
-	mv target/release/libelrond_vm_exec_c_api.so target/release/libvmexeccapi.so
+	mv target/release/libmx_vm_executor_c_api.so target/release/libvmexeccapi.so
 	patchelf --set-soname libvmexeccapi.so target/release/libvmexeccapi.so
 
 capi-osx-amd64: capi
-	mv target/release/libelrond_vm_exec_c_api.dylib target/release/libvmexeccapi.dylib
+	mv target/release/libmx_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
 	install_name_tool -id @executable_path/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
 clean:

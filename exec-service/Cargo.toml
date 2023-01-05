@@ -1,5 +1,5 @@
 [package]
-name = "elrond-exec-service"
+name = "mx-vm-executor"
 version = "0.0.1"
 edition = "2021"
 
