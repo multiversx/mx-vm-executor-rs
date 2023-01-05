@@ -8,12 +8,12 @@ edition = "2021"
 [dependencies]
 mx-vm-executor = { path = "../exec-service" }
 
-wasmer = { git = "https://github.com/ElrondNetwork/wasmer", branch = "instance-reset", default-features = false, features = [
+wasmer = { git = "https://github.com/multiversx/wasmer", branch = "instance-reset", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
-wasmer-types = { git = "https://github.com/ElrondNetwork/wasmer", branch = "instance-reset" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", branch = "instance-reset" }
 
 loupe = "0.1.3"
