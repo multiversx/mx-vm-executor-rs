@@ -1,4 +1,4 @@
-use crate::ExecutorError;
+use crate::{BreakpointValue, ExecutorError};
 
 pub struct CompilationOptions {
     pub gas_limit: u64,
@@ -54,10 +54,10 @@ pub trait Instance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&self, value: u64) -> Result<(), String>;
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<u64, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), String>;

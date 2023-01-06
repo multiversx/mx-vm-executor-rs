@@ -2,7 +2,7 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use mx_vm_executor::{CompilationOptions, ExecutorError, Instance, ServiceError};
+use mx_vm_executor::{BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError};
 use mx_vm_executor::{MemLength, MemPtr};
 use std::{rc::Rc, sync::Arc};
 use wasmer::Singlepass;
@@ -264,12 +264,12 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn set_breakpoint_value(&self, value: u64) -> Result<(), String> {
-        set_breakpoint_value(&self.wasmer_instance, value)
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+        set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&self) -> Result<u64, String> {
-        get_breakpoint_value(&self.wasmer_instance)
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
+        get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 
     fn reset(&self) -> Result<(), String> {
