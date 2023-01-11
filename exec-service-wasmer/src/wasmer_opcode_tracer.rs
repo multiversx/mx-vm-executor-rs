@@ -49,7 +49,7 @@ struct FunctionOpcodeTracer {
 
 impl FunctionOpcodeTracer {
     fn trace_opcode<'b>(&mut self, operator: &Operator<'b>) -> Result<(), MiddlewareError> {
-        let result = write!(self.output_file, "\t{:?}\n", operator);
+        let result = writeln!(self.output_file, "\t{:?}", operator);
         if let Err(error) = result {
             return Err(MiddlewareError::new(
                 "opcode_trace_middleware",
