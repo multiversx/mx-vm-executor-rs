@@ -1,3 +1,4 @@
+use crate::wasmer_opcode_tracer::OpcodeTracer;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
@@ -127,6 +128,9 @@ fn push_middlewares(
     compilation_options: &CompilationOptions,
     executor_data: Rc<WasmerExecutorData>,
 ) {
+    // Create opcode_tracer middleware
+    let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
+
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
@@ -151,6 +155,11 @@ fn push_middlewares(
     compiler.push_middleware(metering_middleware);
     executor_data.print_execution_info("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
+
+    if compilation_options.opcode_trace {
+        executor_data.print_execution_info("Adding opcode_tracer middleware ...");
+        compiler.push_middleware(opcode_tracer_middleware);
+    }
 }
 
 impl Instance for WasmerInstance {
