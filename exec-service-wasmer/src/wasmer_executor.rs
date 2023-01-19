@@ -49,11 +49,8 @@ impl WasmerExecutorData {
         }
     }
     pub(crate) fn trace_execution_info(&self, message: &str) {
-        match self.log_level {
-            WasmerExecutorLogLevel::Debug | WasmerExecutorLogLevel::Trace => {
-                println!("[TRACE] {}", message)
-            }
-            WasmerExecutorLogLevel::None => return,
+        if let WasmerExecutorLogLevel::Debug | WasmerExecutorLogLevel::Trace = self.log_level {
+            println!("[TRACE] {}", message);
         }
     }
 }
