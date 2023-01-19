@@ -129,9 +129,6 @@ fn push_middlewares(
     compilation_options: &CompilationOptions,
     executor_data: Rc<WasmerExecutorData>,
 ) {
-    // Create opcode_tracer middleware
-    let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
@@ -164,6 +161,8 @@ fn push_middlewares(
     compiler.push_middleware(breakpoints_middleware);
 
     if compilation_options.opcode_trace {
+        // Create opcode_tracer middleware
+        let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
         executor_data.print_execution_info("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
