@@ -88,6 +88,8 @@ pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
 /// # Safety
 ///
 /// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
 pub unsafe extern "C" fn vm_exec_executor_set_log_level(
     executor_ptr: *mut vm_exec_executor_t,
     value: u64,
