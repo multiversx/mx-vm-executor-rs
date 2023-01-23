@@ -10,10 +10,11 @@ pub struct WasmerExecutor {
     pub data: Rc<WasmerExecutorData>,
 }
 
+#[derive(PartialEq, PartialOrd, Eq)]
 pub enum WasmerExecutorLogLevel {
     None,
-    Trace,
     Debug,
+    Trace,
 }
 
 impl TryFrom<u64> for WasmerExecutorLogLevel {
@@ -21,13 +22,11 @@ impl TryFrom<u64> for WasmerExecutorLogLevel {
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
-            log_level if log_level == WasmerExecutorLogLevel::None as u64 => {
-                Ok(WasmerExecutorLogLevel::None)
-            }
-            log_level if log_level == WasmerExecutorLogLevel::Trace as u64 => {
+            none if none == WasmerExecutorLogLevel::None as u64 => Ok(WasmerExecutorLogLevel::None),
+            trace if trace == WasmerExecutorLogLevel::Trace as u64 => {
                 Ok(WasmerExecutorLogLevel::Trace)
             }
-            log_level if log_level == WasmerExecutorLogLevel::Debug as u64 => {
+            debug if debug == WasmerExecutorLogLevel::Debug as u64 => {
                 Ok(WasmerExecutorLogLevel::Debug)
             }
             _ => Err("WasmerExecutor undefined log level"),
@@ -42,14 +41,14 @@ pub struct WasmerExecutorData {
 }
 
 impl WasmerExecutorData {
-    #[allow(dead_code)]
-    pub(crate) fn debug_execution_info(&self, message: &str) {
-        if let WasmerExecutorLogLevel::Debug = self.log_level {
+    pub(crate) fn debug(&self, message: &str) {
+        if self.log_level >= WasmerExecutorLogLevel::Debug {
             println!("[DEBUG] {}", message);
         }
     }
-    pub(crate) fn trace_execution_info(&self, message: &str) {
-        if let WasmerExecutorLogLevel::Debug | WasmerExecutorLogLevel::Trace = self.log_level {
+    #[allow(dead_code)]
+    pub(crate) fn trace(&self, message: &str) {
+        if self.log_level == WasmerExecutorLogLevel::Trace {
             println!("[TRACE] {}", message);
         }
     }
@@ -57,8 +56,7 @@ impl WasmerExecutorData {
 
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
-        self.data
-            .trace_execution_info("Setting context pointer ...");
+        self.data.debug("Setting context pointer ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(vm_hooks) = Rc::get_mut(&mut data_mut.vm_hooks) {
                 vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
@@ -72,7 +70,7 @@ impl Executor for WasmerExecutor {
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        self.data.trace_execution_info("Setting opcode cost ...");
+        self.data.debug("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(opcode_cost_mut) = Arc::get_mut(&mut data_mut.opcode_cost) {
                 *opcode_cost_mut = opcode_cost.clone();

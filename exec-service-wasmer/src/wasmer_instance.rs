@@ -31,17 +31,17 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        executor_data.trace_execution_info("Compiling module ...");
+        executor_data.debug("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        executor_data.trace_execution_info("Converting imports ...");
+        executor_data.debug("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        executor_data.trace_execution_info("Instantiating module ...");
+        executor_data.debug("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -68,20 +68,20 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        executor_data.trace_execution_info("Deserializing module ...");
+        executor_data.debug("Deserializing module ...");
         let module;
         unsafe {
             module = Module::deserialize(&store, cache_bytes)?;
         };
 
         // Create an empty import object.
-        executor_data.trace_execution_info("Converting imports ...");
+        executor_data.debug("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        executor_data.trace_execution_info("Instantiating module ...");
+        executor_data.debug("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -151,19 +151,19 @@ fn push_middlewares(
         metering_middleware.clone(),
     ]));
 
-    executor_data.trace_execution_info("Adding protected_globals middleware ...");
+    executor_data.debug("Adding protected_globals middleware ...");
     compiler.push_middleware(protected_globals_middleware);
-    executor_data.trace_execution_info("Adding metering middleware ...");
+    executor_data.debug("Adding metering middleware ...");
     compiler.push_middleware(metering_middleware);
-    executor_data.trace_execution_info("Adding opcode_control middleware ...");
+    executor_data.debug("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
-    executor_data.trace_execution_info("Adding breakpoints middleware ...");
+    executor_data.debug("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 
     if compilation_options.opcode_trace {
         // Create opcode_tracer middleware
         let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-        executor_data.trace_execution_info("Adding opcode_tracer middleware ...");
+        executor_data.debug("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
 }
@@ -171,7 +171,7 @@ fn push_middlewares(
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.executor_data
-            .trace_execution_info(format!("Rust instance call: {}", func_name).as_str());
+            .debug(format!("Rust instance call: {}", func_name).as_str());
 
         let func = self
             .wasmer_instance
