@@ -163,8 +163,11 @@ impl FunctionMiddleware for FunctionMetering {
         if matches!(
             operator,
             Operator::Loop { .. }
+                | Operator::Block { .. }
                 | Operator::End
+                | Operator::If { .. }
                 | Operator::Else
+                | Operator::Unreachable
                 | Operator::Br { .. }
                 | Operator::BrTable { .. }
                 | Operator::BrIf { .. }

@@ -8,12 +8,12 @@ edition = "2021"
 [dependencies]
 elrond-exec-service = { path = "../exec-service" }
 
-wasmer = { git = "https://github.com/ElrondNetwork/wasmer", branch = "instance-reset", default-features = false, features = [
+wasmer = { git = "https://github.com/ElrondNetwork/wasmer", rev = "411320b9a", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
-wasmer-types = { git = "https://github.com/ElrondNetwork/wasmer", branch = "instance-reset" }
+wasmer-types = { git = "https://github.com/ElrondNetwork/wasmer", rev = "411320b9a" }
 
 loupe = "0.1.3"
