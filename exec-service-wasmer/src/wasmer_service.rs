@@ -42,7 +42,7 @@ impl ExecutorService for BasicExecutorService {
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
             opcode_cost: Arc::new(Default::default()),
-            log_level: WasmerExecutorLogLevel::Trace,
+            log_level: WasmerExecutorLogLevel::Debug,
         };
         Ok(Box::new(WasmerExecutor {
             data: Rc::new(data),

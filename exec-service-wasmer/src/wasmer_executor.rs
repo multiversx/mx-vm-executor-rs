@@ -23,11 +23,11 @@ impl TryFrom<u64> for WasmerExecutorLogLevel {
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
             none if none == WasmerExecutorLogLevel::None as u64 => Ok(WasmerExecutorLogLevel::None),
-            trace if trace == WasmerExecutorLogLevel::Trace as u64 => {
-                Ok(WasmerExecutorLogLevel::Trace)
-            }
             debug if debug == WasmerExecutorLogLevel::Debug as u64 => {
                 Ok(WasmerExecutorLogLevel::Debug)
+            }
+            trace if trace == WasmerExecutorLogLevel::Trace as u64 => {
+                Ok(WasmerExecutorLogLevel::Trace)
             }
             _ => Err("WasmerExecutor undefined log level"),
         }
