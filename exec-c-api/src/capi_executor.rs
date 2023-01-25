@@ -79,6 +79,33 @@ pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
     }
 }
 
+/// Sets the log level for the given executor.
+///
+/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
+/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// `wasmer_last_error_message()` to get the generated error message.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_exec_executor_set_log_level(
+    executor_ptr: *mut vm_exec_executor_t,
+    value: u64,
+) -> vm_exec_result_t {
+    let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
+
+    let result = capi_executor.content.set_execution_log_level(value);
+    match result {
+        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Err(message) => {
+            with_service(|service| service.update_last_error_str(message.to_string()));
+            vm_exec_result_t::VM_EXEC_ERROR
+        }
+    }
+}
+
 /// Destroys a VM executor object.
 ///
 /// # Safety
