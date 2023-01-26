@@ -10,24 +10,49 @@ pub struct WasmerExecutor {
     pub data: Rc<WasmerExecutorData>,
 }
 
+#[derive(PartialEq, PartialOrd, Eq)]
+pub enum WasmerExecutorLogLevel {
+    None,
+    Debug,
+    Trace,
+}
+
+impl TryFrom<u64> for WasmerExecutorLogLevel {
+    type Error = &'static str;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(WasmerExecutorLogLevel::None),
+            1 => Ok(WasmerExecutorLogLevel::Debug),
+            2 => Ok(WasmerExecutorLogLevel::Trace),
+            _ => Err("WasmerExecutor undefined log level"),
+        }
+    }
+}
+
 pub struct WasmerExecutorData {
     pub vm_hooks: Rc<Box<dyn VMHooks>>,
     pub opcode_cost: Arc<OpcodeCost>,
-    pub print_execution_info: bool,
+    pub log_level: WasmerExecutorLogLevel,
 }
 
 impl WasmerExecutorData {
-    pub(crate) fn print_execution_info(&self, message: &str) {
-        if self.print_execution_info {
-            println!("{}", message);
+    pub(crate) fn debug(&self, message: &str) {
+        if self.log_level >= WasmerExecutorLogLevel::Debug {
+            println!("[DEBUG] {}", message);
+        }
+    }
+    #[allow(dead_code)]
+    pub(crate) fn trace(&self, message: &str) {
+        if self.log_level == WasmerExecutorLogLevel::Trace {
+            println!("[TRACE] {}", message);
         }
     }
 }
 
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
-        self.data
-            .print_execution_info("Setting context pointer ...");
+        self.data.debug("Setting context pointer ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(vm_hooks) = Rc::get_mut(&mut data_mut.vm_hooks) {
                 vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
@@ -41,7 +66,7 @@ impl Executor for WasmerExecutor {
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        self.data.print_execution_info("Setting opcode cost ...");
+        self.data.debug("Setting opcode cost ...");
         if let Some(data_mut) = Rc::get_mut(&mut self.data) {
             if let Some(opcode_cost_mut) = Arc::get_mut(&mut data_mut.opcode_cost) {
                 *opcode_cost_mut = opcode_cost.clone();
@@ -51,6 +76,25 @@ impl Executor for WasmerExecutor {
 
         Err(Box::new(ServiceError::new(
             "WasmerExecutor opcodes cost configuration error",
+        )))
+    }
+
+    fn set_execution_log_level(&mut self, value: u64) -> Result<(), ExecutorError> {
+        if let Some(data_mut) = Rc::get_mut(&mut self.data) {
+            let result = WasmerExecutorLogLevel::try_from(value);
+            match result {
+                Ok(log_level) => {
+                    data_mut.log_level = log_level;
+                    return Ok(());
+                }
+                Err(error) => {
+                    return Err(Box::new(ServiceError::new(error)));
+                }
+            }
+        }
+
+        Err(Box::new(ServiceError::new(
+            "WasmerExecutor log level error",
         )))
     }
 

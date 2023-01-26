@@ -1,3 +1,5 @@
+use crate::wasmer_opcode_trace::OpcodeTracer;
+use crate::wasmer_protected_globals::ProtectedGlobals;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
@@ -30,17 +32,17 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        executor_data.print_execution_info("Compiling module ...");
+        executor_data.debug("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        executor_data.print_execution_info("Converting imports ...");
+        executor_data.debug("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        executor_data.print_execution_info("Instantiating module ...");
+        executor_data.debug("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -67,20 +69,20 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        executor_data.print_execution_info("Deserializing module ...");
+        executor_data.debug("Deserializing module ...");
         let module;
         unsafe {
             module = Module::deserialize(&store, cache_bytes)?;
         };
 
         // Create an empty import object.
-        executor_data.print_execution_info("Converting imports ...");
+        executor_data.debug("Converting imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        executor_data.print_execution_info("Instantiating module ...");
+        executor_data.debug("Instantiating module ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -131,6 +133,13 @@ fn push_middlewares(
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
+        breakpoints_middleware.clone(),
+    ));
+
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
@@ -138,26 +147,32 @@ fn push_middlewares(
         breakpoints_middleware.clone(),
     ));
 
-    // Create opcode_control middleware
-    let opcode_control_middleware = Arc::new(OpcodeControl::new(
-        compilation_options.max_memory_grow,
-        compilation_options.max_memory_grow_delta,
+    let protected_globals_middleware = Arc::new(ProtectedGlobals::new(vec![
         breakpoints_middleware.clone(),
-        vec![breakpoints_middleware.clone(), metering_middleware.clone()],
-    ));
+        metering_middleware.clone(),
+    ]));
 
-    executor_data.print_execution_info("Adding opcode_control middleware ...");
-    compiler.push_middleware(opcode_control_middleware);
-    executor_data.print_execution_info("Adding metering middleware ...");
+    executor_data.debug("Adding protected_globals middleware ...");
+    compiler.push_middleware(protected_globals_middleware);
+    executor_data.debug("Adding metering middleware ...");
     compiler.push_middleware(metering_middleware);
-    executor_data.print_execution_info("Adding breakpoints middleware ...");
+    executor_data.debug("Adding opcode_control middleware ...");
+    compiler.push_middleware(opcode_control_middleware);
+    executor_data.debug("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
+
+    if compilation_options.opcode_trace {
+        // Create opcode_tracer middleware
+        let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
+        executor_data.debug("Adding opcode_tracer middleware ...");
+        compiler.push_middleware(opcode_tracer_middleware);
+    }
 }
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.executor_data
-            .print_execution_info(format!("Rust instance call: {}", func_name).as_str());
+            .debug(format!("Rust instance call: {}", func_name).as_str());
 
         let func = self
             .wasmer_instance

@@ -9,6 +9,9 @@ pub trait Executor {
     /// Sets the opcode costs for the given executor.
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError>;
 
+    /// Sets the log level for the given executor (default is Debug).
+    fn set_execution_log_level(&mut self, value: u64) -> Result<(), ExecutorError>;
+
     /// Creates a new VM executor instance.
     fn new_instance(
         &self,

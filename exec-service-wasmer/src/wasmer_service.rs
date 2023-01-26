@@ -5,6 +5,7 @@ use mx_vm_executor::{Executor, ExecutorError, ExecutorLastError, ExecutorService
 
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;
+use crate::WasmerExecutorLogLevel;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
@@ -37,7 +38,7 @@ impl ExecutorService for BasicExecutorService {
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
             opcode_cost: Arc::new(Default::default()),
-            print_execution_info: true,
+            log_level: WasmerExecutorLogLevel::Debug,
         };
         Ok(Box::new(WasmerExecutor {
             data: Rc::new(data),
