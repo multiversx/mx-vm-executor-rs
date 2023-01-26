@@ -1,4 +1,4 @@
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BreakpointValue {
     /// Lack of a breakpoint
     None = 0,
