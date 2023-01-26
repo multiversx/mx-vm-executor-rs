@@ -5,7 +5,7 @@ use crate::{
     service_singleton::with_service, vm_exec_result_t,
 };
 use libc::c_void;
-use mx_vm_executor::Executor;
+use multiversx_vm_executor::Executor;
 
 #[repr(C)]
 pub struct vm_exec_executor_t;

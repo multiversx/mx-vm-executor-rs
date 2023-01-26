@@ -6,7 +6,7 @@
 
 use std::ffi::c_void;
 
-use mx_vm_executor::{MemLength, MemPtr};
+use multiversx_vm_executor::{MemLength, MemPtr};
 
 use crate::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
 
@@ -34,7 +34,7 @@ impl CapiVMHooks {
 }
 
 #[rustfmt::skip]
-impl mx_vm_executor::VMHooks for CapiVMHooks {
+impl multiversx_vm_executor::VMHooks for CapiVMHooks {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) {
         self.vm_hooks_ptr = vm_hooks_ptr;
     }

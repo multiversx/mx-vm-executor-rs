@@ -1,7 +1,9 @@
 use std::rc::Rc;
 use std::sync::Arc;
 
-use mx_vm_executor::{Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks};
+use multiversx_vm_executor::{
+    Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
+};
 
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;

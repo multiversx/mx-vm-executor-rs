@@ -4,8 +4,10 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use mx_vm_executor::{BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError};
-use mx_vm_executor::{MemLength, MemPtr};
+use multiversx_vm_executor::{
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
+};
+use multiversx_vm_executor::{MemLength, MemPtr};
 use std::{rc::Rc, sync::Arc};
 use wasmer::Singlepass;
 use wasmer::Universal;

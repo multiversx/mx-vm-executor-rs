@@ -1,5 +1,5 @@
 use crate::WasmerInstance;
-use mx_vm_executor::{
+use multiversx_vm_executor::{
     CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
 };
 use std::ffi::c_void;

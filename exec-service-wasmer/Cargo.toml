@@ -1,12 +1,12 @@
 [package]
-name = "mx-vm-executor-wasmer"
+name = "multiversx-vm-executor-wasmer"
 version = "0.0.1"
 edition = "2021"
 
 [lib]
 
 [dependencies]
-mx-vm-executor = { path = "../exec-service" }
+multiversx-vm-executor = { path = "../exec-service" }
 
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "411320b9a", default-features = false, features = [
     "singlepass",
