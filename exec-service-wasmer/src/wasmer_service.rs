@@ -1,11 +1,9 @@
 use std::rc::Rc;
 use std::sync::Arc;
 
-use elrond_exec_service::Executor;
-use elrond_exec_service::ExecutorError;
-use elrond_exec_service::ExecutorLastError;
-use elrond_exec_service::ExecutorService;
-use elrond_exec_service::VMHooks;
+use multiversx_vm_executor::{
+    Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
+};
 
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;

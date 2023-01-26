@@ -1,4 +1,4 @@
-use crate::ExecutorError;
+use crate::{BreakpointValue, ExecutorError};
 
 pub struct CompilationOptions {
     pub gas_limit: u64,
@@ -9,6 +9,12 @@ pub struct CompilationOptions {
     pub metering: bool,
     pub runtime_breakpoints: bool,
 }
+
+/// The argument type for dealing with executor memory pointers.
+pub type MemPtr = isize;
+
+/// The argument type for dealing with lengths of slices of the executor memory.
+pub type MemLength = isize;
 
 pub trait Instance {
     /// Calls an exported function of a WebAssembly instance by `name`.
@@ -38,14 +44,20 @@ pub trait Instance {
     /// Gets a pointer to the beginning of the contiguous memory data bytes.
     fn memory_ptr(&self) -> Result<*mut u8, String>;
 
+    /// Loads data from executor memory.
+    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError>;
+
+    /// Loads data from executor memory.
+    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError>;
+
     /// Grows a memory by the given number of pages (of 65Kb each).
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&self, value: u64) -> Result<(), String>;
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<u64, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), String>;

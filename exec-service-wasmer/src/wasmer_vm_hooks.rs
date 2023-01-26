@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use elrond_exec_service::VMHooks;
+use multiversx_vm_executor::{MemLength, MemPtr, VMHooks};
 use wasmer::WasmerEnv;
 
 #[derive(Clone, Debug)]
@@ -12,3 +12,13 @@ unsafe impl Send for VMHooksWrapper {}
 unsafe impl Sync for VMHooksWrapper {}
 
 impl WasmerEnv for VMHooksWrapper {}
+
+impl VMHooksWrapper {
+    pub(crate) fn convert_mem_ptr(&self, raw: i32) -> MemPtr {
+        raw as MemPtr
+    }
+
+    pub(crate) fn convert_mem_length(&self, raw: i32) -> MemLength {
+        raw as MemLength
+    }
+}

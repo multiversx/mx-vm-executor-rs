@@ -4,7 +4,10 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use elrond_exec_service::{CompilationOptions, ExecutorError, Instance, ServiceError};
+use multiversx_vm_executor::{
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
+};
+use multiversx_vm_executor::{MemLength, MemPtr};
 use std::{rc::Rc, sync::Arc};
 use wasmer::Singlepass;
 use wasmer::Universal;
@@ -244,6 +247,29 @@ impl Instance for WasmerInstance {
         }
     }
 
+    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => unsafe {
+                let mem_data = memory.data_unchecked();
+                Ok(&mem_data[mem_ptr as usize..=(mem_ptr + mem_length) as usize])
+            },
+            Err(err) => Err(err.into()),
+        }
+    }
+
+    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => unsafe {
+                let mem_data = memory.data_unchecked_mut();
+                mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
+                Ok(())
+            },
+            Err(err) => Err(err.into()),
+        }
+    }
+
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let result = self.get_memory_ref();
         match result {
@@ -255,12 +281,12 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn set_breakpoint_value(&self, value: u64) -> Result<(), String> {
-        set_breakpoint_value(&self.wasmer_instance, value)
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+        set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&self) -> Result<u64, String> {
-        get_breakpoint_value(&self.wasmer_instance)
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
+        get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 
     fn reset(&self) -> Result<(), String> {

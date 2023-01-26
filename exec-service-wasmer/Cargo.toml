@@ -1,19 +1,19 @@
 [package]
-name = "elrond-exec-service-wasmer"
+name = "multiversx-vm-executor-wasmer"
 version = "0.0.1"
 edition = "2021"
 
 [lib]
 
 [dependencies]
-elrond-exec-service = { path = "../exec-service" }
+multiversx-vm-executor = { path = "../exec-service" }
 
-wasmer = { git = "https://github.com/ElrondNetwork/wasmer", rev = "411320b9a", default-features = false, features = [
+wasmer = { git = "https://github.com/multiversx/wasmer", rev = "411320b9a", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
-wasmer-types = { git = "https://github.com/ElrondNetwork/wasmer", rev = "411320b9a" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "411320b9a" }
 
 loupe = "0.1.3"
