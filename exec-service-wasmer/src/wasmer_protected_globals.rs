@@ -58,9 +58,9 @@ struct FunctionProtectedGlobals {
 }
 
 impl FunctionProtectedGlobals {
-    fn check_protected_globals_invalid_access<'b>(
+    fn check_protected_globals_invalid_access(
         &self,
-        operator: &Operator<'_>,
+        operator: &Operator,
     ) -> Result<(), MiddlewareError> {
         if let Operator::GlobalSet { global_index } = *operator {
             if self.protected_globals.contains(&global_index) {

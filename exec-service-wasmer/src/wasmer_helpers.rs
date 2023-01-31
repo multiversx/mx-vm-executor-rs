@@ -6,7 +6,7 @@ pub trait MiddlewareWithProtectedGlobals {
 }
 
 impl std::fmt::Debug for dyn MiddlewareWithProtectedGlobals {
-    fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    fn fmt(&self, _f: &mut core::fmt::Formatter) -> core::fmt::Result {
         Ok(())
     }
 }
