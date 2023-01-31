@@ -36,7 +36,7 @@ impl Breakpoints {
 
     pub(crate) fn inject_breakpoint_condition<'b>(
         &self,
-        state: &mut MiddlewareReaderState<'b>,
+        state: &mut MiddlewareReaderState<'_>,
         breakpoint_value: u64,
     ) {
         state.extend(&[
@@ -108,7 +108,7 @@ struct FunctionBreakpoints {
 }
 
 impl FunctionBreakpoints {
-    fn inject_breakpoint_condition_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_breakpoint_condition_check<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_index.breakpoint_value_global_index.as_u32(),

@@ -124,7 +124,7 @@ struct FunctionMetering {
 }
 
 impl FunctionMetering {
-    fn inject_points_used_increment<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_points_used_increment<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),
@@ -139,7 +139,7 @@ impl FunctionMetering {
         ]);
     }
 
-    fn inject_out_of_gas_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_out_of_gas_check<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),

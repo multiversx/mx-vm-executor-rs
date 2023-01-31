@@ -39,13 +39,13 @@ pub struct WasmerExecutorData {
 impl WasmerExecutorData {
     pub(crate) fn debug(&self, message: &str) {
         if self.log_level >= WasmerExecutorLogLevel::Debug {
-            println!("[DEBUG] {}", message);
+            println!("[DEBUG] {message}");
         }
     }
     #[allow(dead_code)]
     pub(crate) fn trace(&self, message: &str) {
         if self.log_level == WasmerExecutorLogLevel::Trace {
-            println!("[TRACE] {}", message);
+            println!("[TRACE] {message}");
         }
     }
 }

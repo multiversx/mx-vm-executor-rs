@@ -124,7 +124,7 @@ struct FunctionOpcodeControl {
 }
 
 impl FunctionOpcodeControl {
-    fn inject_memory_grow_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_memory_grow_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
@@ -138,7 +138,7 @@ impl FunctionOpcodeControl {
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_MEMORY_LIMIT);
     }
 
-    fn inject_memory_grow_count_increment<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_memory_grow_count_increment<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.memory_grow_count_global_index.as_u32(),
@@ -151,7 +151,7 @@ impl FunctionOpcodeControl {
         ]);
     }
 
-    fn inject_memory_grow_delta_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_memory_grow_delta_limit_check<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.operand_backup_global_index.as_u32(),
@@ -166,7 +166,7 @@ impl FunctionOpcodeControl {
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_MEMORY_LIMIT);
     }
 
-    fn inject_memory_grow_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_memory_grow_check<'b>(&self, state: &mut MiddlewareReaderState<'_>) {
         self.inject_memory_grow_limit_check(state);
         self.inject_memory_grow_count_increment(state);
 
