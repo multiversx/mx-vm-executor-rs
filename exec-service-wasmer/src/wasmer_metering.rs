@@ -1,6 +1,6 @@
-use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
+use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use multiversx_vm_executor::OpcodeCost;
 use std::mem;
@@ -24,6 +24,7 @@ struct MeteringGlobalIndexes {
 #[derive(Debug)]
 pub(crate) struct Metering {
     points_limit: u64,
+    unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
@@ -32,11 +33,13 @@ pub(crate) struct Metering {
 impl Metering {
     pub(crate) fn new(
         points_limit: u64,
+        unmetered_locals: usize,
         opcode_cost: Arc<OpcodeCost>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             points_limit,
+            unmetered_locals,
             opcode_cost,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
@@ -79,6 +82,7 @@ impl ModuleMiddleware for Metering {
     ) -> Box<dyn FunctionMiddleware> {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
+            unmetered_locals: self.unmetered_locals,
             opcode_cost: self.opcode_cost.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
@@ -113,6 +117,7 @@ impl MiddlewareWithProtectedGlobals for Metering {
 #[derive(Debug)]
 struct FunctionMetering {
     accumulated_cost: u64,
+    unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
@@ -182,6 +187,18 @@ impl FunctionMiddleware for FunctionMetering {
         }
 
         state.push_operator(operator);
+
+        Ok(())
+    }
+
+    fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
+        let unmetered_locals = self.unmetered_locals as u32;
+        if count > unmetered_locals {
+            let metered_locals = count - unmetered_locals;
+            let local_cost = get_local_cost(&self.opcode_cost);
+            let metered_locals_cost = metered_locals * local_cost;
+            self.accumulated_cost += metered_locals_cost as u64;
+        }
 
         Ok(())
     }

@@ -145,6 +145,7 @@ fn push_middlewares(
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
+        compilation_options.unmetered_locals,
         executor_data.opcode_cost.clone(),
         breakpoints_middleware.clone(),
     ));
