@@ -14,6 +14,7 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
+const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
@@ -192,6 +193,8 @@ impl FunctionMiddleware for FunctionMetering {
     }
 
     fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
+        check_local_count_exceeded(count)?;
+
         let unmetered_locals = self.unmetered_locals as u32;
         if count > unmetered_locals {
             let metered_locals = count - unmetered_locals;
@@ -244,4 +247,15 @@ pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
         }
         Err(err) => Err(err.to_string()),
     }
+}
+
+fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {
+    if count > MAX_LOCAL_COUNT {
+        return Err(MiddlewareError::new(
+            "metering_middleware",
+            format!("maximum number of locals({MAX_LOCAL_COUNT}) exceeded({count})"),
+        ));
+    }
+
+    Ok(())
 }
