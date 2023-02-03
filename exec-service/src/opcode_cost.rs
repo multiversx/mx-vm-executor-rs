@@ -459,6 +459,7 @@ pub struct OpcodeCost {
     pub opcode_localget: u32,
     pub opcode_localset: u32,
     pub opcode_localtee: u32,
+    pub opcode_localallocate: u32,
     pub opcode_loop: u32,
     pub opcode_memoryatomicnotify: u32,
     pub opcode_memoryatomicwait32: u32,

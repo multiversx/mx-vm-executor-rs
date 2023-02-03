@@ -7,6 +7,10 @@
 use multiversx_vm_executor::OpcodeCost;
 use wasmer::wasmparser::Operator;
 
+pub fn get_local_cost(opcode_cost: &OpcodeCost) -> u32 {
+	opcode_cost.opcode_localallocate
+}
+
 pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> u32 {
     match op {
         Operator::AtomicFence { .. } => opcode_cost.opcode_atomicfence,

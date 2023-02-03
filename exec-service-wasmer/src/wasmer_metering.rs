@@ -1,6 +1,6 @@
-use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
+use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use multiversx_vm_executor::OpcodeCost;
 use std::mem;
@@ -14,6 +14,7 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
+const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
@@ -24,6 +25,7 @@ struct MeteringGlobalIndexes {
 #[derive(Debug)]
 pub(crate) struct Metering {
     points_limit: u64,
+    unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
@@ -32,11 +34,13 @@ pub(crate) struct Metering {
 impl Metering {
     pub(crate) fn new(
         points_limit: u64,
+        unmetered_locals: usize,
         opcode_cost: Arc<OpcodeCost>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             points_limit,
+            unmetered_locals,
             opcode_cost,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
@@ -79,6 +83,7 @@ impl ModuleMiddleware for Metering {
     ) -> Box<dyn FunctionMiddleware> {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
+            unmetered_locals: self.unmetered_locals,
             opcode_cost: self.opcode_cost.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
@@ -113,13 +118,14 @@ impl MiddlewareWithProtectedGlobals for Metering {
 #[derive(Debug)]
 struct FunctionMetering {
     accumulated_cost: u64,
+    unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
 
 impl FunctionMetering {
-    fn inject_points_used_increment<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_points_used_increment(&self, state: &mut MiddlewareReaderState) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),
@@ -134,7 +140,7 @@ impl FunctionMetering {
         ]);
     }
 
-    fn inject_out_of_gas_check<'b>(&self, state: &mut MiddlewareReaderState<'b>) {
+    fn inject_out_of_gas_check(&self, state: &mut MiddlewareReaderState) {
         state.extend(&[
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),
@@ -185,6 +191,20 @@ impl FunctionMiddleware for FunctionMetering {
 
         Ok(())
     }
+
+    fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
+        check_local_count_exceeded(count)?;
+
+        let unmetered_locals = self.unmetered_locals as u32;
+        if count > unmetered_locals {
+            let metered_locals = count - unmetered_locals;
+            let local_cost = get_local_cost(&self.opcode_cost);
+            let metered_locals_cost = metered_locals * local_cost;
+            self.accumulated_cost += metered_locals_cost as u64;
+        }
+
+        Ok(())
+    }
 }
 
 pub(crate) fn set_points_limit(instance: &Instance, limit: u64) -> Result<(), String> {
@@ -227,4 +247,15 @@ pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
         }
         Err(err) => Err(err.to_string()),
     }
+}
+
+fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {
+    if count > MAX_LOCAL_COUNT {
+        return Err(MiddlewareError::new(
+            "metering_middleware",
+            format!("maximum number of locals({MAX_LOCAL_COUNT}) exceeded({count})"),
+        ));
+    }
+
+    Ok(())
 }

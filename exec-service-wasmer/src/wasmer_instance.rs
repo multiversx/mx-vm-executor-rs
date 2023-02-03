@@ -145,6 +145,7 @@ fn push_middlewares(
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
+        compilation_options.unmetered_locals,
         executor_data.opcode_cost.clone(),
         breakpoints_middleware.clone(),
     ));
@@ -174,7 +175,7 @@ fn push_middlewares(
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         self.executor_data
-            .debug(format!("Rust instance call: {}", func_name).as_str());
+            .debug(format!("Rust instance call: {func_name}").as_str());
 
         let func = self
             .wasmer_instance
