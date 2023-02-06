@@ -171,7 +171,7 @@ fn push_middlewares(
     if compilation_options.opcode_trace {
         // Create opcode_tracer middleware
         let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-        // trace!("Adding opcode_tracer middleware ...");
+        trace!("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
 }
