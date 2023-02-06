@@ -16,4 +16,6 @@ wasmer = { git = "https://github.com/multiversx/wasmer", rev = "244da9f49", defa
 ] }
 wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "244da9f49" }
 
+chrono = "0.4.23"
+log = "0.4.17"
 loupe = "0.1.3"

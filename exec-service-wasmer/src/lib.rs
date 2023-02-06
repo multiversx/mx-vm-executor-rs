@@ -3,6 +3,7 @@ mod wasmer_executor;
 mod wasmer_helpers;
 mod wasmer_imports;
 mod wasmer_instance;
+mod wasmer_logger;
 mod wasmer_metering;
 mod wasmer_metering_helpers;
 mod wasmer_opcode_control;
