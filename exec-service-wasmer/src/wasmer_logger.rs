@@ -15,7 +15,6 @@ impl log::Log for WasmerLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            const PATTERN: &str = "/";
             println!(
                 "{:<5}[{}] [{}]\t{}",
                 record.level(),
@@ -23,7 +22,7 @@ impl log::Log for WasmerLogger {
                 record
                     .file()
                     .unwrap()
-                    .rsplit_terminator(PATTERN)
+                    .rsplit_terminator('/')
                     .next()
                     .unwrap(),
                 record.args()

@@ -187,8 +187,14 @@ impl Instance for WasmerInstance {
             .map_err(|_| "function not found".to_string())?;
 
         match func.call(&[]) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(err.to_string()),
+            Ok(_) => {
+                debug!("Call succeeded: {func_name}");
+                Ok(())
+            }
+            Err(err) => {
+                log::error!("Call failed: {func_name} - {err}");
+                Err(err.to_string())
+            }
         }
     }
 
