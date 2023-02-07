@@ -121,12 +121,12 @@ fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<Stri
     let result = validate_memory(&memories);
     match result {
         Ok(memory_name) => Ok(memory_name),
-        Err(err) => return Err(err),
+        Err(err) => Err(err),
     }
 }
 
 fn validate_memory(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<String, ExecutorError> {
-    if memories.len() == 0 {
+    if memories.is_empty() {
         return Err(Box::new(ServiceError::new(
             "no memory declared in smart contract",
         )));
