@@ -45,12 +45,13 @@ pub fn init(log_level: LevelFilter) {
 }
 
 pub fn set_log_level(log_level: LevelFilter) {
-    if INIT.is_completed() {
-        log::set_max_level(log_level);
-        info!("Setting log level to {log_level} ...");
-    } else {
+    // Extra safety to check that logger is truly initialized
+    if !INIT.is_completed() {
         init(log_level);
     }
+
+    log::set_max_level(log_level);
+    info!("Setting log level to {log_level} ...");
 }
 
 pub fn u64_to_log_level(value: u64) -> Result<LevelFilter, &'static str> {
@@ -69,6 +70,12 @@ pub fn u64_to_log_level(value: u64) -> Result<LevelFilter, &'static str> {
 pub mod test {
     use super::*;
 
+    // Helper method used only for tests to reset the log level to Off
+    // This way, we make surre it doesn't interfere with the other tests
+    fn reset_log_level_to_off() {
+        log::set_max_level(LevelFilter::Off);
+    }
+
     #[test]
     fn test_init_only_once() {
         init(LevelFilter::Off);
@@ -78,6 +85,25 @@ pub mod test {
         init(LevelFilter::Debug);
         init(LevelFilter::Trace);
         assert_eq!(log::max_level(), LevelFilter::Off);
+    }
+
+    #[test]
+    fn test_set_log_level() {
+        init(LevelFilter::Off);
+        assert_eq!(log::max_level(), LevelFilter::Off);
+
+        set_log_level(LevelFilter::Error);
+        assert_eq!(log::max_level(), LevelFilter::Error);
+
+        reset_log_level_to_off();
+    }
+
+    #[test]
+    fn test_set_log_level_with_uninitialized_logger() {
+        set_log_level(LevelFilter::Warn);
+        assert_eq!(log::max_level(), LevelFilter::Warn);
+
+        reset_log_level_to_off();
     }
 
     #[test]
