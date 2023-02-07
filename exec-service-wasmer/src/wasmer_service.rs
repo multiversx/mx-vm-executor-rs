@@ -1,13 +1,16 @@
+use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use log::info;
+use log::LevelFilter;
 use multiversx_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
 
+use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
 use crate::WasmerExecutorData;
-use crate::WasmerExecutorLogLevel;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
@@ -16,9 +19,15 @@ pub struct BasicExecutorService {
 
 impl BasicExecutorService {
     pub fn new() -> Self {
+        Self::init();
         Self {
             last_error: String::new(),
         }
+    }
+
+    fn init() {
+        // Initialize the logger only once
+        WasmerLogger::init(LevelFilter::Trace);
     }
 }
 
@@ -37,13 +46,14 @@ impl ExecutorService for BasicExecutorService {
         &self,
         vm_hooks_builder: Box<dyn VMHooks>,
     ) -> Result<Box<dyn Executor>, ExecutorError> {
+        info!("Initializing WasmerExecutor ...");
+
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),
             opcode_cost: Arc::new(Default::default()),
-            log_level: WasmerExecutorLogLevel::Debug,
         };
         Ok(Box::new(WasmerExecutor {
-            data: Rc::new(data),
+            data: Rc::new(RefCell::new(data)),
         }))
     }
 }
