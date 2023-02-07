@@ -4,7 +4,7 @@ use crate::{basic_types::vm_exec_result_t, service_singleton::with_service};
 
 /// Sets the log level.
 #[no_mangle]
-pub unsafe extern "C" fn vm_exec_set_log_level(value: u64) -> vm_exec_result_t {
+pub extern "C" fn vm_exec_set_log_level(value: u64) -> vm_exec_result_t {
     let result = u64_to_log_level(value);
 
     match result {
