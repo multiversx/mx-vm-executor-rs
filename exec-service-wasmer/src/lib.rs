@@ -14,5 +14,6 @@ mod wasmer_vm_hooks;
 
 pub use wasmer_executor::*;
 pub use wasmer_instance::*;
+pub use wasmer_logger::*;
 pub use wasmer_metering_helpers::*;
 pub use wasmer_service::*;

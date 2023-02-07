@@ -44,6 +44,15 @@ pub fn init(log_level: LevelFilter) {
     });
 }
 
+pub fn set_log_level(log_level: LevelFilter) {
+    if INIT.is_completed() {
+        log::set_max_level(log_level);
+        info!("Setting log level to {log_level} ...");
+    } else {
+        init(log_level);
+    }
+}
+
 pub fn u64_to_log_level(value: u64) -> Result<LevelFilter, &'static str> {
     match value {
         0 => Ok(LevelFilter::Off),
