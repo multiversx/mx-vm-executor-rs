@@ -4,6 +4,10 @@ use log::{info, Level, LevelFilter, Metadata, Record};
 
 struct WasmerLogger;
 
+use std::sync::Once;
+
+static INIT: Once = Once::new();
+
 impl log::Log for WasmerLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level() <= Level::Trace
@@ -11,14 +15,15 @@ impl log::Log for WasmerLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
+            const PATTERN: &str = "/";
             println!(
-                "{}[{}] [{}]\t{}",
+                "{:<5}[{}] [{}]\t{}",
                 record.level(),
                 Local::now().format("%Y-%m-%d %H:%M:%S:%3f"),
                 record
                     .file()
                     .unwrap()
-                    .rsplit_terminator("/")
+                    .rsplit_terminator(PATTERN)
                     .next()
                     .unwrap(),
                 record.args()
@@ -29,21 +34,15 @@ impl log::Log for WasmerLogger {
     fn flush(&self) {}
 }
 
-pub fn init(log_level: LevelFilter) -> bool {
-    let result =
-        log::set_boxed_logger(Box::new(WasmerLogger)).map(|()| log::set_max_level(log_level));
-
-    match result {
-        Ok(_) => {
-            let log_level = log::max_level();
-            info!("Initializing WasmerLogger with {log_level} ...");
-            true
-        }
-        Err(_) => {
-            info!("WasmerLogger already initialized");
-            false
-        }
-    }
+pub fn init(log_level: LevelFilter) {
+    INIT.call_once(|| {
+        log::set_boxed_logger(Box::new(WasmerLogger))
+            .map(|()| {
+                log::set_max_level(log_level);
+                info!("Initializing WasmerLogger with {log_level} ...");
+            })
+            .unwrap();
+    });
 }
 
 pub fn u64_to_log_level(value: u64) -> Result<LevelFilter, &'static str> {
@@ -63,20 +62,14 @@ pub mod test {
     use super::*;
 
     #[test]
-    fn test_already_initialized() {
-        let result = init(LevelFilter::Off);
-        assert!(result);
-        let result = init(LevelFilter::Off);
-        assert!(!result);
-    }
-
-    #[test]
-    fn test_set_max_log_level() {
+    fn test_init_only_once() {
         init(LevelFilter::Off);
+        init(LevelFilter::Error);
+        init(LevelFilter::Warn);
+        init(LevelFilter::Info);
+        init(LevelFilter::Debug);
+        init(LevelFilter::Trace);
         assert_eq!(log::max_level(), LevelFilter::Off);
-
-        log::set_max_level(LevelFilter::Debug);
-        assert_eq!(log::max_level(), LevelFilter::Debug);
     }
 
     #[test]

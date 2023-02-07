@@ -2,8 +2,8 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use log::info;
 use log::LevelFilter;
-use log::trace;
 use multiversx_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
@@ -19,12 +19,15 @@ pub struct BasicExecutorService {
 
 impl BasicExecutorService {
     pub fn new() -> Self {
-        // Initiliaze the logger only once
-        WasmerLogger::init(LevelFilter::Trace);
-
+        Self::init();
         Self {
             last_error: String::new(),
         }
+    }
+
+    fn init() {
+        // Initialize the logger only once
+        WasmerLogger::init(LevelFilter::Trace);
     }
 }
 
@@ -43,7 +46,7 @@ impl ExecutorService for BasicExecutorService {
         &self,
         vm_hooks_builder: Box<dyn VMHooks>,
     ) -> Result<Box<dyn Executor>, ExecutorError> {
-        trace!("Creating new executor ...");
+        info!("Initializing WasmerExecutor ...");
 
         let data = WasmerExecutorData {
             vm_hooks: Rc::new(vm_hooks_builder),

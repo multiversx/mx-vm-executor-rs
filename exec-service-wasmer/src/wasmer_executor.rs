@@ -1,6 +1,6 @@
 use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerInstance;
-use log::trace;
+use log::info;
 use multiversx_vm_executor::{
     CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
 };
@@ -38,12 +38,12 @@ pub struct WasmerExecutor {
 
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
-        trace!("Setting vmhooks ...");
+        info!("Setting vmhooks ...");
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        trace!("Setting opcode cost...");
+        info!("Setting opcode cost...");
         self.data.borrow_mut().set_opcode_cost(opcode_cost)
     }
 
@@ -51,7 +51,7 @@ impl Executor for WasmerExecutor {
         let result = WasmerLogger::u64_to_log_level(value);
         match result {
             Ok(level) => {
-                trace!("Setting execution log level to {level}...");
+                info!("Setting execution log level to {level}...");
                 log::set_max_level(level);
                 Ok(())
             }

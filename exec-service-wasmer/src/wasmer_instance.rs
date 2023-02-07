@@ -4,7 +4,7 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use log::trace;
+use log::{debug, info};
 use multiversx_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
 };
@@ -37,17 +37,17 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        trace!("Compiling module ...");
+        info!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        trace!("Converting imports ...");
+        info!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.borrow().vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        trace!("Instantiating module ...");
+        info!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -74,20 +74,20 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        trace!("Deserializing module ...");
+        info!("Deserializing module ...");
         let module;
         unsafe {
             module = Module::deserialize(&store, cache_bytes)?;
         };
 
         // Create an empty import object.
-        trace!("Converting imports ...");
+        info!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.borrow().vm_hooks.clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        trace!("Instantiating module ...");
+        info!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -159,26 +159,26 @@ fn push_middlewares(
         metering_middleware.clone(),
     ]));
 
-    trace!("Adding protected_globals middleware ...");
+    info!("Adding protected_globals middleware ...");
     compiler.push_middleware(protected_globals_middleware);
-    trace!("Adding metering middleware ...");
+    info!("Adding metering middleware ...");
     compiler.push_middleware(metering_middleware);
-    trace!("Adding opcode_control middleware ...");
+    info!("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
-    trace!("Adding breakpoints middleware ...");
+    info!("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 
     if compilation_options.opcode_trace {
         // Create opcode_tracer middleware
         let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-        trace!("Adding opcode_tracer middleware ...");
+        info!("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
 }
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
-        trace!("Rust instance call: {func_name}");
+        debug!("Rust instance call: {func_name}");
 
         let func = self
             .wasmer_instance
