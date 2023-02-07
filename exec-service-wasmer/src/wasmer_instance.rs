@@ -11,9 +11,11 @@ use multiversx_vm_executor::{
 use multiversx_vm_executor::{MemLength, MemPtr};
 use std::cell::RefCell;
 use std::{rc::Rc, sync::Arc};
-use wasmer::Singlepass;
 use wasmer::Universal;
 use wasmer::{CompilerConfig, Extern, Module, Store};
+use wasmer::{Pages, Singlepass};
+
+const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
     #[allow(dead_code)]
@@ -115,19 +117,43 @@ fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<Stri
         .iter()
         .memories()
         .collect::<Vec<_>>();
+
+    let result = validate_memory(&memories);
+    match result {
+        Ok(memory_name) => Ok(memory_name),
+        Err(err) => return Err(err),
+    }
+}
+
+fn validate_memory(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<String, ExecutorError> {
+    if memories.len() == 0 {
+        return Err(Box::new(ServiceError::new(
+            "no memory declared in smart contract",
+        )));
+    }
     if memories.len() > 1 {
         return Err(Box::new(ServiceError::new(
             "more than one memory declared in smart contract",
         )));
     }
 
-    if let Some(entry) = memories.get(0) {
-        Ok(entry.0.clone())
-    } else {
-        Err(Box::new(ServiceError::new(
-            "no memory declared in smart contract",
-        )))
+    let memory = memories[0].1;
+    let memory_type = memory.ty();
+    let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
+
+    if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
+        log::error!(
+            "Memory size exceeds maximum allowed: {:#?} > {:#?}",
+            max_memory_pages,
+            MAX_MEMORY_PAGES_ALLOWED
+        );
+        return Err(Box::new(ServiceError::new(
+            "memory size exceeds maximum allowed",
+        )));
     }
+
+    debug!("WasmerMemory size: {:#?}", memory.size());
+    Ok(memories[0].0.clone())
 }
 
 fn push_middlewares(
