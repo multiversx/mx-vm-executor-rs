@@ -170,7 +170,7 @@ impl FunctionMiddleware for FunctionMetering {
             None => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
-                    format!("Unsupported operator: {:?}", operator),
+                    format!("Unsupported operator: {operator:?}"),
                 ))
             }
         }
