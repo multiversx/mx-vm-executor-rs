@@ -53,7 +53,7 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+        let memory_name = extract_memory_name(&wasmer_instance)?;
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -93,7 +93,7 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+        let memory_name = extract_memory_name(&wasmer_instance)?;
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -111,21 +111,24 @@ impl WasmerInstance {
     }
 }
 
-fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<String, ExecutorError> {
+fn extract_memory_name(wasmer_instance: &wasmer::Instance) -> Result<String, ExecutorError> {
     let memories = wasmer_instance
         .exports
         .iter()
         .memories()
         .collect::<Vec<_>>();
+    validate_memories(&memories)?;
 
-    let result = validate_memory(&memories);
-    match result {
-        Ok(memory_name) => Ok(memory_name),
-        Err(err) => Err(err),
-    }
+    // At this point we know that there is exactly one memory
+    let memory = memories[0].1;
+    validate_memory(memory)?;
+
+    let memory_name = memories[0].0.clone();
+    Ok(memory_name)
 }
 
-fn validate_memory(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<String, ExecutorError> {
+// Checks that there is exactly one memory in the smart contract, no more, no less
+fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), ExecutorError> {
     if memories.is_empty() {
         return Err(Box::new(ServiceError::new(
             "no memory declared in smart contract",
@@ -137,7 +140,11 @@ fn validate_memory(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<String,
         )));
     }
 
-    let memory = memories[0].1;
+    Ok(())
+}
+
+// Checks that the memory size is not greater than the maximum allowed
+fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
     let memory_type = memory.ty();
     let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
 
@@ -153,7 +160,7 @@ fn validate_memory(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<String,
     }
 
     debug!("WasmerMemory size: {:#?}", memory.size());
-    Ok(memories[0].0.clone())
+    Ok(())
 }
 
 fn push_middlewares(
