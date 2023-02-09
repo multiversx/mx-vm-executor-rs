@@ -8,7 +8,7 @@ use multiversx_vm_executor::OpcodeCost;
 use wasmer::wasmparser::Operator;
 
 pub fn get_local_cost(opcode_cost: &OpcodeCost) -> u32 {
-	opcode_cost.opcode_localallocate
+    opcode_cost.opcode_localallocate
 }
 
 pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
@@ -140,6 +140,6 @@ pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
         Operator::TypedSelect { .. } => Some(opcode_cost.opcode_typedselect),
         Operator::Unreachable { .. } => Some(opcode_cost.opcode_unreachable),
         Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind),
-		_ => None,
+        _ => None,
     }
 }
