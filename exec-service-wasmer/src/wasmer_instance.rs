@@ -117,17 +117,18 @@ fn extract_memory_name(wasmer_instance: &wasmer::Instance) -> Result<String, Exe
         .iter()
         .memories()
         .collect::<Vec<_>>();
+    // Checks that there is exactly one memory in the smart contract, no more, no less
     validate_memories(&memories)?;
 
     // At this point we know that there is exactly one memory
     let memory = memories[0].1;
+    // Checks that the memory size is not greater than the maximum allowed
     validate_memory(memory)?;
 
-    let memory_name = memories[0].0.clone();
-    Ok(memory_name)
+    let memory_name = memories[0].0;
+    Ok(memory_name.clone())
 }
 
-// Checks that there is exactly one memory in the smart contract, no more, no less
 fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), ExecutorError> {
     if memories.is_empty() {
         return Err(Box::new(ServiceError::new(
@@ -143,7 +144,6 @@ fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), E
     Ok(())
 }
 
-// Checks that the memory size is not greater than the maximum allowed
 fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
     let memory_type = memory.ty();
     let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
