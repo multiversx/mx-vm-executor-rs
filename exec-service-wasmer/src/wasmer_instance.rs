@@ -53,7 +53,17 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_memory_name(&wasmer_instance)?;
+        // Check that there is exactly one memory in the smart contract, no more, no less
+        let memories = get_memories(&wasmer_instance);
+        validate_memories(&memories)?;
+
+        // At this point we know that there is exactly one memory
+        let memory = memories[0].1;
+        // Checks that the memory size is not greater than the maximum allowed
+        validate_memory(memory)?;
+
+        debug!("WasmerMemory size: {:#?}", memory.size());
+        let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -93,7 +103,17 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_memory_name(&wasmer_instance)?;
+        // Check that there is exactly one memory in the smart contract, no more, no less
+        let memories = get_memories(&wasmer_instance);
+        validate_memories(&memories)?;
+
+        // At this point we know that there is exactly one memory
+        let memory = memories[0].1;
+        // Checks that the memory size is not greater than the maximum allowed
+        validate_memory(memory)?;
+
+        debug!("WasmerMemory size: {:#?}", memory.size());
+        let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -111,22 +131,13 @@ impl WasmerInstance {
     }
 }
 
-fn extract_memory_name(wasmer_instance: &wasmer::Instance) -> Result<String, ExecutorError> {
+fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
     let memories = wasmer_instance
         .exports
         .iter()
         .memories()
         .collect::<Vec<_>>();
-    // Checks that there is exactly one memory in the smart contract, no more, no less
-    validate_memories(&memories)?;
-
-    // At this point we know that there is exactly one memory
-    let memory = memories[0].1;
-    // Checks that the memory size is not greater than the maximum allowed
-    validate_memory(memory)?;
-
-    let memory_name = memories[0].0;
-    Ok(memory_name.clone())
+    memories
 }
 
 fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), ExecutorError> {
@@ -159,7 +170,6 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
         )));
     }
 
-    debug!("WasmerMemory size: {:#?}", memory.size());
     Ok(())
 }
 
