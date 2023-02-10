@@ -11,9 +11,11 @@ use multiversx_vm_executor::{
 use multiversx_vm_executor::{MemLength, MemPtr};
 use std::cell::RefCell;
 use std::{rc::Rc, sync::Arc};
-use wasmer::Singlepass;
 use wasmer::Universal;
 use wasmer::{CompilerConfig, Extern, Module, Store};
+use wasmer::{Pages, Singlepass};
+
+const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
     #[allow(dead_code)]
@@ -51,7 +53,17 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+        // Check that there is exactly one memory in the smart contract, no more, no less
+        let memories = get_memories(&wasmer_instance);
+        validate_memories(&memories)?;
+
+        // At this point we know that there is exactly one memory
+        let memory = memories[0].1;
+        // Checks that the memory size is not greater than the maximum allowed
+        validate_memory(memory)?;
+
+        debug!("WasmerMemory size: {:#?}", memory.size());
+        let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -91,7 +103,17 @@ impl WasmerInstance {
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
-        let memory_name = extract_wasmer_memory_name(&wasmer_instance)?;
+        // Check that there is exactly one memory in the smart contract, no more, no less
+        let memories = get_memories(&wasmer_instance);
+        validate_memories(&memories)?;
+
+        // At this point we know that there is exactly one memory
+        let memory = memories[0].1;
+        // Checks that the memory size is not greater than the maximum allowed
+        validate_memory(memory)?;
+
+        debug!("WasmerMemory size: {:#?}", memory.size());
+        let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
             executor_data,
@@ -109,25 +131,46 @@ impl WasmerInstance {
     }
 }
 
-fn extract_wasmer_memory_name(wasmer_instance: &wasmer::Instance) -> Result<String, ExecutorError> {
+fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
     let memories = wasmer_instance
         .exports
         .iter()
         .memories()
         .collect::<Vec<_>>();
+    memories
+}
+
+fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), ExecutorError> {
+    if memories.is_empty() {
+        return Err(Box::new(ServiceError::new(
+            "no memory declared in smart contract",
+        )));
+    }
     if memories.len() > 1 {
         return Err(Box::new(ServiceError::new(
             "more than one memory declared in smart contract",
         )));
     }
 
-    if let Some(entry) = memories.get(0) {
-        Ok(entry.0.clone())
-    } else {
-        Err(Box::new(ServiceError::new(
-            "no memory declared in smart contract",
-        )))
+    Ok(())
+}
+
+fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
+    let memory_type = memory.ty();
+    let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
+
+    if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
+        log::error!(
+            "Memory size exceeds maximum allowed: {:#?} > {:#?}",
+            max_memory_pages,
+            MAX_MEMORY_PAGES_ALLOWED
+        );
+        return Err(Box::new(ServiceError::new(
+            "memory size exceeds maximum allowed",
+        )));
     }
+
+    Ok(())
 }
 
 fn push_middlewares(
