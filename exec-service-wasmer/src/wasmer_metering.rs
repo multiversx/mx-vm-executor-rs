@@ -164,8 +164,16 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        self.accumulated_cost +=
-            get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap()) as u64;
+        let option = get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap());
+        match option {
+            Some(cost) => self.accumulated_cost += cost as u64,
+            None => {
+                return Err(MiddlewareError::new(
+                    "metering_middleware",
+                    format!("Unsupported operator: {operator:?}"),
+                ))
+            }
+        }
 
         if matches!(
             operator,
