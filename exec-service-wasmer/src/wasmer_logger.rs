@@ -1,6 +1,6 @@
 use chrono::Local;
 
-use log::{info, Level, LevelFilter, Metadata, Record};
+use log::{trace, Level, LevelFilter, Metadata, Record};
 
 struct WasmerLogger;
 
@@ -38,7 +38,7 @@ pub fn init(log_level: LevelFilter) {
         log::set_boxed_logger(Box::new(WasmerLogger))
             .map(|()| {
                 log::set_max_level(log_level);
-                info!("Initializing WasmerLogger with {log_level} ...");
+                trace!("Initializing WasmerLogger with {log_level} ...");
             })
             .unwrap();
     });
@@ -51,7 +51,7 @@ pub fn set_log_level(log_level: LevelFilter) {
     }
 
     log::set_max_level(log_level);
-    info!("Setting log level to {log_level} ...");
+    trace!("Setting log level to {log_level} ...");
 }
 
 pub fn u64_to_log_level(value: u64) -> Result<LevelFilter, &'static str> {

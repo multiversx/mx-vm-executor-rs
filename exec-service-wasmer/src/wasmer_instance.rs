@@ -4,7 +4,7 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use log::{debug, info};
+use log::trace;
 use multiversx_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
 };
@@ -18,9 +18,7 @@ use wasmer::{Pages, Singlepass};
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
-    #[allow(dead_code)]
-    pub(crate) executor_data: Rc<RefCell<WasmerExecutorData>>,
-    pub(crate) wasmer_instance: wasmer::Instance,
+    wasmer_instance: wasmer::Instance,
     memory_name: String,
 }
 
@@ -39,17 +37,17 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        info!("Compiling module ...");
+        trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        info!("Generating imports ...");
+        trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().vm_hooks.clone(),
+            vm_hooks: executor_data.borrow().get_vm_hooks_clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        info!("Instantiating WasmerInstance ...");
+        trace!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -62,11 +60,10 @@ impl WasmerInstance {
         // Checks that the memory size is not greater than the maximum allowed
         validate_memory(memory)?;
 
-        debug!("WasmerMemory size: {:#?}", memory.size());
+        trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
-            executor_data,
             wasmer_instance,
             memory_name,
         }))
@@ -86,20 +83,20 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        info!("Deserializing module ...");
+        trace!("Deserializing module ...");
         let module;
         unsafe {
             module = Module::deserialize(&store, cache_bytes)?;
         };
 
         // Create an empty import object.
-        info!("Generating imports ...");
+        trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().vm_hooks.clone(),
+            vm_hooks: executor_data.borrow().get_vm_hooks_clone(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        info!("Instantiating WasmerInstance ...");
+        trace!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -112,11 +109,10 @@ impl WasmerInstance {
         // Checks that the memory size is not greater than the maximum allowed
         validate_memory(memory)?;
 
-        debug!("WasmerMemory size: {:#?}", memory.size());
+        trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
-            executor_data,
             wasmer_instance,
             memory_name,
         }))
@@ -160,7 +156,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
     let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
 
     if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
-        log::error!(
+        trace!(
             "Memory size exceeds maximum allowed: {:#?} > {:#?}",
             max_memory_pages,
             MAX_MEMORY_PAGES_ALLOWED
@@ -192,7 +188,7 @@ fn push_middlewares(
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         compilation_options.unmetered_locals,
-        executor_data.borrow().opcode_cost.clone(),
+        executor_data.borrow().get_opcode_cost_clone(),
         breakpoints_middleware.clone(),
     ));
 
@@ -202,26 +198,26 @@ fn push_middlewares(
         metering_middleware.clone(),
     ]));
 
-    info!("Adding protected_globals middleware ...");
+    trace!("Adding protected_globals middleware ...");
     compiler.push_middleware(protected_globals_middleware);
-    info!("Adding metering middleware ...");
+    trace!("Adding metering middleware ...");
     compiler.push_middleware(metering_middleware);
-    info!("Adding opcode_control middleware ...");
+    trace!("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
-    info!("Adding breakpoints middleware ...");
+    trace!("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 
     if compilation_options.opcode_trace {
         // Create opcode_tracer middleware
         let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-        info!("Adding opcode_tracer middleware ...");
+        trace!("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
 }
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
-        debug!("Rust instance call: {func_name}");
+        trace!("Rust instance call: {func_name}");
 
         let func = self
             .wasmer_instance
@@ -231,11 +227,11 @@ impl Instance for WasmerInstance {
 
         match func.call(&[]) {
             Ok(_) => {
-                debug!("Call succeeded: {func_name}");
+                trace!("Call succeeded: {func_name}");
                 Ok(())
             }
             Err(err) => {
-                log::error!("Call failed: {func_name} - {err}");
+                trace!("Call failed: {func_name} - {err}");
                 Err(err.to_string())
             }
         }
