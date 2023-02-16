@@ -43,7 +43,7 @@ impl WasmerInstance {
         // Create an empty import object.
         trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().get_vm_hooks_clone(),
+            vm_hooks: executor_data.borrow().get_vm_hooks(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
@@ -92,7 +92,7 @@ impl WasmerInstance {
         // Create an empty import object.
         trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().get_vm_hooks_clone(),
+            vm_hooks: executor_data.borrow().get_vm_hooks(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
@@ -188,7 +188,7 @@ fn push_middlewares(
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         compilation_options.unmetered_locals,
-        executor_data.borrow().get_opcode_cost_clone(),
+        executor_data.borrow().get_opcode_cost(),
         breakpoints_middleware.clone(),
     ));
 

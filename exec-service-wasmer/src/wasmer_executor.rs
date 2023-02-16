@@ -37,11 +37,11 @@ impl WasmerExecutorData {
         Ok(())
     }
 
-    pub(crate) fn get_vm_hooks_clone(&self) -> Rc<Box<dyn VMHooks>> {
+    pub(crate) fn get_vm_hooks(&self) -> Rc<Box<dyn VMHooks>> {
         self.vm_hooks.clone()
     }
 
-    pub(crate) fn get_opcode_cost_clone(&self) -> Arc<Mutex<OpcodeCost>> {
+    pub(crate) fn get_opcode_cost(&self) -> Arc<Mutex<OpcodeCost>> {
         self.opcode_cost.clone()
     }
 }
