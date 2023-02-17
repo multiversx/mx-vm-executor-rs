@@ -22,7 +22,7 @@ impl BasicExecutorService {
 
     fn init() {
         // Initialize the logger only once
-        WasmerLogger::init(LevelFilter::Off);
+        // WasmerLogger::init(LevelFilter::Off);
     }
 }
 
