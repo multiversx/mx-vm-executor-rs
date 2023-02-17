@@ -33,13 +33,13 @@ impl WasmerExecutorData {
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        if let Some(self_opcode_cost) = Arc::get_mut(&mut self.opcode_cost) {
-            self_opcode_cost.clone_from(opcode_cost);
+        if let Some(opcode_cost_mut) = Arc::get_mut(&mut self.opcode_cost) {
+            opcode_cost_mut.clone_from(opcode_cost);
             Ok(())
         } else {
-            return Err(Box::new(ServiceError::new(
+            Err(Box::new(ServiceError::new(
                 "WasmerExecutor already set opcode cost, further configuration not allowed",
-            )));
+            )))
         }
     }
 
