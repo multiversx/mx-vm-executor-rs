@@ -162,9 +162,9 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
         //     max_memory_pages,
         //     MAX_MEMORY_PAGES_ALLOWED
         // );
-        // return Err(Box::new(ServiceError::new(
-        //     "memory size exceeds maximum allowed",
-        // )));
+        return Err(Box::new(ServiceError::new(
+            "memory size exceeds maximum allowed",
+        )));
     }
 
     Ok(())
