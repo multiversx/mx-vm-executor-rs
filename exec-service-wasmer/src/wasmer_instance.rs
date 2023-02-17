@@ -4,7 +4,7 @@ use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
-use log::trace;
+// use log::trace;
 use multiversx_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
 };
@@ -38,17 +38,17 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        trace!("Compiling module ...");
+        // trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
         // Create an empty import object.
-        trace!("Generating imports ...");
+        // trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.borrow().get_vm_hooks(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        trace!("Instantiating WasmerInstance ...");
+        // trace!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -61,7 +61,7 @@ impl WasmerInstance {
         // Checks that the memory size is not greater than the maximum allowed
         validate_memory(memory)?;
 
-        trace!("WasmerMemory size: {:#?}", memory.size());
+        // trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
@@ -84,20 +84,20 @@ impl WasmerInstance {
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
 
-        trace!("Deserializing module ...");
+        // trace!("Deserializing module ...");
         let module;
         unsafe {
             module = Module::deserialize(&store, cache_bytes)?;
         };
 
         // Create an empty import object.
-        trace!("Generating imports ...");
+        // trace!("Generating imports ...");
         let vm_hooks_wrapper = VMHooksWrapper {
             vm_hooks: executor_data.borrow().get_vm_hooks(),
         };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
-        trace!("Instantiating WasmerInstance ...");
+        // trace!("Instantiating WasmerInstance ...");
         let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
         set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
@@ -110,7 +110,7 @@ impl WasmerInstance {
         // Checks that the memory size is not greater than the maximum allowed
         validate_memory(memory)?;
 
-        trace!("WasmerMemory size: {:#?}", memory.size());
+        // trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
         Ok(Box::new(WasmerInstance {
@@ -157,14 +157,14 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
     let max_memory_pages = memory_type.maximum.unwrap_or(memory_type.minimum);
 
     if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
-        trace!(
-            "Memory size exceeds maximum allowed: {:#?} > {:#?}",
-            max_memory_pages,
-            MAX_MEMORY_PAGES_ALLOWED
-        );
-        return Err(Box::new(ServiceError::new(
-            "memory size exceeds maximum allowed",
-        )));
+        // trace!(
+        //     "Memory size exceeds maximum allowed: {:#?} > {:#?}",
+        //     max_memory_pages,
+        //     MAX_MEMORY_PAGES_ALLOWED
+        // );
+        // return Err(Box::new(ServiceError::new(
+        //     "memory size exceeds maximum allowed",
+        // )));
     }
 
     Ok(())
@@ -199,26 +199,26 @@ fn push_middlewares(
         metering_middleware.clone(),
     ]));
 
-    trace!("Adding protected_globals middleware ...");
+    // trace!("Adding protected_globals middleware ...");
     compiler.push_middleware(protected_globals_middleware);
-    trace!("Adding metering middleware ...");
+    // trace!("Adding metering middleware ...");
     compiler.push_middleware(metering_middleware);
-    trace!("Adding opcode_control middleware ...");
+    // trace!("Adding opcode_control middleware ...");
     compiler.push_middleware(opcode_control_middleware);
-    trace!("Adding breakpoints middleware ...");
+    // trace!("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 
     if compilation_options.opcode_trace {
         // Create opcode_tracer middleware
         let opcode_tracer_middleware = Arc::new(OpcodeTracer::new());
-        trace!("Adding opcode_tracer middleware ...");
+        // trace!("Adding opcode_tracer middleware ...");
         compiler.push_middleware(opcode_tracer_middleware);
     }
 }
 
 impl Instance for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
-        trace!("Rust instance call: {func_name}");
+        // trace!("Rust instance call: {func_name}");
 
         let func = self
             .wasmer_instance
@@ -228,11 +228,11 @@ impl Instance for WasmerInstance {
 
         match func.call(&[]) {
             Ok(_) => {
-                trace!("Call succeeded: {func_name}");
+                // trace!("Call succeeded: {func_name}");
                 Ok(())
             }
             Err(err) => {
-                trace!("Call failed: {func_name} - {err}");
+                // trace!("Call failed: {func_name} - {err}");
                 Err(err.to_string())
             }
         }
