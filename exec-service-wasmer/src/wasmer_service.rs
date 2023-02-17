@@ -1,5 +1,4 @@
-use log::trace;
-use log::LevelFilter;
+use log::{trace, LevelFilter};
 use multiversx_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
@@ -22,7 +21,7 @@ impl BasicExecutorService {
 
     fn init() {
         // Initialize the logger only once
-        // WasmerLogger::init(LevelFilter::Off);
+        WasmerLogger::init(LevelFilter::Off);
     }
 }
 
@@ -41,7 +40,7 @@ impl ExecutorService for BasicExecutorService {
         &self,
         vm_hooks_builder: Box<dyn VMHooks>,
     ) -> Result<Box<dyn Executor>, ExecutorError> {
-        // trace!("Initializing WasmerExecutor ...");
+        trace!("Initializing WasmerExecutor ...");
         Ok(Box::new(WasmerExecutor::new(vm_hooks_builder)))
     }
 }

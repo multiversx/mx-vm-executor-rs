@@ -6,18 +6,18 @@ use multiversx_vm_executor::{
 use std::cell::RefCell;
 use std::ffi::c_void;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 pub(crate) struct WasmerExecutorData {
     vm_hooks: Rc<Box<dyn VMHooks>>,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_cost: Arc<OpcodeCost>,
 }
 
 impl WasmerExecutorData {
     fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
         Self {
             vm_hooks: Rc::new(vm_hooks),
-            opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
+            opcode_cost: Arc::new(OpcodeCost::default()),
         }
     }
 
@@ -33,15 +33,21 @@ impl WasmerExecutorData {
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
-        Ok(())
+        if let Some(self_opcode_cost) = Arc::get_mut(&mut self.opcode_cost) {
+            self_opcode_cost.clone_from(opcode_cost);
+            Ok(())
+        } else {
+            return Err(Box::new(ServiceError::new(
+                "WasmerExecutor already set opcode cost, further configuration not allowed",
+            )));
+        }
     }
 
     pub(crate) fn get_vm_hooks(&self) -> Rc<Box<dyn VMHooks>> {
         self.vm_hooks.clone()
     }
 
-    pub(crate) fn get_opcode_cost(&self) -> Arc<Mutex<OpcodeCost>> {
+    pub(crate) fn get_opcode_cost(&self) -> Arc<OpcodeCost> {
         self.opcode_cost.clone()
     }
 }
@@ -60,12 +66,12 @@ impl WasmerExecutor {
 
 impl Executor for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
-        // trace!("Setting vmhooks ...");
+        trace!("Setting vmhooks ...");
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
     }
 
     fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        // trace!("Setting opcode cost...");
+        trace!("Setting opcode cost...");
         self.data.borrow_mut().set_opcode_cost(opcode_cost)
     }
 

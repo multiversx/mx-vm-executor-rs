@@ -26,7 +26,7 @@ struct MeteringGlobalIndexes {
 pub(crate) struct Metering {
     points_limit: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
@@ -35,7 +35,7 @@ impl Metering {
     pub(crate) fn new(
         points_limit: u64,
         unmetered_locals: usize,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_cost: Arc<OpcodeCost>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
@@ -119,7 +119,7 @@ impl MiddlewareWithProtectedGlobals for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
@@ -164,7 +164,7 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap());
+        let option = get_opcode_cost(&operator, &self.opcode_cost);
         match option {
             Some(cost) => self.accumulated_cost += cost as u64,
             None => {
@@ -207,7 +207,7 @@ impl FunctionMiddleware for FunctionMetering {
         let unmetered_locals = self.unmetered_locals as u32;
         if count > unmetered_locals {
             let metered_locals = count - unmetered_locals;
-            let local_cost = get_local_cost(&self.opcode_cost.lock().unwrap());
+            let local_cost = get_local_cost(&self.opcode_cost);
             let metered_locals_cost = metered_locals * local_cost;
             self.accumulated_cost += metered_locals_cost as u64;
         }
