@@ -30,10 +30,6 @@ pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
     }
 }
 
-fn set_breakpoint_value_u64(instance: &dyn Instance, value: u64) -> Result<(), String> {
-    instance.set_breakpoint_value(value.try_into()?)
-}
-
 /// Returns the runtime breakpoint value from the given instance.
 ///
 /// # Safety
@@ -54,4 +50,8 @@ pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
             0
         }
     }
+}
+
+fn set_breakpoint_value_u64(instance: &dyn Instance, value: u64) -> Result<(), String> {
+    instance.set_breakpoint_value(value.try_into()?)
 }
