@@ -996,6 +996,31 @@ fn wasmer_import_mbuffer_set_random(env: &VMHooksWrapper, destination_handle: i3
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_map_new(env: &VMHooksWrapper) -> i32 {
+    env.vm_hooks.managed_map_new()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_put(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+    env.vm_hooks.managed_map_put(m_map_handle, key_handle, value_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_get(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    env.vm_hooks.managed_map_get(m_map_handle, key_handle, out_value_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_remove(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    env.vm_hooks.managed_map_remove(m_map_handle, key_handle, out_value_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_contains(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32) -> i32 {
+    env.vm_hooks.managed_map_contains(m_map_handle, key_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_small_int_get_unsigned_argument(env: &VMHooksWrapper, id: i32) -> i64 {
     env.vm_hooks.small_int_get_unsigned_argument(id)
 }
@@ -1445,6 +1470,11 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "mBufferGetArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_get_argument),
             "mBufferFinish" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_finish),
             "mBufferSetRandom" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_set_random),
+            "managedMapNew" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_new),
+            "managedMapPut" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_put),
+            "managedMapGet" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_get),
+            "managedMapRemove" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_remove),
+            "managedMapContains" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_contains),
             "smallIntGetUnsignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_get_unsigned_argument),
             "smallIntGetSignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_get_signed_argument),
             "smallIntFinishUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_finish_unsigned),

@@ -210,6 +210,11 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn mbuffer_get_argument(&self, id: i32, destination_handle: i32) -> i32;
     fn mbuffer_finish(&self, source_handle: i32) -> i32;
     fn mbuffer_set_random(&self, destination_handle: i32, length: i32) -> i32;
+    fn managed_map_new(&self) -> i32;
+    fn managed_map_put(&self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32;
+    fn managed_map_get(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32;
+    fn managed_map_remove(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32;
+    fn managed_map_contains(&self, m_map_handle: i32, key_handle: i32) -> i32;
     fn small_int_get_unsigned_argument(&self, id: i32) -> i64;
     fn small_int_get_signed_argument(&self, id: i32) -> i64;
     fn small_int_finish_unsigned(&self, value: i64);
@@ -1167,6 +1172,31 @@ impl VMHooks for VMHooksDefault {
 
     fn mbuffer_set_random(&self, destination_handle: i32, length: i32) -> i32 {
         println!("Called: mbuffer_set_random");
+        0
+    }
+
+    fn managed_map_new(&self) -> i32 {
+        println!("Called: managed_map_new");
+        0
+    }
+
+    fn managed_map_put(&self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+        println!("Called: managed_map_put");
+        0
+    }
+
+    fn managed_map_get(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+        println!("Called: managed_map_get");
+        0
+    }
+
+    fn managed_map_remove(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+        println!("Called: managed_map_remove");
+        0
+    }
+
+    fn managed_map_contains(&self, m_map_handle: i32, key_handle: i32) -> i32 {
+        println!("Called: managed_map_contains");
         0
     }
 
