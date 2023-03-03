@@ -827,6 +827,26 @@ impl multiversx_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.mbuffer_set_random_func_ptr)(self.vm_hooks_ptr, destination_handle, length)
     }
 
+    fn managed_map_new(&self) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_new_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn managed_map_put(&self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_put_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, value_handle)
+    }
+
+    fn managed_map_get(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_get_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, out_value_handle)
+    }
+
+    fn managed_map_remove(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_remove_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, out_value_handle)
+    }
+
+    fn managed_map_contains(&self, m_map_handle: i32, key_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_contains_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle)
+    }
+
     fn small_int_get_unsigned_argument(&self, id: i32) -> i64 {
         (self.c_func_pointers_ptr.small_int_get_unsigned_argument_func_ptr)(self.vm_hooks_ptr, id)
     }
