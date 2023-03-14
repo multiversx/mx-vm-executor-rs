@@ -6,6 +6,7 @@ use crate::{
 };
 use libc::c_void;
 use multiversx_vm_executor::Executor;
+use multiversx_vm_executor_wasmer::force_sighandler_reinstall;
 
 #[repr(C)]
 pub struct vm_exec_executor_t;
@@ -47,6 +48,13 @@ pub unsafe extern "C" fn vm_exec_new_executor(
             vm_exec_result_t::VM_EXEC_ERROR
         }
     }
+}
+
+/// Forces reinstalling the sighandlers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+pub unsafe extern "C" fn vm_force_sighandler_reinstall() {
+    force_sighandler_reinstall();
 }
 
 /// Sets the data that can be hold by an instance context.

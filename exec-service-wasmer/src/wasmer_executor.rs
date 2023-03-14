@@ -6,7 +6,21 @@ use multiversx_vm_executor::{
 use std::cell::RefCell;
 use std::ffi::c_void;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Once};
+
+use wasmer_vm::platform_init;
+
+static SIGHANDLER_INIT: Once = Once::new();
+
+fn set_sighandler_init_if_needed() {
+    SIGHANDLER_INIT.call_once(|| {});
+}
+
+pub unsafe fn force_sighandler_reinstall() {
+    if SIGHANDLER_INIT.is_completed() {
+        platform_init();
+    }
+}
 
 pub(crate) struct WasmerExecutorData {
     vm_hooks: Rc<Box<dyn VMHooks>>,
@@ -74,6 +88,7 @@ impl Executor for WasmerExecutor {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
+        set_sighandler_init_if_needed();
         WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)
     }
 
@@ -82,6 +97,7 @@ impl Executor for WasmerExecutor {
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
+        set_sighandler_init_if_needed();
         WasmerInstance::try_new_instance_from_cache(
             self.data.clone(),
             cache_bytes,
