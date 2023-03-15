@@ -8,14 +8,14 @@ edition = "2021"
 [dependencies]
 multiversx-vm-executor = { path = "../exec-service" }
 
-wasmer = { path = "../../wasmer/lib/api" , default-features = false, features = [
+wasmer = { git = "https://github.com/multiversx/wasmer", rev = "a3e2bc6a34a45a9a1e880c7f0ff666c735cbdadd", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
-wasmer-vm = { path = "../../wasmer/lib/vm" }
-wasmer-types = { path = "../../wasmer/lib/types"  }
+wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "a3e2bc6a34a45a9a1e880c7f0ff666c735cbdadd" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "a3e2bc6a34a45a9a1e880c7f0ff666c735cbdadd" }
 
 chrono = "0.4.23"
 log = "0.4.17"
