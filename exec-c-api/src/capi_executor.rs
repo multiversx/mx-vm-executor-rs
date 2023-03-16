@@ -51,7 +51,10 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 }
 
 /// Forces reinstalling the sighandlers.
-#[allow(clippy::cast_ptr_alignment)]
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
 #[no_mangle]
 pub unsafe extern "C" fn vm_force_sighandler_reinstall() {
     force_sighandler_reinstall();
