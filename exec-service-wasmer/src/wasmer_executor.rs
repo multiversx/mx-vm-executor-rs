@@ -10,8 +10,10 @@ use std::sync::{Arc, Mutex};
 
 use wasmer_vm::platform_init;
 
-pub unsafe fn force_sighandler_reinstall() {
-    platform_init();
+pub fn force_sighandler_reinstall() {
+    unsafe {
+        platform_init();
+    }
 }
 
 pub(crate) struct WasmerExecutorData {
