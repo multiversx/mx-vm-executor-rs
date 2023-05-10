@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu-20.04
             artifact_name: libvmexeccapi.so
             make_target: capi-linux-amd64
           - os: macos-11

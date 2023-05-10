@@ -8,6 +8,14 @@ use std::ffi::c_void;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
+use wasmer_vm::platform_init;
+
+pub fn force_sighandler_reinstall() {
+    unsafe {
+        platform_init();
+    }
+}
+
 pub(crate) struct WasmerExecutorData {
     vm_hooks: Rc<Box<dyn VMHooks>>,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
