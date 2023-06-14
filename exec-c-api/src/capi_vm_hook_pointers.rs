@@ -120,6 +120,8 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_is_esdt_limited_transfer_func_ptr: extern "C" fn(context: *mut c_void, token_id_handle: i32) -> i32,
     pub managed_is_esdt_paused_func_ptr: extern "C" fn(context: *mut c_void, token_id_handle: i32) -> i32,
     pub managed_buffer_to_hex_func_ptr: extern "C" fn(context: *mut c_void, source_handle: i32, dest_handle: i32),
+    pub managed_get_code_metadata_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, response_handle: i32),
+    pub managed_is_builtin_function_func_ptr: extern "C" fn(context: *mut c_void, function_name_handle: i32) -> i32,
     pub big_float_new_from_parts_func_ptr: extern "C" fn(context: *mut c_void, integral_part: i32, fractional_part: i32, exponent: i32) -> i32,
     pub big_float_new_from_frac_func_ptr: extern "C" fn(context: *mut c_void, numerator: i64, denominator: i64) -> i32,
     pub big_float_new_from_sci_func_ptr: extern "C" fn(context: *mut c_void, significand: i64, exponent: i64) -> i32,
