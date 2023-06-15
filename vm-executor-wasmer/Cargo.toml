@@ -6,7 +6,7 @@ edition = "2021"
 [lib]
 
 [dependencies]
-multiversx-chain-vm-executor = { path = "../exec-service" }
+multiversx-chain-vm-executor = { path = "../vm-executor" }
 
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "cdd1550", default-features = false, features = [
     "singlepass",

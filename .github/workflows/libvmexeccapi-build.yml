@@ -34,4 +34,4 @@ jobs:
           path: |
             target/release/*.so
             target/release/*.dylib
-            exec-c-api/libvmexeccapi.h
+            c-api/libvmexeccapi.h

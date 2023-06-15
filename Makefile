@@ -25,4 +25,4 @@ clean:
 	rm target/release/libvmexeccapi_arm.so
 	rm target/release/libvmexeccapi.dylib
 	rm target/release/libvmexeccapi_arm.dylib
-	rm exec-c-api/libvmexeccapi.h
+	rm c-api/libvmexeccapi.h
