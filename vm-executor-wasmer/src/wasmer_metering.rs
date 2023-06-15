@@ -2,7 +2,7 @@ use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
-use multiversx_vm_executor::OpcodeCost;
+use multiversx_chain_vm_executor::OpcodeCost;
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::Operator;

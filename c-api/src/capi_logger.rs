@@ -1,4 +1,4 @@
-use multiversx_vm_executor_wasmer::{set_log_level, u64_to_log_level};
+use multiversx_chain_vm_executor_wasmer::{set_log_level, u64_to_log_level};
 
 use crate::{basic_types::vm_exec_result_t, service_singleton::with_service};
 

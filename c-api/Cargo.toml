@@ -1,6 +1,6 @@
 [package]
-name = "multiversx-vm-executor-c-api"
-version = "0.0.1"
+name = "multiversx-chain-vm-executor-c-api"
+version = "0.0.0"
 edition = "2021"
 publish = false
 
@@ -8,8 +8,8 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
-multiversx-vm-executor = { path = "../exec-service" }
-multiversx-vm-executor-wasmer = { path = "../exec-service-wasmer" }
+multiversx-chain-vm-executor = { path = "../vm-executor" }
+multiversx-chain-vm-executor-wasmer = { path = "../vm-executor-wasmer" }
 
 lazy_static = "1.4"
 libc = { version = "^0.2", default-features = false }

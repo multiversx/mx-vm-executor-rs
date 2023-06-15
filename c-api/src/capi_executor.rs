@@ -5,8 +5,8 @@ use crate::{
     service_singleton::with_service, vm_exec_result_t,
 };
 use libc::c_void;
-use multiversx_vm_executor::Executor;
-use multiversx_vm_executor_wasmer::force_sighandler_reinstall;
+use multiversx_chain_vm_executor::Executor;
+use multiversx_chain_vm_executor_wasmer::force_sighandler_reinstall;
 
 #[repr(C)]
 pub struct vm_exec_executor_t;

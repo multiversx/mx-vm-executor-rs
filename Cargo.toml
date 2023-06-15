@@ -1,7 +1,7 @@
 
 [workspace]
 members = [
-    "exec-c-api",
-    "exec-service",
-    "exec-service-wasmer",
+    "c-api",
+    "vm-executor",
+    "vm-executor-wasmer",
 ]

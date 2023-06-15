@@ -5,10 +5,10 @@ use crate::{
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use log::trace;
-use multiversx_vm_executor::{
+use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
 };
-use multiversx_vm_executor::{MemLength, MemPtr};
+use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
 use std::cell::RefCell;
 use std::{rc::Rc, sync::Arc};

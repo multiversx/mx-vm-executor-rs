@@ -6,7 +6,7 @@ use crate::{
     string_copy, vm_exec_result_t,
 };
 use libc::{c_char, c_int};
-use multiversx_vm_executor::{CompilationOptions, Instance};
+use multiversx_chain_vm_executor::{CompilationOptions, Instance};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
