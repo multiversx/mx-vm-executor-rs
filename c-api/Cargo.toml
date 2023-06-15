@@ -1,6 +1,6 @@
 [package]
 name = "multiversx-chain-vm-executor-c-api"
-version = "0.0.1"
+version = "0.0.0"
 edition = "2021"
 publish = false
 

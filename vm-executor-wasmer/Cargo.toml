@@ -1,7 +1,8 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2021"
+publish = false # will also be published, but it is not yet ready for that
 
 [lib]
 
