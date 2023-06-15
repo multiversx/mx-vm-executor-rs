@@ -1,22 +1,22 @@
 .PHONY: clean
 
 capi:
-	cargo build -p multiversx-vm-executor-c-api --release
+	cargo build -p multiversx-chain-vm-executor-c-api --release
 
 capi-linux-amd64: capi
-	mv target/release/libmultiversx_vm_executor_c_api.so target/release/libvmexeccapi.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi.so
 	patchelf --set-soname libvmexeccapi.so target/release/libvmexeccapi.so
 
 capi-linux-arm: capi
-	mv target/release/libmultiversx_vm_executor_c_api.so target/release/libvmexeccapi_arm.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi_arm.so
 	patchelf --set-soname libvmexeccapi_arm.so target/release/libvmexeccapi_arm.so
 
 capi-osx-amd64: capi
-	mv target/release/libmultiversx_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
 	install_name_tool -id @executable_path/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
 capi-osx-arm: capi
-	mv target/release/libmultiversx_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
 	install_name_tool -id @executable_path/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
 
 clean:

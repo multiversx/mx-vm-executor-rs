@@ -1,6 +1,6 @@
 use std::slice;
 
-use multiversx_vm_executor::CompilationOptions;
+use multiversx_chain_vm_executor::CompilationOptions;
 
 use crate::{
     capi_executor::{vm_exec_executor_t, CapiExecutor},

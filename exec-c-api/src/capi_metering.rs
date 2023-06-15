@@ -2,7 +2,7 @@ use crate::capi_executor::{vm_exec_executor_t, CapiExecutor};
 use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
 use crate::service_singleton::with_service;
 use crate::vm_exec_result_t;
-use multiversx_vm_executor::OpcodeCost;
+use multiversx_chain_vm_executor::OpcodeCost;
 
 #[allow(non_camel_case_types)]
 #[repr(C)]

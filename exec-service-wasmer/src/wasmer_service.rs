@@ -1,5 +1,5 @@
 use log::trace;
-use multiversx_vm_executor::{
+use multiversx_chain_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
 

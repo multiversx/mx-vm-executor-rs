@@ -1,5 +1,5 @@
-use multiversx_vm_executor::ExecutorService;
-use multiversx_vm_executor_wasmer::BasicExecutorService;
+use multiversx_chain_vm_executor::ExecutorService;
+use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
 use std::cell::RefCell;
 
 thread_local! {
