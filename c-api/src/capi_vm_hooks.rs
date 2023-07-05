@@ -403,6 +403,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, call_value_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, call_value_handle)
+    }
+
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_esdt_balance_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, value_handle)
     }
