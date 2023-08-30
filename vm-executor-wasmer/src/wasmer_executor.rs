@@ -12,7 +12,7 @@ use wasmer_vm::platform_init;
 
 pub fn force_sighandler_reinstall() {
     unsafe {
-        platform_init();
+        // platform_init();
     }
 }
 
