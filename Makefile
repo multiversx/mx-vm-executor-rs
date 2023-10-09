@@ -13,11 +13,11 @@ capi-linux-arm: capi
 
 capi-osx-amd64: capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
-	install_name_tool -id @executable_path/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
+	install_name_tool -id @rpath/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
 capi-osx-arm: capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
-	install_name_tool -id @executable_path/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
 
 clean:
 	cargo clean
