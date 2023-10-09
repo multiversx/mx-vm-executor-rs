@@ -134,9 +134,11 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
+        let must_add_breakpoint = is_control_flow_operator(&operator);
+
         state.push_operator(operator);
 
-        if is_control_flow_operator(&operator) {
+        if must_add_breakpoint {
             self.inject_breakpoint_condition_check(state)
         }
 
