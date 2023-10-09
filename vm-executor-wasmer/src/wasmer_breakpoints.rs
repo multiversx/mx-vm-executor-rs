@@ -9,7 +9,9 @@ use wasmer::{
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
+use crate::wasmer_helpers::{
+    create_global_index, is_control_flow_operator, MiddlewareWithProtectedGlobals,
+};
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -132,14 +134,9 @@ impl FunctionMiddleware for FunctionBreakpoints {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        let must_add_breakpoint = matches!(
-            operator,
-            Operator::Call { .. } | Operator::CallIndirect { .. }
-        );
-
         state.push_operator(operator);
 
-        if must_add_breakpoint {
+        if is_control_flow_operator(&operator) {
             self.inject_breakpoint_condition_check(state)
         }
 

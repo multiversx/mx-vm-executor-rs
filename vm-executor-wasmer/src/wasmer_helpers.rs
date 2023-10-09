@@ -30,3 +30,21 @@ pub(crate) fn create_global_index(
 
     global_index
 }
+
+pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
+    matches!(
+        operator,
+        Operator::Loop { .. }
+            | Operator::Block { .. }
+            | Operator::End
+            | Operator::If { .. }
+            | Operator::Else
+            | Operator::Unreachable
+            | Operator::Br { .. }
+            | Operator::BrTable { .. }
+            | Operator::BrIf { .. }
+            | Operator::Call { .. }
+            | Operator::CallIndirect { .. }
+            | Operator::Return
+    )
+}

@@ -1,5 +1,7 @@
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
-use crate::wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals};
+use crate::wasmer_helpers::{
+    create_global_index, is_control_flow_operator, MiddlewareWithProtectedGlobals,
+};
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use multiversx_chain_vm_executor::OpcodeCost;
@@ -175,21 +177,7 @@ impl FunctionMiddleware for FunctionMetering {
             }
         }
 
-        if matches!(
-            operator,
-            Operator::Loop { .. }
-                | Operator::Block { .. }
-                | Operator::End
-                | Operator::If { .. }
-                | Operator::Else
-                | Operator::Unreachable
-                | Operator::Br { .. }
-                | Operator::BrTable { .. }
-                | Operator::BrIf { .. }
-                | Operator::Call { .. }
-                | Operator::CallIndirect { .. }
-                | Operator::Return
-        ) {
+        if is_control_flow_operator(&operator) {
             self.inject_points_used_increment(state);
             self.inject_out_of_gas_check(state);
 
