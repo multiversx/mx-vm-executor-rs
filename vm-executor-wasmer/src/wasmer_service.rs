@@ -3,8 +3,8 @@ use multiversx_chain_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
 
-// use log::LevelFilter;
-// use crate::wasmer_logger as WasmerLogger;
+use log::LevelFilter;
+use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
 
 #[derive(Default)]
@@ -22,7 +22,7 @@ impl BasicExecutorService {
 
     fn init() {
         // Initialize the logger only once (disable until we sync with node)
-        // WasmerLogger::init(LevelFilter::Off);
+        WasmerLogger::init(LevelFilter::Off);
     }
 }
 
