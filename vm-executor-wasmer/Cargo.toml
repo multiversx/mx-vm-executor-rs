@@ -1,14 +1,16 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 publish = false # will also be published, but it is not yet ready for that
 
 [lib]
 
-[dependencies]
-multiversx-chain-vm-executor = { path = "../vm-executor" }
+[dependencies.multiversx-chain-vm-executor]
+version = "0.2.0"
+path = "../vm-executor"
 
+[dependencies]
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "cdd1550", default-features = false, features = [
     "singlepass",
     "sys",
