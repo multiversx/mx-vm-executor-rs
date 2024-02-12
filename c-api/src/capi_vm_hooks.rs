@@ -403,8 +403,8 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
-    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, call_value_handle: i32) {
-        (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, call_value_handle)
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, egld_value_handle)
     }
 
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
@@ -1057,5 +1057,17 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.elliptic_curve_get_values_func_ptr)(self.vm_hooks_ptr, ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
+    }
+
+    fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_secp256r1_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
+    }
+
+    fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_blssignature_share_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
+    }
+
+    fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_blsaggregated_signature_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 }
