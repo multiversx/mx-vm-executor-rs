@@ -1,4 +1,4 @@
-use wasmer::{ExportIndex, GlobalInit, GlobalType, Mutability, Type, wasmparser::Operator};
+use wasmer::{wasmparser::Operator, ExportIndex, GlobalInit, GlobalType, Mutability, Type};
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 pub trait MiddlewareWithProtectedGlobals {
