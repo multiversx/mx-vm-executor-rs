@@ -24,7 +24,7 @@ jobs:
             make_target: capi-osx-amd64
           - os: macos-13-xlarge
             artifact_name: libvmexeccapi_arm
-            make_target: capi-osx-arm64
+            make_target: capi-osx-arm
     steps:
       - name: Checkout
         uses: actions/checkout@v3
