@@ -11,4 +11,4 @@ ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 COPY . /repository
 WORKDIR /repository
 RUN make capi-linux-arm
-RUN cp /repository/target/release/libvmexeccapi_arm.so /data/libvmexeccapi_arm.so
+RUN mkdir /data && cp /repository/target/release/libvmexeccapi_arm.so /data/libvmexeccapi_arm.so
