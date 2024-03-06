@@ -28,8 +28,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Make
         run: make ${{ matrix.make_target }}
+      
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         with:
