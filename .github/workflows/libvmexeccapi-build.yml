@@ -22,11 +22,16 @@ jobs:
           - os: macos-11
             artifact_name: libvmexeccapi.dylib
             make_target: capi-osx-amd64
+          - os: macos-13-xlarge
+            artifact_name: libvmexeccapi_arm
+            make_target: capi-osx-arm
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
       - name: Make
         run: make ${{ matrix.make_target }}
+      
       - name: Save artifacts
         uses: actions/upload-artifact@v3
         with:
