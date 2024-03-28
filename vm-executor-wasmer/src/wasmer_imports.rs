@@ -426,6 +426,16 @@ fn wasmer_import_managed_caller(env: &VMHooksWrapper, destination_handle: i32) {
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_get_original_caller_addr(env: &VMHooksWrapper, destination_handle: i32) {
+    env.vm_hooks.managed_get_original_caller_addr(destination_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_relayer_addr(env: &VMHooksWrapper, destination_handle: i32) {
+    env.vm_hooks.managed_get_relayer_addr(destination_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_signal_error(env: &VMHooksWrapper, err_handle: i32) {
     env.vm_hooks.managed_signal_error(err_handle)
 }
@@ -538,6 +548,11 @@ fn wasmer_import_managed_execute_on_dest_context(env: &VMHooksWrapper, gas: i64,
 #[rustfmt::skip]
 fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
     env.vm_hooks.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user(env: &VMHooksWrapper, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    env.vm_hooks.managed_multi_transfer_esdt_nft_execute_by_user(user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
@@ -1386,6 +1401,8 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedSCAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_sc_address),
             "managedOwnerAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_owner_address),
             "managedCaller" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_caller),
+            "managedGetOriginalCallerAddr" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_original_caller_addr),
+            "managedGetRelayerAddr" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_relayer_addr),
             "managedSignalError" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_signal_error),
             "managedWriteLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_write_log),
             "managedGetOriginalTxHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_original_tx_hash),
@@ -1409,6 +1426,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedExecuteOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_same_context),
             "managedExecuteOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context),
             "managedMultiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute),
+            "managedMultiTransferESDTNFTExecuteByUser" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user),
             "managedTransferValueExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_transfer_value_execute),
             "managedIsESDTFrozen" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_frozen),
             "managedIsESDTLimitedTransfer" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_limited_transfer),
