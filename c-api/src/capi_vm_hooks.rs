@@ -371,6 +371,14 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_caller_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
+    fn managed_get_original_caller_addr(&self, destination_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_original_caller_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
+    }
+
+    fn managed_get_relayer_addr(&self, destination_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_relayer_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
+    }
+
     fn managed_signal_error(&self, err_handle: i32) {
         (self.c_func_pointers_ptr.managed_signal_error_func_ptr)(self.vm_hooks_ptr, err_handle)
     }
@@ -461,6 +469,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(self.vm_hooks_ptr, user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
     fn managed_transfer_value_execute(&self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
