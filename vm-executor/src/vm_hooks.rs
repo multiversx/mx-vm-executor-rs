@@ -104,7 +104,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_get_prev_block_random_seed(&self, result_handle: i32);
     fn managed_get_return_data(&self, result_id: i32, result_handle: i32);
     fn managed_get_multi_esdt_call_value(&self, multi_call_value_handle: i32);
-    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, call_value_handle: i32);
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32);
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32);
@@ -268,6 +268,9 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn get_curve_length_ec(&self, ec_handle: i32) -> i32;
     fn get_priv_key_byte_length_ec(&self, ec_handle: i32) -> i32;
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32;
+    fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
+    fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
+    fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -703,7 +706,7 @@ impl VMHooks for VMHooksDefault {
         println!("Called: managed_get_multi_esdt_call_value");
     }
 
-    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, call_value_handle: i32) {
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
         println!("Called: managed_get_back_transfers");
     }
 
@@ -1458,6 +1461,21 @@ impl VMHooks for VMHooksDefault {
 
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
         println!("Called: elliptic_curve_get_values");
+        0
+    }
+
+    fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        println!("Called: managed_verify_secp256r1");
+        0
+    }
+
+    fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        println!("Called: managed_verify_blssignature_share");
+        0
+    }
+
+    fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        println!("Called: managed_verify_blsaggregated_signature");
         0
     }
 }

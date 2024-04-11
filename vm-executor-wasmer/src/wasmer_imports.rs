@@ -466,8 +466,8 @@ fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_c
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, call_value_handle: i32) {
-    env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, call_value_handle)
+fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+    env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
 }
 
 #[rustfmt::skip]
@@ -1285,6 +1285,21 @@ fn wasmer_import_elliptic_curve_get_values(env: &VMHooksWrapper, ec_handle: i32,
     env.vm_hooks.elliptic_curve_get_values(ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
 }
 
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_secp256r1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    env.vm_hooks.managed_verify_secp256r1(key_handle, message_handle, sig_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_blssignature_share(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    env.vm_hooks.managed_verify_blssignature_share(key_handle, message_handle, sig_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_blsaggregated_signature(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    env.vm_hooks.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle)
+}
+
 pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObject {
     imports! {
         "env" => {
@@ -1543,6 +1558,9 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "getCurveLengthEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_curve_length_ec),
             "getPrivKeyByteLengthEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_priv_key_byte_length_ec),
             "ellipticCurveGetValues" => Function::new_native_with_env(store, env.clone(), wasmer_import_elliptic_curve_get_values),
+            "managedVerifySecp256r1" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_secp256r1),
+            "managedVerifyBLSSignatureShare" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blssignature_share),
+            "managedVerifyBLSAggregatedSignature" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blsaggregated_signature),
 
         }
     }

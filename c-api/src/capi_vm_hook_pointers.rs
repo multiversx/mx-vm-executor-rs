@@ -101,7 +101,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_get_prev_block_random_seed_func_ptr: extern "C" fn(context: *mut c_void, result_handle: i32),
     pub managed_get_return_data_func_ptr: extern "C" fn(context: *mut c_void, result_id: i32, result_handle: i32),
     pub managed_get_multi_esdt_call_value_func_ptr: extern "C" fn(context: *mut c_void, multi_call_value_handle: i32),
-    pub managed_get_back_transfers_func_ptr: extern "C" fn(context: *mut c_void, esdt_transfers_value_handle: i32, call_value_handle: i32),
+    pub managed_get_back_transfers_func_ptr: extern "C" fn(context: *mut c_void, esdt_transfers_value_handle: i32, egld_value_handle: i32),
     pub managed_get_esdt_balance_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32),
     pub managed_get_esdt_token_data_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32),
     pub managed_async_call_func_ptr: extern "C" fn(context: *mut c_void, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32),
@@ -265,6 +265,9 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_curve_length_ec_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32) -> i32,
     pub get_priv_key_byte_length_ec_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32) -> i32,
     pub elliptic_curve_get_values_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32,
+    pub managed_verify_secp256r1_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
+    pub managed_verify_blssignature_share_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
+    pub managed_verify_blsaggregated_signature_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
 }
 
 impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {
