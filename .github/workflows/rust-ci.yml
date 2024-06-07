@@ -15,7 +15,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: stable
+          toolchain: "1.77"
       - name: Run rust tests
         run: cargo test
   clippy_check:
