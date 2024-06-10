@@ -276,8 +276,8 @@ fn wasmer_import_get_call_value_token_name_by_index(env: &VMHooksWrapper, call_v
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_builtin_function_name(env: &VMHooksWrapper, name_offset: i32, name_length: i32) -> i32 {
-    env.vm_hooks.is_builtin_function_name(env.convert_mem_ptr(name_offset), env.convert_mem_length(name_length))
+fn wasmer_import_is_reserved_function_name(env: &VMHooksWrapper, name_offset: i32, name_length: i32) -> i32 {
+    env.vm_hooks.is_reserved_function_name(env.convert_mem_ptr(name_offset), env.convert_mem_length(name_length))
 }
 
 #[rustfmt::skip]
@@ -1376,7 +1376,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "getNumESDTTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_num_esdt_transfers),
             "getCallValueTokenName" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_call_value_token_name),
             "getCallValueTokenNameByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_call_value_token_name_by_index),
-            "isBuiltinFunctionName" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_builtin_function_name),
+            "isReservedFunctionName" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_reserved_function_name),
             "writeLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_log),
             "writeEventLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_event_log),
             "getBlockTimestamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_timestamp),

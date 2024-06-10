@@ -66,7 +66,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn get_num_esdt_transfers(&self) -> i32;
     fn get_call_value_token_name(&self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32;
     fn get_call_value_token_name_by_index(&self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32;
-    fn is_builtin_function_name(&self, name_offset: MemPtr, name_length: MemLength) -> i32;
+    fn is_reserved_function_name(&self, name_offset: MemPtr, name_length: MemLength) -> i32;
     fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32);
     fn write_event_log(&self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength);
     fn get_block_timestamp(&self) -> i64;
@@ -542,8 +542,8 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
-    fn is_builtin_function_name(&self, name_offset: MemPtr, name_length: MemLength) -> i32 {
-        println!("Called: is_builtin_function_name");
+    fn is_reserved_function_name(&self, name_offset: MemPtr, name_length: MemLength) -> i32 {
+        println!("Called: is_reserved_function_name");
         0
     }
 
