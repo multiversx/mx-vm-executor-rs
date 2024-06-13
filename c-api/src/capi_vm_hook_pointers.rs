@@ -63,7 +63,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_num_esdt_transfers_func_ptr: extern "C" fn(context: *mut c_void) -> i32,
     pub get_call_value_token_name_func_ptr: extern "C" fn(context: *mut c_void, call_value_offset: i32, token_name_offset: i32) -> i32,
     pub get_call_value_token_name_by_index_func_ptr: extern "C" fn(context: *mut c_void, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32,
-    pub is_reserved_function_name_func_ptr: extern "C" fn(context: *mut c_void, name_offset: i32, name_length: i32) -> i32,
+    pub is_reserved_function_name_func_ptr: extern "C" fn(context: *mut c_void, name_handle: i32) -> i32,
     pub write_log_func_ptr: extern "C" fn(context: *mut c_void, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32),
     pub write_event_log_func_ptr: extern "C" fn(context: *mut c_void, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32),
     pub get_block_timestamp_func_ptr: extern "C" fn(context: *mut c_void) -> i64,

@@ -276,8 +276,8 @@ fn wasmer_import_get_call_value_token_name_by_index(env: &VMHooksWrapper, call_v
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_reserved_function_name(env: &VMHooksWrapper, name_offset: i32, name_length: i32) -> i32 {
-    env.vm_hooks.is_reserved_function_name(env.convert_mem_ptr(name_offset), env.convert_mem_length(name_length))
+fn wasmer_import_is_reserved_function_name(env: &VMHooksWrapper, name_handle: i32) -> i32 {
+    env.vm_hooks.is_reserved_function_name(name_handle)
 }
 
 #[rustfmt::skip]
