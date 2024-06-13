@@ -91,6 +91,7 @@ typedef struct {
   int32_t (*get_num_esdt_transfers_func_ptr)(void *context);
   int32_t (*get_call_value_token_name_func_ptr)(void *context, int32_t call_value_offset, int32_t token_name_offset);
   int32_t (*get_call_value_token_name_by_index_func_ptr)(void *context, int32_t call_value_offset, int32_t token_name_offset, int32_t index);
+  int32_t (*is_reserved_function_name_func_ptr)(void *context, int32_t name_handle);
   void (*write_log_func_ptr)(void *context, int32_t data_pointer, int32_t data_length, int32_t topic_ptr, int32_t num_topics);
   void (*write_event_log_func_ptr)(void *context, int32_t num_topics, int32_t topic_lengths_offset, int32_t topic_offset, int32_t data_offset, int32_t data_length);
   int64_t (*get_block_timestamp_func_ptr)(void *context);
@@ -121,6 +122,8 @@ typedef struct {
   void (*managed_sc_address_func_ptr)(void *context, int32_t destination_handle);
   void (*managed_owner_address_func_ptr)(void *context, int32_t destination_handle);
   void (*managed_caller_func_ptr)(void *context, int32_t destination_handle);
+  void (*managed_get_original_caller_addr_func_ptr)(void *context, int32_t destination_handle);
+  void (*managed_get_relayer_addr_func_ptr)(void *context, int32_t destination_handle);
   void (*managed_signal_error_func_ptr)(void *context, int32_t err_handle);
   void (*managed_write_log_func_ptr)(void *context, int32_t topics_handle, int32_t data_handle);
   void (*managed_get_original_tx_hash_func_ptr)(void *context, int32_t result_handle);
@@ -144,6 +147,7 @@ typedef struct {
   int32_t (*managed_execute_on_same_context_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
   int32_t (*managed_execute_on_dest_context_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
   int32_t (*managed_multi_transfer_esdt_nft_execute_func_ptr)(void *context, int32_t dst_handle, int32_t token_transfers_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(void *context, int32_t user_handle, int32_t dst_handle, int32_t token_transfers_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
   int32_t (*managed_transfer_value_execute_func_ptr)(void *context, int32_t dst_handle, int32_t value_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
   int32_t (*managed_is_esdt_frozen_func_ptr)(void *context, int32_t address_handle, int32_t token_id_handle, int64_t nonce);
   int32_t (*managed_is_esdt_limited_transfer_func_ptr)(void *context, int32_t token_id_handle);

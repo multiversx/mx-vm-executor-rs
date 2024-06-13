@@ -251,6 +251,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.get_call_value_token_name_by_index_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(call_value_offset), self.convert_mem_ptr(token_name_offset), index)
     }
 
+    fn is_reserved_function_name(&self, name_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.is_reserved_function_name_func_ptr)(self.vm_hooks_ptr, name_handle)
+    }
+
     fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
         (self.c_func_pointers_ptr.write_log_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_pointer), self.convert_mem_length(data_length), self.convert_mem_ptr(topic_ptr), num_topics)
     }
