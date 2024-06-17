@@ -823,6 +823,22 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.mbuffer_from_big_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
     }
 
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
+    }
+
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
+    }
+
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_to_big_float_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_float_handle)
     }
