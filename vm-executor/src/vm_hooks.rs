@@ -80,6 +80,10 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn get_prev_block_round(&self) -> i64;
     fn get_prev_block_epoch(&self) -> i64;
     fn get_prev_block_random_seed(&self, pointer: MemPtr);
+    fn get_round_time(&self) -> i64;
+    fn epoch_start_block_time_stamp(&self) -> i64;
+    fn epoch_start_block_nonce(&self) -> i64;
+    fn epoch_start_block_round(&self) -> i64;
     fn finish(&self, pointer: MemPtr, length: MemLength);
     fn execute_on_same_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
     fn execute_on_dest_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
@@ -605,6 +609,26 @@ impl VMHooks for VMHooksDefault {
 
     fn get_prev_block_random_seed(&self, pointer: MemPtr) {
         println!("Called: get_prev_block_random_seed");
+    }
+
+    fn get_round_time(&self) -> i64 {
+        println!("Called: get_round_time");
+        0
+    }
+
+    fn epoch_start_block_time_stamp(&self) -> i64 {
+        println!("Called: epoch_start_block_time_stamp");
+        0
+    }
+
+    fn epoch_start_block_nonce(&self) -> i64 {
+        println!("Called: epoch_start_block_nonce");
+        0
+    }
+
+    fn epoch_start_block_round(&self) -> i64 {
+        println!("Called: epoch_start_block_round");
+        0
     }
 
     fn finish(&self, pointer: MemPtr, length: MemLength) {
