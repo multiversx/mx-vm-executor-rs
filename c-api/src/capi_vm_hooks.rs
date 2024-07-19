@@ -307,6 +307,22 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.get_prev_block_random_seed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
     }
 
+    fn get_round_time(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_round_time_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_time_stamp(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_time_stamp_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_nonce(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_nonce_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_round(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_round_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn finish(&self, pointer: MemPtr, length: MemLength) {
         (self.c_func_pointers_ptr.finish_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer), self.convert_mem_length(length))
     }
