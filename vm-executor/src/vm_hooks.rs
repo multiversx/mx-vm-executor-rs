@@ -213,6 +213,10 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn mbuffer_to_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_from_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64;
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64;
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64);
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64);
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
     fn mbuffer_from_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
     fn mbuffer_storage_store(&self, key_handle: i32, source_handle: i32) -> i32;
@@ -1199,6 +1203,24 @@ impl VMHooks for VMHooksDefault {
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         println!("Called: mbuffer_from_big_int_signed");
         0
+    }
+
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64 {
+        println!("Called: mbuffer_to_small_int_unsigned");
+        0
+    }
+
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64 {
+        println!("Called: mbuffer_to_small_int_signed");
+        0
+    }
+
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64) {
+        println!("Called: mbuffer_from_small_int_unsigned");
+    }
+
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64) {
+        println!("Called: mbuffer_from_small_int_signed");
     }
 
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
