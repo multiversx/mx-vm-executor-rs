@@ -137,7 +137,7 @@ fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Me
     memories
 }
 
-fn validate_memories(memories: &Vec<(&String, &wasmer::Memory)>) -> Result<(), ExecutorError> {
+fn validate_memories(memories: &[(&String, &wasmer::Memory)]) -> Result<(), ExecutorError> {
     if memories.is_empty() {
         return Err(Box::new(ServiceError::new(
             "no memory declared in smart contract",
