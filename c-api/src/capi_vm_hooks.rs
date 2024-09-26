@@ -251,6 +251,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.get_call_value_token_name_by_index_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(call_value_offset), self.convert_mem_ptr(token_name_offset), index)
     }
 
+    fn is_reserved_function_name(&self, name_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.is_reserved_function_name_func_ptr)(self.vm_hooks_ptr, name_handle)
+    }
+
     fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
         (self.c_func_pointers_ptr.write_log_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_pointer), self.convert_mem_length(data_length), self.convert_mem_ptr(topic_ptr), num_topics)
     }
@@ -371,6 +375,14 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_caller_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
+    fn managed_get_original_caller_addr(&self, destination_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_original_caller_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
+    }
+
+    fn managed_get_relayer_addr(&self, destination_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_relayer_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
+    }
+
     fn managed_signal_error(&self, err_handle: i32) {
         (self.c_func_pointers_ptr.managed_signal_error_func_ptr)(self.vm_hooks_ptr, err_handle)
     }
@@ -403,8 +415,8 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
-    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, call_value_handle: i32) {
-        (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, call_value_handle)
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, egld_value_handle)
     }
 
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
@@ -461,6 +473,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(self.vm_hooks_ptr, user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
     fn managed_transfer_value_execute(&self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
@@ -1057,5 +1073,17 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.elliptic_curve_get_values_func_ptr)(self.vm_hooks_ptr, ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
+    }
+
+    fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_secp256r1_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
+    }
+
+    fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_blssignature_share_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
+    }
+
+    fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_blsaggregated_signature_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 }
