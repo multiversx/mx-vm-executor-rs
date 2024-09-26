@@ -180,6 +180,7 @@ fn push_middlewares(
 
     // Create opcode_control middleware
     let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        100, // TODO: should be compilation_options.max_memory_grow_count,
         compilation_options.max_memory_grow,
         compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
