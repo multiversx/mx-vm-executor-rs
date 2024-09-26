@@ -11,15 +11,15 @@ version = "0.2.0"
 path = "../vm-executor"
 
 [dependencies]
-wasmer = { git = "https://github.com/multiversx/wasmer", rev = "cdd1550", default-features = false, features = [
+wasmer = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
 
-wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "cdd1550" }
-wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "cdd1550" }
+wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
 
 chrono = "0.4.23"
 log = "0.4.17"
