@@ -63,6 +63,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_num_esdt_transfers_func_ptr: extern "C" fn(context: *mut c_void) -> i32,
     pub get_call_value_token_name_func_ptr: extern "C" fn(context: *mut c_void, call_value_offset: i32, token_name_offset: i32) -> i32,
     pub get_call_value_token_name_by_index_func_ptr: extern "C" fn(context: *mut c_void, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32,
+    pub is_reserved_function_name_func_ptr: extern "C" fn(context: *mut c_void, name_handle: i32) -> i32,
     pub write_log_func_ptr: extern "C" fn(context: *mut c_void, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32),
     pub write_event_log_func_ptr: extern "C" fn(context: *mut c_void, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32),
     pub get_block_timestamp_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
@@ -93,6 +94,8 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_sc_address_func_ptr: extern "C" fn(context: *mut c_void, destination_handle: i32),
     pub managed_owner_address_func_ptr: extern "C" fn(context: *mut c_void, destination_handle: i32),
     pub managed_caller_func_ptr: extern "C" fn(context: *mut c_void, destination_handle: i32),
+    pub managed_get_original_caller_addr_func_ptr: extern "C" fn(context: *mut c_void, destination_handle: i32),
+    pub managed_get_relayer_addr_func_ptr: extern "C" fn(context: *mut c_void, destination_handle: i32),
     pub managed_signal_error_func_ptr: extern "C" fn(context: *mut c_void, err_handle: i32),
     pub managed_write_log_func_ptr: extern "C" fn(context: *mut c_void, topics_handle: i32, data_handle: i32),
     pub managed_get_original_tx_hash_func_ptr: extern "C" fn(context: *mut c_void, result_handle: i32),
@@ -101,7 +104,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_get_prev_block_random_seed_func_ptr: extern "C" fn(context: *mut c_void, result_handle: i32),
     pub managed_get_return_data_func_ptr: extern "C" fn(context: *mut c_void, result_id: i32, result_handle: i32),
     pub managed_get_multi_esdt_call_value_func_ptr: extern "C" fn(context: *mut c_void, multi_call_value_handle: i32),
-    pub managed_get_back_transfers_func_ptr: extern "C" fn(context: *mut c_void, esdt_transfers_value_handle: i32, call_value_handle: i32),
+    pub managed_get_back_transfers_func_ptr: extern "C" fn(context: *mut c_void, esdt_transfers_value_handle: i32, egld_value_handle: i32),
     pub managed_get_esdt_balance_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32),
     pub managed_get_esdt_token_data_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32),
     pub managed_async_call_func_ptr: extern "C" fn(context: *mut c_void, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32),
@@ -116,6 +119,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_execute_on_same_context_func_ptr: extern "C" fn(context: *mut c_void, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32,
     pub managed_execute_on_dest_context_func_ptr: extern "C" fn(context: *mut c_void, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32,
     pub managed_multi_transfer_esdt_nft_execute_func_ptr: extern "C" fn(context: *mut c_void, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32,
+    pub managed_multi_transfer_esdt_nft_execute_by_user_func_ptr: extern "C" fn(context: *mut c_void, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32,
     pub managed_transfer_value_execute_func_ptr: extern "C" fn(context: *mut c_void, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32,
     pub managed_is_esdt_frozen_func_ptr: extern "C" fn(context: *mut c_void, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32,
     pub managed_is_esdt_limited_transfer_func_ptr: extern "C" fn(context: *mut c_void, token_id_handle: i32) -> i32,
@@ -265,6 +269,9 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_curve_length_ec_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32) -> i32,
     pub get_priv_key_byte_length_ec_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32) -> i32,
     pub elliptic_curve_get_values_func_ptr: extern "C" fn(context: *mut c_void, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32,
+    pub managed_verify_secp256r1_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
+    pub managed_verify_blssignature_share_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
+    pub managed_verify_blsaggregated_signature_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
 }
 
 impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {

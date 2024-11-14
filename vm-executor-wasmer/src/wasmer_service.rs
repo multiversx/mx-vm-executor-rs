@@ -3,9 +3,9 @@ use multiversx_chain_vm_executor::{
     Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
 };
 
-use log::LevelFilter;
 use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
+use log::LevelFilter;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
