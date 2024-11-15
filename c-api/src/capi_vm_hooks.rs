@@ -307,6 +307,22 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.get_prev_block_random_seed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
     }
 
+    fn get_round_time(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_round_time_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_time_stamp(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_time_stamp_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_nonce(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_nonce_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_round(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_round_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn finish(&self, pointer: MemPtr, length: MemLength) {
         (self.c_func_pointers_ptr.finish_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer), self.convert_mem_length(length))
     }
@@ -821,6 +837,22 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_from_big_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
+    }
+
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
+    }
+
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
     }
 
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {

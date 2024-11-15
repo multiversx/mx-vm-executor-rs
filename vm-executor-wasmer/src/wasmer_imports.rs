@@ -346,6 +346,26 @@ fn wasmer_import_get_prev_block_random_seed(env: &VMHooksWrapper, pointer: i32) 
 }
 
 #[rustfmt::skip]
+fn wasmer_import_get_round_time(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.get_round_time()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_time_stamp(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_time_stamp()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_nonce(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_nonce()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_round(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_round()
+}
+
+#[rustfmt::skip]
 fn wasmer_import_finish(env: &VMHooksWrapper, pointer: i32, length: i32) {
     env.vm_hooks.finish(env.convert_mem_ptr(pointer), env.convert_mem_length(length))
 }
@@ -991,6 +1011,26 @@ fn wasmer_import_mbuffer_from_big_int_signed(env: &VMHooksWrapper, m_buffer_hand
 }
 
 #[rustfmt::skip]
+fn wasmer_import_mbuffer_to_small_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32) -> i64 {
+    env.vm_hooks.mbuffer_to_small_int_unsigned(m_buffer_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_to_small_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32) -> i64 {
+    env.vm_hooks.mbuffer_to_small_int_signed(m_buffer_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_from_small_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, value: i64) {
+    env.vm_hooks.mbuffer_from_small_int_unsigned(m_buffer_handle, value)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_from_small_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, value: i64) {
+    env.vm_hooks.mbuffer_from_small_int_signed(m_buffer_handle, value)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_mbuffer_to_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
     env.vm_hooks.mbuffer_to_big_float(m_buffer_handle, big_float_handle)
 }
@@ -1390,6 +1430,10 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "getPrevBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_round),
             "getPrevBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_epoch),
             "getPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_random_seed),
+            "getRoundTime" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_round_time),
+            "epochStartBlockTimeStamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_time_stamp),
+            "epochStartBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_nonce),
+            "epochStartBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_round),
             "finish" => Function::new_native_with_env(store, env.clone(), wasmer_import_finish),
             "executeOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_same_context),
             "executeOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_dest_context),
@@ -1519,6 +1563,10 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "mBufferToBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_int_signed),
             "mBufferFromBigIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_unsigned),
             "mBufferFromBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_signed),
+            "mBufferToSmallIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_small_int_unsigned),
+            "mBufferToSmallIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_small_int_signed),
+            "mBufferFromSmallIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_small_int_unsigned),
+            "mBufferFromSmallIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_small_int_signed),
             "mBufferToBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_float),
             "mBufferFromBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_float),
             "mBufferStorageStore" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_storage_store),
