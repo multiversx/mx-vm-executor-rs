@@ -8,6 +8,7 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
+meta = { path = "../meta" }
 multiversx-chain-vm-executor = { path = "../vm-executor" }
 multiversx-chain-vm-executor-wasmer = { path = "../vm-executor-wasmer" }
 
