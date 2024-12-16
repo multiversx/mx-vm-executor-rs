@@ -13,6 +13,7 @@ pub enum vm_exec_result_t {
     VM_EXEC_ERROR = 2,
 }
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_byte_array {
     pub bytes: *const u8,
@@ -74,6 +75,7 @@ pub(crate) unsafe fn string_copy(
     s.len() as c_int + 1
 }
 
+#[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_byte_array_list {
     pub arrays: *const vm_exec_byte_array,

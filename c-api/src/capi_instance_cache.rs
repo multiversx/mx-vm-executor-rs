@@ -1,5 +1,6 @@
 use std::slice;
 
+use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::CompilationOptions;
 
 use crate::{
@@ -16,6 +17,7 @@ use crate::{
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
+#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_cache(
     instance_ptr: *const vm_exec_instance_t,
     cache_bytes_ptr: *mut *const u8,
@@ -47,6 +49,7 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment, unused_variables)]
 #[no_mangle]
+#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_from_cache(
     executor_ptr: *mut vm_exec_executor_t,
     instance_ptr_ptr: *mut *mut vm_exec_instance_t,

@@ -2,6 +2,7 @@
 resolver = "2"
 
 members = [
+    "meta",
     "c-api",
     "vm-executor",
     "vm-executor-wasmer",
