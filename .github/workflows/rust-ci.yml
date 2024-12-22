@@ -17,7 +17,7 @@ jobs:
           default: true
           toolchain: "1.83"
       - name: Run rust tests
-        run: cargo +1.83 test
+        run: cargo +1.83 test --release
   clippy_check:
     permissions: write-all
     name: Clippy linter check
