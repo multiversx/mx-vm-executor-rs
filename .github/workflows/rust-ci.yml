@@ -15,9 +15,9 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: "1.77"
+          toolchain: "1.81"
       - name: Run rust tests
-        run: cargo +1.77 test
+        run: cargo +1.81 test
   clippy_check:
     permissions: write-all
     name: Clippy linter check
