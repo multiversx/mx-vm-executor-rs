@@ -501,6 +501,11 @@ fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_c
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_get_all_transfers_call_value(env: &VMHooksWrapper, value_handle: i32) {
+    env.vm_hooks.managed_get_all_transfers_call_value(value_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
     env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
 }
@@ -1461,6 +1466,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedGetPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_prev_block_random_seed),
             "managedGetReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_return_data),
             "managedGetMultiESDTCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_multi_esdt_call_value),
+            "managedGetAllTransfersCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_all_transfers_call_value),
             "managedGetBackTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_back_transfers),
             "managedGetESDTBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_balance),
             "managedGetESDTTokenData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_data),
