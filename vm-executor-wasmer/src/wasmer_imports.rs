@@ -501,8 +501,8 @@ fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_c
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_all_transfers_call_value(env: &VMHooksWrapper, value_handle: i32) {
-    env.vm_hooks.managed_get_all_transfers_call_value(value_handle)
+fn wasmer_import_managed_get_all_transfers_call_value(env: &VMHooksWrapper, transfer_call_values_list_handle: i32) {
+    env.vm_hooks.managed_get_all_transfers_call_value(transfer_call_values_list_handle)
 }
 
 #[rustfmt::skip]
@@ -613,6 +613,11 @@ fn wasmer_import_managed_buffer_to_hex(env: &VMHooksWrapper, source_handle: i32,
 #[rustfmt::skip]
 fn wasmer_import_managed_get_code_metadata(env: &VMHooksWrapper, address_handle: i32, response_handle: i32) {
     env.vm_hooks.managed_get_code_metadata(address_handle, response_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_code_hash(env: &VMHooksWrapper, address_handle: i32, code_hash_handle: i32) {
+    env.vm_hooks.managed_get_code_hash(address_handle, code_hash_handle)
 }
 
 #[rustfmt::skip]
@@ -1489,6 +1494,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedIsESDTPaused" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_paused),
             "managedBufferToHex" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_buffer_to_hex),
             "managedGetCodeMetadata" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_code_metadata),
+            "managedGetCodeHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_code_hash),
             "managedIsBuiltinFunction" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_builtin_function),
             "bigFloatNewFromParts" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_parts),
             "bigFloatNewFromFrac" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_frac),

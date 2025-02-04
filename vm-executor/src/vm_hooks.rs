@@ -111,7 +111,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_get_prev_block_random_seed(&self, result_handle: i32);
     fn managed_get_return_data(&self, result_id: i32, result_handle: i32);
     fn managed_get_multi_esdt_call_value(&self, multi_call_value_handle: i32);
-    fn managed_get_all_transfers_call_value(&self, value_handle: i32);
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32);
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32);
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
@@ -134,6 +134,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_is_esdt_paused(&self, token_id_handle: i32) -> i32;
     fn managed_buffer_to_hex(&self, source_handle: i32, dest_handle: i32);
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32);
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32);
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32;
     fn big_float_new_from_parts(&self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32;
     fn big_float_new_from_frac(&self, numerator: i64, denominator: i64) -> i32;
@@ -752,7 +753,7 @@ impl VMHooks for VMHooksDefault {
         println!("Called: managed_get_multi_esdt_call_value");
     }
 
-    fn managed_get_all_transfers_call_value(&self, value_handle: i32) {
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32) {
         println!("Called: managed_get_all_transfers_call_value");
     }
 
@@ -854,6 +855,10 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32) {
         println!("Called: managed_get_code_metadata");
+    }
+
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32) {
+        println!("Called: managed_get_code_hash");
     }
 
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32 {
