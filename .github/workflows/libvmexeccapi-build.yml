@@ -38,7 +38,7 @@ jobs:
         run: make ${{ matrix.make_target }}
       
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: libs
           path: |
