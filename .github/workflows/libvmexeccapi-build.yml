@@ -42,6 +42,7 @@ jobs:
         with:
           name: libs
           path: |
-            target/release/*.so
-            target/release/*.dylib
+            target/release/libvmexeccapi.so
+            target/release/libvmexeccapi.dylib
+            target/release/libvmexeccapi_arm.dylib
             c-api/libvmexeccapi.h
