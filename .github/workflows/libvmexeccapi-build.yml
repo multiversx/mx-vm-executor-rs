@@ -40,7 +40,7 @@ jobs:
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: libs
+          name: libs-${{ github.sha }}
           path: |
             target/release/libvmexeccapi.so
             target/release/libvmexeccapi.dylib
