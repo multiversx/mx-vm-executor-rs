@@ -431,8 +431,8 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
-    fn managed_get_all_transfers_call_value(&self, value_handle: i32) {
-        (self.c_func_pointers_ptr.managed_get_all_transfers_call_value_func_ptr)(self.vm_hooks_ptr, value_handle)
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_all_transfers_call_value_func_ptr)(self.vm_hooks_ptr, transfer_call_values_list_handle)
     }
 
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
@@ -521,6 +521,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
 
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_code_metadata_func_ptr)(self.vm_hooks_ptr, address_handle, response_handle)
+    }
+
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_code_hash_func_ptr)(self.vm_hooks_ptr, address_handle, code_hash_handle)
     }
 
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32 {
