@@ -491,8 +491,16 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_execute_on_dest_context_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
     }
 
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_execute_on_dest_context_with_error_return_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+    }
+
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_with_return_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
     fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {

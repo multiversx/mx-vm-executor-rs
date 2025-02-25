@@ -576,8 +576,18 @@ fn wasmer_import_managed_execute_on_dest_context(env: &VMHooksWrapper, gas: i64,
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_execute_on_dest_context_with_error_return(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_execute_on_dest_context_with_error_return(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
     env.vm_hooks.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_multi_transfer_esdt_nft_execute_with_return(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    env.vm_hooks.managed_multi_transfer_esdt_nft_execute_with_return(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
@@ -1486,7 +1496,9 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedExecuteReadOnly" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_read_only),
             "managedExecuteOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_same_context),
             "managedExecuteOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context),
+            "managedExecuteOnDestContextWithErrorReturn" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context_with_error_return),
             "managedMultiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute),
+            "managedMultiTransferESDTNFTExecuteWithReturn" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_with_return),
             "managedMultiTransferESDTNFTExecuteByUser" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user),
             "managedTransferValueExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_transfer_value_execute),
             "managedIsESDTFrozen" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_frozen),
