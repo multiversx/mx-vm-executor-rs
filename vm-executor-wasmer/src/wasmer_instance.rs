@@ -24,7 +24,7 @@ pub struct WasmerInstance {
 }
 
 impl WasmerInstance {
-    pub(crate) fn try_new_instance(
+    pub fn try_new_instance(
         executor_data: Rc<RefCell<WasmerExecutorData>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
