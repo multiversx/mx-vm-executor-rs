@@ -82,7 +82,9 @@ impl Executor for WasmerExecutor {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)
+        let instance =
+            WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)?;
+        Ok(Box::new(instance))
     }
 
     fn new_instance_from_cache(
@@ -90,10 +92,11 @@ impl Executor for WasmerExecutor {
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::try_new_instance_from_cache(
+        let instance = WasmerInstance::try_new_instance_from_cache(
             self.data.clone(),
             cache_bytes,
             compilation_options,
-        )
+        )?;
+        Ok(Box::new(instance))
     }
 }

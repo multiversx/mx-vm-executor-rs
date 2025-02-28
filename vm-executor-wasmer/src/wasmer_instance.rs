@@ -28,7 +28,7 @@ impl WasmerInstance {
         executor_data: Rc<RefCell<WasmerExecutorData>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
+    ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
@@ -64,17 +64,17 @@ impl WasmerInstance {
         trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
-        Ok(Box::new(WasmerInstance {
+        Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
-        }))
+        })
     }
 
-    pub(crate) fn try_new_instance_from_cache(
+    pub fn try_new_instance_from_cache(
         executor_data: Rc<RefCell<WasmerExecutorData>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
+    ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
@@ -113,10 +113,10 @@ impl WasmerInstance {
         trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
-        Ok(Box::new(WasmerInstance {
+        Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
-        }))
+        })
     }
 
     fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
