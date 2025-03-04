@@ -303,7 +303,9 @@ impl Instance for WasmerInstance {
         match result {
             Ok(memory) => unsafe {
                 let mem_data = memory.data_unchecked();
-                Ok(&mem_data[mem_ptr as usize..=(mem_ptr + mem_length) as usize])
+                let start = mem_ptr as usize;
+                let end = (mem_ptr + mem_length) as usize;
+                Ok(&mem_data[start..end])
             },
             Err(err) => Err(err.into()),
         }
