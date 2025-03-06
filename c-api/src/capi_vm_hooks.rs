@@ -447,6 +447,10 @@ impl multiversx_chain_vm_executor::VMHooks for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_esdt_token_data_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
     }
 
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_esdt_token_type_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, type_handle)
+    }
+
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
         (self.c_func_pointers_ptr.managed_async_call_func_ptr)(self.vm_hooks_ptr, dest_handle, value_handle, function_handle, arguments_handle)
     }

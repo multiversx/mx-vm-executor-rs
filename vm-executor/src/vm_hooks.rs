@@ -115,6 +115,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32);
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32);
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32);
     fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32;
     fn managed_get_callback_closure(&self, callback_closure_handle: i32);
@@ -769,6 +770,10 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
         println!("Called: managed_get_esdt_token_data");
+    }
+
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+        println!("Called: managed_get_esdt_token_type");
     }
 
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
