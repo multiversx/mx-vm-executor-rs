@@ -1,0 +1,26 @@
+[package]
+name = "multiversx-chain-vm-executor-wasmer5"
+version = "0.3.0"
+edition = "2021"
+publish = false # will also be published, but it is not yet ready for that
+
+[lib]
+
+[dependencies.multiversx-chain-vm-executor]
+version = "0.3.0"
+path = "../vm-executor"
+
+[dependencies]
+wasmer = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df", default-features = false, features = [
+    "singlepass",
+    "sys",
+    "universal",
+    "wat",
+] }
+
+wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
+
+chrono = "0.4.23"
+log = "0.4.17"
+loupe = "0.1.3"

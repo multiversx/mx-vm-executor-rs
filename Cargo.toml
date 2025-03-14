@@ -6,4 +6,5 @@ members = [
     "c-api",
     "vm-executor",
     "vm-executor-wasmer",
+    "vm-executor-wasmer5",
 ]
