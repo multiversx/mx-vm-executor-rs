@@ -126,7 +126,9 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_execute_read_only(&self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_execute_on_same_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_execute_on_dest_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_transfer_value_execute(&self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_is_esdt_frozen(&self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32;
@@ -819,8 +821,18 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_execute_on_dest_context_with_error_return");
+        0
+    }
+
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         println!("Called: managed_multi_transfer_esdt_nft_execute");
+        0
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        println!("Called: managed_multi_transfer_esdt_nft_execute_with_return");
         0
     }
 
