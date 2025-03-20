@@ -12,7 +12,7 @@ use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
 use std::cell::RefCell;
 use std::{rc::Rc, sync::Arc};
-use wasmer::Universal;
+use wasmer::{ExternType, Universal};
 use wasmer::{CompilerConfig, Extern, Module, Store};
 use wasmer::{Pages, Singlepass};
 
@@ -256,6 +256,19 @@ impl Instance for WasmerInstance {
 
     fn has_function(&self, func_name: &str) -> bool {
         self.wasmer_instance.exports.get_function(func_name).is_ok()
+    }
+
+    fn has_imported_function(&self, func_name: &str) -> bool {
+
+        for import in self.wasmer_instance.module().imports() {
+            if let ExternType::Function(_) = import.ty() {
+                if import.name() == func_name {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     fn get_exported_function_names(&self) -> Vec<String> {

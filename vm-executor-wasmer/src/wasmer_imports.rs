@@ -521,6 +521,11 @@ fn wasmer_import_managed_get_esdt_token_data(env: &VMHooksWrapper, address_handl
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_get_esdt_token_type(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+    env.vm_hooks.managed_get_esdt_token_type(address_handle, token_id_handle, nonce, type_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_async_call(env: &VMHooksWrapper, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
     env.vm_hooks.managed_async_call(dest_handle, value_handle, function_handle, arguments_handle)
 }
@@ -1485,6 +1490,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedGetBackTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_back_transfers),
             "managedGetESDTBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_balance),
             "managedGetESDTTokenData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_data),
+            "managedGetESDTTokenType" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_type),
             "managedAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_async_call),
             "managedCreateAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_create_async_call),
             "managedGetCallbackClosure" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_callback_closure),
