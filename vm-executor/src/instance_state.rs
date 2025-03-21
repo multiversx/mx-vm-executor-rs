@@ -1,36 +1,12 @@
-use crate::{BreakpointValue, ExecutorError, InstanceState};
+use crate::{BreakpointValue, ExecutorError, MemLength, MemPtr};
 
-pub struct CompilationOptions {
-    pub gas_limit: u64,
-    pub unmetered_locals: usize,
-    pub max_memory_grow: usize,
-    pub max_memory_grow_delta: usize,
-    pub opcode_trace: bool,
-    pub metering: bool,
-    pub runtime_breakpoints: bool,
-}
+// /// The argument type for dealing with executor memory pointers.
+// pub type MemPtr = isize;
 
-/// The argument type for dealing with executor memory pointers.
-pub type MemPtr = isize;
+// /// The argument type for dealing with lengths of slices of the executor memory.
+// pub type MemLength = isize;
 
-/// The argument type for dealing with lengths of slices of the executor memory.
-pub type MemLength = isize;
-
-pub trait Instance {
-    /// Calls an exported function of a WebAssembly instance by `name`.
-    fn call(&mut self, func_name: &str) -> Result<(), String>;
-
-    /// Checks that all public module functions (SC endpoints) have no arguments or results.
-    fn check_signatures(&self) -> bool;
-
-    /// Checks whether SC has an endpoint with given name.
-    fn has_function(&self, func_name: &str) -> bool;
-
-    /// Required to be able to extract all SC endpoint names.
-    fn get_exported_function_names(&self) -> Vec<String>;
-
-    fn state_ref(&mut self) -> Box<dyn InstanceState + '_>;
-
+pub trait InstanceState {
     /// Sets the number of points(gas) limit for the given instance.
     fn set_points_limit(&self, limit: u64) -> Result<(), String>;
 
@@ -60,10 +36,4 @@ pub trait Instance {
 
     /// Returns the runtime breakpoint value from the given instance.
     fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String>;
-
-    /// Resets an instance, cleaning memories and globals.
-    fn reset(&self) -> Result<(), String>;
-
-    /// Caches an instance.
-    fn cache(&self) -> Result<Vec<u8>, String>;
 }

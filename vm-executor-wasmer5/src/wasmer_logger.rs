@@ -35,7 +35,8 @@ impl log::Log for WasmerLogger {
 
 pub fn init(log_level: LevelFilter) {
     INIT.call_once(|| {
-        log::set_boxed_logger(Box::new(WasmerLogger))
+        // log::set_logger(logger)
+        log::set_logger(&WasmerLogger)
             .map(|()| {
                 log::set_max_level(log_level);
                 trace!("Initializing WasmerLogger with {log_level} ...");

@@ -92,7 +92,7 @@ impl ModuleMiddleware for Metering {
         })
     }
 
-    fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         let points_limit = self.points_limit as i64;
@@ -105,6 +105,8 @@ impl ModuleMiddleware for Metering {
             ),
             points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
         });
+        
+        Ok(())
     }
 }
 

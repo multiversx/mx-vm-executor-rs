@@ -139,7 +139,7 @@ pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
         Operator::Try { .. } => Some(opcode_cost.opcode_try),
         Operator::TypedSelect { .. } => Some(opcode_cost.opcode_typedselect),
         Operator::Unreachable { .. } => Some(opcode_cost.opcode_unreachable),
-        Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind),
+        // Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind),
         _ => None,
     }
 }

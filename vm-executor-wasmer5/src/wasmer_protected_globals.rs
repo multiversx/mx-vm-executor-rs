@@ -49,7 +49,9 @@ impl ModuleMiddleware for ProtectedGlobals {
         })
     }
 
-    fn transform_module_info(&self, _module_info: &mut ModuleInfo) {}
+    fn transform_module_info(&self, _module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
+        Ok(())
+    }
 }
 
 #[derive(Debug)]

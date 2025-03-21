@@ -2,10 +2,12 @@ use std::mem;
 use std::sync::Mutex;
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
-use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
+use wasmer::wasmparser::{
+    Operator,
+    // Type as WpType, TypeOrFuncType as WpTypeOrFuncType
+};
 use wasmer::{
-    FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
+    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Store
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
@@ -19,7 +21,7 @@ pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
 pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
-#[derive(Clone, Debug, MemoryUsage)]
+#[derive(Clone, Debug)]
 struct BreakpointsGlobalIndex {
     breakpoint_value_global_index: GlobalIndex,
 }
@@ -43,7 +45,7 @@ impl Breakpoints {
     ) {
         state.extend(&[
             Operator::If {
-                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+                blockty: wasmer::wasmparser::BlockType::Empty,
             },
             Operator::I64Const {
                 value: breakpoint_value as i64,
@@ -68,12 +70,12 @@ impl Breakpoints {
 unsafe impl Send for Breakpoints {}
 unsafe impl Sync for Breakpoints {}
 
-impl MemoryUsage for Breakpoints {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_index.size_of_val(tracker)
-            - mem::size_of_val(&self.global_index)
-    }
-}
+// impl MemoryUsage for Breakpoints {
+//     fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
+//         mem::size_of_val(self) + self.global_index.size_of_val(tracker)
+//             - mem::size_of_val(&self.global_index)
+//     }
+// }
 
 impl ModuleMiddleware for Breakpoints {
     fn generate_function_middleware(
@@ -85,7 +87,7 @@ impl ModuleMiddleware for Breakpoints {
         })
     }
 
-    fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_index = self.global_index.lock().unwrap();
 
         *global_index = Some(BreakpointsGlobalIndex {
@@ -95,6 +97,8 @@ impl ModuleMiddleware for Breakpoints {
                 BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
             ),
         });
+
+        Ok(())
     }
 }
 
@@ -120,7 +124,7 @@ impl FunctionBreakpoints {
             },
             Operator::I64Ne,
             Operator::If {
-                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+                blockty: wasmer::wasmparser::BlockType::Empty,
             },
             Operator::Unreachable,
             Operator::End,
@@ -146,11 +150,15 @@ impl FunctionMiddleware for FunctionBreakpoints {
     }
 }
 
-pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) -> Result<(), String> {
+pub(crate) fn set_breakpoint_value(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+    value: u64,
+) -> Result<(), String> {
     let result = instance.exports.get_global(BREAKPOINT_VALUE);
     match result {
         Ok(global) => {
-            let result = global.set(value.into());
+            let result = global.set(store, value.into());
             match result {
                 Ok(_) => Ok(()),
                 Err(err) => Err(err.message()),
@@ -160,11 +168,11 @@ pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) -> Result<()
     }
 }
 
-pub(crate) fn get_breakpoint_value(instance: &Instance) -> Result<u64, String> {
+pub(crate) fn get_breakpoint_value(instance: &Instance, store: &mut impl AsStoreMut) -> Result<u64, String> {
     let result = instance.exports.get_global(BREAKPOINT_VALUE);
     match result {
         Ok(global) => {
-            let result = global.get().try_into();
+            let result = global.get(store).try_into();
             match result {
                 Ok(value) => Ok(value),
                 Err(err) => Err(err.to_string()),

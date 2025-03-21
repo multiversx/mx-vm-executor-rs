@@ -6,1585 +6,1638 @@
 
 #![allow(clippy::too_many_arguments)]
 
-use wasmer::{imports, Function, ImportObject, Store};
+use std::cell::RefCell;
 
-use crate::wasmer_vm_hooks::VMHooksWrapper;
+use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks};
+use wasmer::{imports, Function, FunctionEnv, FunctionEnvMut, Imports, Store};
 
+use crate::{
+    wasmer_instance_state::WasmerInstanceState, wasmer_vm_hooks::VMHooksWrapper,
+};
+
+fn create_vm_hooks(mut env: FunctionEnvMut<VMHooksWrapper>) -> Box<dyn VMHooks> {
+    let (data, store_mut) = env.data_and_store_mut();
+    // let wasmer_inner = &data.wasmer_inner.upgrade().unwrap();
+    let wasmer_inner = unsafe { data.wasmer_inner.as_ptr().as_ref().unwrap() };
+    let instance_state = Box::new(WasmerInstanceState {
+        wasmer_inner,
+        store_ref: store_mut,
+    });
+    data.vm_hooks_builder.create_vm_hooks(instance_state)
+}
+
+fn wtf(mut env: FunctionEnvMut<VMHooksWrapper>) {
+    let (data, store_mut) = env.data_and_store_mut();
+    // let refcell = RefCell::new(value)
+}
+
+// fn dummy_wasmer_inner() -> WasmerInstanceInner {
+//     todo!()
+// }
+
+// fn with_vm_hooks<F, R>(mut env: FunctionEnvMut<VMHooksWrapper>, f: F) -> R
+// where
+//     F: FnOnce(&dyn VMHooks) -> R,
+// {
+//     let (data, store_mut) = env.data_and_store_mut();
+//     let inner = dummy_wasmer_inner();
+//     let instance_state = WasmerInstanceState {
+//         // wasmer_inner: data.wasmer_inner.as_ptr().as_ref().unwrap(),
+//         wasmer_inner: &inner,
+//         store_ref: store_mut,
+//     };
+//     // let instance_state_2 = WasmerInstanceState2 { env };
+//     let vm_hooks = data
+//         .vm_hooks_builder
+//         .create_vm_hooks(Box::new(instance_state));
+//     f(&*vm_hooks)
+// }
+
+fn convert_mem_ptr(raw: i32) -> MemPtr {
+    raw as MemPtr
+}
+
+fn convert_mem_length(raw: i32) -> MemLength {
+    raw as MemLength
+}
+
 #[rustfmt::skip]
-fn wasmer_import_get_gas_left(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_gas_left()
+fn wasmer_import_get_gas_left(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_gas_left()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_sc_address(env: &VMHooksWrapper, result_offset: i32) {
-    env.vm_hooks.get_sc_address(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_sc_address(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) {
+    create_vm_hooks(env).get_sc_address(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_owner_address(env: &VMHooksWrapper, result_offset: i32) {
-    env.vm_hooks.get_owner_address(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_owner_address(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) {
+    create_vm_hooks(env).get_owner_address(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_shard_of_address(env: &VMHooksWrapper, address_offset: i32) -> i32 {
-    env.vm_hooks.get_shard_of_address(env.convert_mem_ptr(address_offset))
+fn wasmer_import_get_shard_of_address(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32) -> i32 {
+    create_vm_hooks(env).get_shard_of_address(convert_mem_ptr(address_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_smart_contract(env: &VMHooksWrapper, address_offset: i32) -> i32 {
-    env.vm_hooks.is_smart_contract(env.convert_mem_ptr(address_offset))
+fn wasmer_import_is_smart_contract(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32) -> i32 {
+    create_vm_hooks(env).is_smart_contract(convert_mem_ptr(address_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_signal_error(env: &VMHooksWrapper, message_offset: i32, message_length: i32) {
-    env.vm_hooks.signal_error(env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length))
+fn wasmer_import_signal_error(env: FunctionEnvMut<VMHooksWrapper>, message_offset: i32, message_length: i32) {
+    create_vm_hooks(env).signal_error(convert_mem_ptr(message_offset), convert_mem_length(message_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_external_balance(env: &VMHooksWrapper, address_offset: i32, result_offset: i32) {
-    env.vm_hooks.get_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_external_balance(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, result_offset: i32) {
+    create_vm_hooks(env).get_external_balance(convert_mem_ptr(address_offset), convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_hash(env: &VMHooksWrapper, nonce: i64, result_offset: i32) -> i32 {
-    env.vm_hooks.get_block_hash(nonce, env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_block_hash(env: FunctionEnvMut<VMHooksWrapper>, nonce: i64, result_offset: i32) -> i32 {
+    create_vm_hooks(env).get_block_hash(nonce, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_balance(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_offset: i32) -> i32 {
-    env.vm_hooks.get_esdt_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_esdt_balance(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_offset: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_balance(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_nft_name_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.vm_hooks.get_esdt_nft_name_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
+fn wasmer_import_get_esdt_nft_name_length(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    create_vm_hooks(env).get_esdt_nft_name_length(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_nft_attribute_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.vm_hooks.get_esdt_nft_attribute_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
+fn wasmer_import_get_esdt_nft_attribute_length(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    create_vm_hooks(env).get_esdt_nft_attribute_length(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_nft_uri_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.vm_hooks.get_esdt_nft_uri_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
+fn wasmer_import_get_esdt_nft_uri_length(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
+    create_vm_hooks(env).get_esdt_nft_uri_length(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_data(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, value_handle: i32, properties_offset: i32, hash_offset: i32, name_offset: i32, attributes_offset: i32, creator_offset: i32, royalties_handle: i32, uris_offset: i32) -> i32 {
-    env.vm_hooks.get_esdt_token_data(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, value_handle, env.convert_mem_ptr(properties_offset), env.convert_mem_ptr(hash_offset), env.convert_mem_ptr(name_offset), env.convert_mem_ptr(attributes_offset), env.convert_mem_ptr(creator_offset), royalties_handle, env.convert_mem_ptr(uris_offset))
+fn wasmer_import_get_esdt_token_data(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, value_handle: i32, properties_offset: i32, hash_offset: i32, name_offset: i32, attributes_offset: i32, creator_offset: i32, royalties_handle: i32, uris_offset: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_token_data(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce, value_handle, convert_mem_ptr(properties_offset), convert_mem_ptr(hash_offset), convert_mem_ptr(name_offset), convert_mem_ptr(attributes_offset), convert_mem_ptr(creator_offset), royalties_handle, convert_mem_ptr(uris_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_local_roles(env: &VMHooksWrapper, token_id_handle: i32) -> i64 {
-    env.vm_hooks.get_esdt_local_roles(token_id_handle)
+fn wasmer_import_get_esdt_local_roles(env: FunctionEnvMut<VMHooksWrapper>, token_id_handle: i32) -> i64 {
+    create_vm_hooks(env).get_esdt_local_roles(token_id_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_validate_token_identifier(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.vm_hooks.validate_token_identifier(token_id_handle)
+fn wasmer_import_validate_token_identifier(env: FunctionEnvMut<VMHooksWrapper>, token_id_handle: i32) -> i32 {
+    create_vm_hooks(env).validate_token_identifier(token_id_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_transfer_value(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) -> i32 {
-    env.vm_hooks.transfer_value(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_transfer_value(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) -> i32 {
+    create_vm_hooks(env).transfer_value(convert_mem_ptr(dest_offset), convert_mem_ptr(value_offset), convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_transfer_value_execute(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.transfer_value_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_transfer_value_execute(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).transfer_value_execute(convert_mem_ptr(dest_offset), convert_mem_ptr(value_offset), gas_limit, convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_transfer_esdt_execute(env: &VMHooksWrapper, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.transfer_esdt_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_transfer_esdt_execute(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).transfer_esdt_execute(convert_mem_ptr(dest_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), convert_mem_ptr(value_offset), gas_limit, convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_transfer_esdt_nft_execute(env: &VMHooksWrapper, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, nonce: i64, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), nonce, gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_transfer_esdt_nft_execute(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, nonce: i64, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).transfer_esdt_nft_execute(convert_mem_ptr(dest_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), convert_mem_ptr(value_offset), nonce, gas_limit, convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dest_offset: i32, num_token_transfers: i32, token_transfers_args_length_offset: i32, token_transfer_data_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.multi_transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), num_token_transfers, env.convert_mem_ptr(token_transfers_args_length_offset), env.convert_mem_ptr(token_transfer_data_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_multi_transfer_esdt_nft_execute(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, num_token_transfers: i32, token_transfers_args_length_offset: i32, token_transfer_data_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).multi_transfer_esdt_nft_execute(convert_mem_ptr(dest_offset), num_token_transfers, convert_mem_ptr(token_transfers_args_length_offset), convert_mem_ptr(token_transfer_data_offset), gas_limit, convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_create_async_call(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32 {
-    env.vm_hooks.create_async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length), env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback)
+fn wasmer_import_create_async_call(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32 {
+    create_vm_hooks(env).create_async_call(convert_mem_ptr(dest_offset), convert_mem_ptr(value_offset), convert_mem_ptr(data_offset), convert_mem_length(data_length), convert_mem_ptr(success_offset), convert_mem_length(success_length), convert_mem_ptr(error_offset), convert_mem_length(error_length), gas, extra_gas_for_callback)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_set_async_context_callback(env: &VMHooksWrapper, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32 {
-    env.vm_hooks.set_async_context_callback(env.convert_mem_ptr(callback), env.convert_mem_length(callback_length), env.convert_mem_ptr(data), env.convert_mem_length(data_length), gas)
+fn wasmer_import_set_async_context_callback(env: FunctionEnvMut<VMHooksWrapper>, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32 {
+    create_vm_hooks(env).set_async_context_callback(convert_mem_ptr(callback), convert_mem_length(callback_length), convert_mem_ptr(data), convert_mem_length(data_length), gas)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_upgrade_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.vm_hooks.upgrade_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_upgrade_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    create_vm_hooks(env).upgrade_contract(convert_mem_ptr(dest_offset), gas_limit, convert_mem_ptr(value_offset), convert_mem_ptr(code_offset), convert_mem_ptr(code_metadata_offset), convert_mem_length(length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_upgrade_from_source_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.vm_hooks.upgrade_from_source_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_upgrade_from_source_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    create_vm_hooks(env).upgrade_from_source_contract(convert_mem_ptr(dest_offset), gas_limit, convert_mem_ptr(value_offset), convert_mem_ptr(source_contract_address_offset), convert_mem_ptr(code_metadata_offset), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_delete_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.vm_hooks.delete_contract(env.convert_mem_ptr(dest_offset), gas_limit, num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_delete_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, gas_limit: i64, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
+    create_vm_hooks(env).delete_contract(convert_mem_ptr(dest_offset), gas_limit, num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_async_call(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) {
-    env.vm_hooks.async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_async_call(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) {
+    create_vm_hooks(env).async_call(convert_mem_ptr(dest_offset), convert_mem_ptr(value_offset), convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_argument_length(env: &VMHooksWrapper, id: i32) -> i32 {
-    env.vm_hooks.get_argument_length(id)
+fn wasmer_import_get_argument_length(env: FunctionEnvMut<VMHooksWrapper>, id: i32) -> i32 {
+    create_vm_hooks(env).get_argument_length(id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_argument(env: &VMHooksWrapper, id: i32, arg_offset: i32) -> i32 {
-    env.vm_hooks.get_argument(id, env.convert_mem_ptr(arg_offset))
+fn wasmer_import_get_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32, arg_offset: i32) -> i32 {
+    create_vm_hooks(env).get_argument(id, convert_mem_ptr(arg_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_function(env: &VMHooksWrapper, function_offset: i32) -> i32 {
-    env.vm_hooks.get_function(env.convert_mem_ptr(function_offset))
+fn wasmer_import_get_function(env: FunctionEnvMut<VMHooksWrapper>, function_offset: i32) -> i32 {
+    create_vm_hooks(env).get_function(convert_mem_ptr(function_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_num_arguments(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.get_num_arguments()
+fn wasmer_import_get_num_arguments(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).get_num_arguments()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_storage_store(env: &VMHooksWrapper, key_offset: i32, key_length: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.vm_hooks.storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_storage_store(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, data_offset: i32, data_length: i32) -> i32 {
+    create_vm_hooks(env).storage_store(convert_mem_ptr(key_offset), convert_mem_length(key_length), convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_storage_load_length(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.vm_hooks.storage_load_length(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_storage_load_length(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i32 {
+    create_vm_hooks(env).storage_load_length(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_storage_load_from_address(env: &VMHooksWrapper, address_offset: i32, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.storage_load_from_address(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset))
+fn wasmer_import_storage_load_from_address(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).storage_load_from_address(convert_mem_ptr(address_offset), convert_mem_ptr(key_offset), convert_mem_length(key_length), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_storage_load(env: &VMHooksWrapper, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset))
+fn wasmer_import_storage_load(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).storage_load(convert_mem_ptr(key_offset), convert_mem_length(key_length), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_set_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32, lock_timestamp: i64) -> i32 {
-    env.vm_hooks.set_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), lock_timestamp)
+fn wasmer_import_set_storage_lock(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, lock_timestamp: i64) -> i32 {
+    create_vm_hooks(env).set_storage_lock(convert_mem_ptr(key_offset), convert_mem_length(key_length), lock_timestamp)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.vm_hooks.get_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_get_storage_lock(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i64 {
+    create_vm_hooks(env).get_storage_lock(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_storage_locked(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.vm_hooks.is_storage_locked(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_is_storage_locked(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i32 {
+    create_vm_hooks(env).is_storage_locked(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_clear_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.vm_hooks.clear_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_clear_storage_lock(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i32 {
+    create_vm_hooks(env).clear_storage_lock(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_caller(env: &VMHooksWrapper, result_offset: i32) {
-    env.vm_hooks.get_caller(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_caller(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) {
+    create_vm_hooks(env).get_caller(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_check_no_payment(env: &VMHooksWrapper) {
-    env.vm_hooks.check_no_payment()
+fn wasmer_import_check_no_payment(env: FunctionEnvMut<VMHooksWrapper>) {
+    create_vm_hooks(env).check_no_payment()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_call_value(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.vm_hooks.get_call_value(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_call_value(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) -> i32 {
+    create_vm_hooks(env).get_call_value(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_value(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.vm_hooks.get_esdt_value(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_esdt_value(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_value(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_value_by_index(env: &VMHooksWrapper, result_offset: i32, index: i32) -> i32 {
-    env.vm_hooks.get_esdt_value_by_index(env.convert_mem_ptr(result_offset), index)
+fn wasmer_import_get_esdt_value_by_index(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32, index: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_value_by_index(convert_mem_ptr(result_offset), index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_name(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.vm_hooks.get_esdt_token_name(env.convert_mem_ptr(result_offset))
+fn wasmer_import_get_esdt_token_name(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_token_name(convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_name_by_index(env: &VMHooksWrapper, result_offset: i32, index: i32) -> i32 {
-    env.vm_hooks.get_esdt_token_name_by_index(env.convert_mem_ptr(result_offset), index)
+fn wasmer_import_get_esdt_token_name_by_index(env: FunctionEnvMut<VMHooksWrapper>, result_offset: i32, index: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_token_name_by_index(convert_mem_ptr(result_offset), index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_nonce(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_esdt_token_nonce()
+fn wasmer_import_get_esdt_token_nonce(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_esdt_token_nonce()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_nonce_by_index(env: &VMHooksWrapper, index: i32) -> i64 {
-    env.vm_hooks.get_esdt_token_nonce_by_index(index)
+fn wasmer_import_get_esdt_token_nonce_by_index(env: FunctionEnvMut<VMHooksWrapper>, index: i32) -> i64 {
+    create_vm_hooks(env).get_esdt_token_nonce_by_index(index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_current_esdt_nft_nonce(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32) -> i64 {
-    env.vm_hooks.get_current_esdt_nft_nonce(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len))
+fn wasmer_import_get_current_esdt_nft_nonce(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32) -> i64 {
+    create_vm_hooks(env).get_current_esdt_nft_nonce(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_type(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.get_esdt_token_type()
+fn wasmer_import_get_esdt_token_type(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).get_esdt_token_type()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_esdt_token_type_by_index(env: &VMHooksWrapper, index: i32) -> i32 {
-    env.vm_hooks.get_esdt_token_type_by_index(index)
+fn wasmer_import_get_esdt_token_type_by_index(env: FunctionEnvMut<VMHooksWrapper>, index: i32) -> i32 {
+    create_vm_hooks(env).get_esdt_token_type_by_index(index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_num_esdt_transfers(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.get_num_esdt_transfers()
+fn wasmer_import_get_num_esdt_transfers(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).get_num_esdt_transfers()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_call_value_token_name(env: &VMHooksWrapper, call_value_offset: i32, token_name_offset: i32) -> i32 {
-    env.vm_hooks.get_call_value_token_name(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset))
+fn wasmer_import_get_call_value_token_name(env: FunctionEnvMut<VMHooksWrapper>, call_value_offset: i32, token_name_offset: i32) -> i32 {
+    create_vm_hooks(env).get_call_value_token_name(convert_mem_ptr(call_value_offset), convert_mem_ptr(token_name_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_call_value_token_name_by_index(env: &VMHooksWrapper, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32 {
-    env.vm_hooks.get_call_value_token_name_by_index(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset), index)
+fn wasmer_import_get_call_value_token_name_by_index(env: FunctionEnvMut<VMHooksWrapper>, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32 {
+    create_vm_hooks(env).get_call_value_token_name_by_index(convert_mem_ptr(call_value_offset), convert_mem_ptr(token_name_offset), index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_reserved_function_name(env: &VMHooksWrapper, name_handle: i32) -> i32 {
-    env.vm_hooks.is_reserved_function_name(name_handle)
+fn wasmer_import_is_reserved_function_name(env: FunctionEnvMut<VMHooksWrapper>, name_handle: i32) -> i32 {
+    create_vm_hooks(env).is_reserved_function_name(name_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_write_log(env: &VMHooksWrapper, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32) {
-    env.vm_hooks.write_log(env.convert_mem_ptr(data_pointer), env.convert_mem_length(data_length), env.convert_mem_ptr(topic_ptr), num_topics)
+fn wasmer_import_write_log(env: FunctionEnvMut<VMHooksWrapper>, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32) {
+    create_vm_hooks(env).write_log(convert_mem_ptr(data_pointer), convert_mem_length(data_length), convert_mem_ptr(topic_ptr), num_topics)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_write_event_log(env: &VMHooksWrapper, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32) {
-    env.vm_hooks.write_event_log(num_topics, env.convert_mem_ptr(topic_lengths_offset), env.convert_mem_ptr(topic_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_write_event_log(env: FunctionEnvMut<VMHooksWrapper>, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32) {
+    create_vm_hooks(env).write_event_log(num_topics, convert_mem_ptr(topic_lengths_offset), convert_mem_ptr(topic_offset), convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_timestamp(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_block_timestamp()
+fn wasmer_import_get_block_timestamp(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_block_timestamp()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_nonce(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_block_nonce()
+fn wasmer_import_get_block_nonce(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_block_nonce()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_round(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_block_round()
+fn wasmer_import_get_block_round(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_block_round()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_epoch(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_block_epoch()
+fn wasmer_import_get_block_epoch(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_block_epoch()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_random_seed(env: &VMHooksWrapper, pointer: i32) {
-    env.vm_hooks.get_block_random_seed(env.convert_mem_ptr(pointer))
+fn wasmer_import_get_block_random_seed(env: FunctionEnvMut<VMHooksWrapper>, pointer: i32) {
+    create_vm_hooks(env).get_block_random_seed(convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_state_root_hash(env: &VMHooksWrapper, pointer: i32) {
-    env.vm_hooks.get_state_root_hash(env.convert_mem_ptr(pointer))
+fn wasmer_import_get_state_root_hash(env: FunctionEnvMut<VMHooksWrapper>, pointer: i32) {
+    create_vm_hooks(env).get_state_root_hash(convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_block_timestamp(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_prev_block_timestamp()
+fn wasmer_import_get_prev_block_timestamp(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_prev_block_timestamp()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_block_nonce(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_prev_block_nonce()
+fn wasmer_import_get_prev_block_nonce(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_prev_block_nonce()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_block_round(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_prev_block_round()
+fn wasmer_import_get_prev_block_round(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_prev_block_round()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_block_epoch(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_prev_block_epoch()
+fn wasmer_import_get_prev_block_epoch(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {
+    create_vm_hooks(env).get_prev_block_epoch()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_block_random_seed(env: &VMHooksWrapper, pointer: i32) {
-    env.vm_hooks.get_prev_block_random_seed(env.convert_mem_ptr(pointer))
+fn wasmer_import_get_prev_block_random_seed(env: FunctionEnvMut<VMHooksWrapper>, pointer: i32) {
+    create_vm_hooks(env).get_prev_block_random_seed(convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_finish(env: &VMHooksWrapper, pointer: i32, length: i32) {
-    env.vm_hooks.finish(env.convert_mem_ptr(pointer), env.convert_mem_length(length))
+fn wasmer_import_finish(env: FunctionEnvMut<VMHooksWrapper>, pointer: i32, length: i32) {
+    create_vm_hooks(env).finish(convert_mem_ptr(pointer), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_execute_on_same_context(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.execute_on_same_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_execute_on_same_context(env: FunctionEnvMut<VMHooksWrapper>, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).execute_on_same_context(gas_limit, convert_mem_ptr(address_offset), convert_mem_ptr(value_offset), convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_execute_on_dest_context(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.execute_on_dest_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_execute_on_dest_context(env: FunctionEnvMut<VMHooksWrapper>, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).execute_on_dest_context(gas_limit, convert_mem_ptr(address_offset), convert_mem_ptr(value_offset), convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_execute_read_only(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.execute_read_only(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_execute_read_only(env: FunctionEnvMut<VMHooksWrapper>, gas_limit: i64, address_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).execute_read_only(gas_limit, convert_mem_ptr(address_offset), convert_mem_ptr(function_offset), convert_mem_length(function_length), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_create_contract(env: &VMHooksWrapper, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, result_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.create_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_create_contract(env: FunctionEnvMut<VMHooksWrapper>, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, result_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).create_contract(gas_limit, convert_mem_ptr(value_offset), convert_mem_ptr(code_offset), convert_mem_ptr(code_metadata_offset), convert_mem_length(length), convert_mem_ptr(result_offset), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_deploy_from_source_contract(env: &VMHooksWrapper, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, result_address_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.deploy_from_source_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_ptr(result_address_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
+fn wasmer_import_deploy_from_source_contract(env: FunctionEnvMut<VMHooksWrapper>, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, result_address_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).deploy_from_source_contract(gas_limit, convert_mem_ptr(value_offset), convert_mem_ptr(source_contract_address_offset), convert_mem_ptr(code_metadata_offset), convert_mem_ptr(result_address_offset), num_arguments, convert_mem_ptr(arguments_length_offset), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_num_return_data(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.get_num_return_data()
+fn wasmer_import_get_num_return_data(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).get_num_return_data()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_return_data_size(env: &VMHooksWrapper, result_id: i32) -> i32 {
-    env.vm_hooks.get_return_data_size(result_id)
+fn wasmer_import_get_return_data_size(env: FunctionEnvMut<VMHooksWrapper>, result_id: i32) -> i32 {
+    create_vm_hooks(env).get_return_data_size(result_id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_return_data(env: &VMHooksWrapper, result_id: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.get_return_data(result_id, env.convert_mem_ptr(data_offset))
+fn wasmer_import_get_return_data(env: FunctionEnvMut<VMHooksWrapper>, result_id: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).get_return_data(result_id, convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_clean_return_data(env: &VMHooksWrapper) {
-    env.vm_hooks.clean_return_data()
+fn wasmer_import_clean_return_data(env: FunctionEnvMut<VMHooksWrapper>) {
+    create_vm_hooks(env).clean_return_data()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_delete_from_return_data(env: &VMHooksWrapper, result_id: i32) {
-    env.vm_hooks.delete_from_return_data(result_id)
+fn wasmer_import_delete_from_return_data(env: FunctionEnvMut<VMHooksWrapper>, result_id: i32) {
+    create_vm_hooks(env).delete_from_return_data(result_id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_original_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.vm_hooks.get_original_tx_hash(env.convert_mem_ptr(data_offset))
+fn wasmer_import_get_original_tx_hash(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32) {
+    create_vm_hooks(env).get_original_tx_hash(convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_current_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.vm_hooks.get_current_tx_hash(env.convert_mem_ptr(data_offset))
+fn wasmer_import_get_current_tx_hash(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32) {
+    create_vm_hooks(env).get_current_tx_hash(convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_prev_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.vm_hooks.get_prev_tx_hash(env.convert_mem_ptr(data_offset))
+fn wasmer_import_get_prev_tx_hash(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32) {
+    create_vm_hooks(env).get_prev_tx_hash(convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_sc_address(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.managed_sc_address(destination_handle)
+fn wasmer_import_managed_sc_address(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).managed_sc_address(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_owner_address(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.managed_owner_address(destination_handle)
+fn wasmer_import_managed_owner_address(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).managed_owner_address(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_caller(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.managed_caller(destination_handle)
+fn wasmer_import_managed_caller(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).managed_caller(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_original_caller_addr(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.managed_get_original_caller_addr(destination_handle)
+fn wasmer_import_managed_get_original_caller_addr(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).managed_get_original_caller_addr(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_relayer_addr(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.managed_get_relayer_addr(destination_handle)
+fn wasmer_import_managed_get_relayer_addr(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).managed_get_relayer_addr(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_signal_error(env: &VMHooksWrapper, err_handle: i32) {
-    env.vm_hooks.managed_signal_error(err_handle)
+fn wasmer_import_managed_signal_error(env: FunctionEnvMut<VMHooksWrapper>, err_handle: i32) {
+    create_vm_hooks(env).managed_signal_error(err_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_write_log(env: &VMHooksWrapper, topics_handle: i32, data_handle: i32) {
-    env.vm_hooks.managed_write_log(topics_handle, data_handle)
+fn wasmer_import_managed_write_log(env: FunctionEnvMut<VMHooksWrapper>, topics_handle: i32, data_handle: i32) {
+    create_vm_hooks(env).managed_write_log(topics_handle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_original_tx_hash(env: &VMHooksWrapper, result_handle: i32) {
-    env.vm_hooks.managed_get_original_tx_hash(result_handle)
+fn wasmer_import_managed_get_original_tx_hash(env: FunctionEnvMut<VMHooksWrapper>, result_handle: i32) {
+    create_vm_hooks(env).managed_get_original_tx_hash(result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_state_root_hash(env: &VMHooksWrapper, result_handle: i32) {
-    env.vm_hooks.managed_get_state_root_hash(result_handle)
+fn wasmer_import_managed_get_state_root_hash(env: FunctionEnvMut<VMHooksWrapper>, result_handle: i32) {
+    create_vm_hooks(env).managed_get_state_root_hash(result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_block_random_seed(env: &VMHooksWrapper, result_handle: i32) {
-    env.vm_hooks.managed_get_block_random_seed(result_handle)
+fn wasmer_import_managed_get_block_random_seed(env: FunctionEnvMut<VMHooksWrapper>, result_handle: i32) {
+    create_vm_hooks(env).managed_get_block_random_seed(result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_prev_block_random_seed(env: &VMHooksWrapper, result_handle: i32) {
-    env.vm_hooks.managed_get_prev_block_random_seed(result_handle)
+fn wasmer_import_managed_get_prev_block_random_seed(env: FunctionEnvMut<VMHooksWrapper>, result_handle: i32) {
+    create_vm_hooks(env).managed_get_prev_block_random_seed(result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_return_data(env: &VMHooksWrapper, result_id: i32, result_handle: i32) {
-    env.vm_hooks.managed_get_return_data(result_id, result_handle)
+fn wasmer_import_managed_get_return_data(env: FunctionEnvMut<VMHooksWrapper>, result_id: i32, result_handle: i32) {
+    create_vm_hooks(env).managed_get_return_data(result_id, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_call_value_handle: i32) {
-    env.vm_hooks.managed_get_multi_esdt_call_value(multi_call_value_handle)
+fn wasmer_import_managed_get_multi_esdt_call_value(env: FunctionEnvMut<VMHooksWrapper>, multi_call_value_handle: i32) {
+    create_vm_hooks(env).managed_get_multi_esdt_call_value(multi_call_value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
-    env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
+fn wasmer_import_managed_get_back_transfers(env: FunctionEnvMut<VMHooksWrapper>, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+    create_vm_hooks(env).managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_esdt_balance(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
-    env.vm_hooks.managed_get_esdt_balance(address_handle, token_id_handle, nonce, value_handle)
+fn wasmer_import_managed_get_esdt_balance(env: FunctionEnvMut<VMHooksWrapper>, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
+    create_vm_hooks(env).managed_get_esdt_balance(address_handle, token_id_handle, nonce, value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_esdt_token_data(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
-    env.vm_hooks.managed_get_esdt_token_data(address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
+fn wasmer_import_managed_get_esdt_token_data(env: FunctionEnvMut<VMHooksWrapper>, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
+    create_vm_hooks(env).managed_get_esdt_token_data(address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_async_call(env: &VMHooksWrapper, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
-    env.vm_hooks.managed_async_call(dest_handle, value_handle, function_handle, arguments_handle)
+fn wasmer_import_managed_async_call(env: FunctionEnvMut<VMHooksWrapper>, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
+    create_vm_hooks(env).managed_async_call(dest_handle, value_handle, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_create_async_call(env: &VMHooksWrapper, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
-    env.vm_hooks.managed_create_async_call(dest_handle, value_handle, function_handle, arguments_handle, env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback, callback_closure_handle)
+fn wasmer_import_managed_create_async_call(env: FunctionEnvMut<VMHooksWrapper>, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_create_async_call(dest_handle, value_handle, function_handle, arguments_handle, convert_mem_ptr(success_offset), convert_mem_length(success_length), convert_mem_ptr(error_offset), convert_mem_length(error_length), gas, extra_gas_for_callback, callback_closure_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_callback_closure(env: &VMHooksWrapper, callback_closure_handle: i32) {
-    env.vm_hooks.managed_get_callback_closure(callback_closure_handle)
+fn wasmer_import_managed_get_callback_closure(env: FunctionEnvMut<VMHooksWrapper>, callback_closure_handle: i32) {
+    create_vm_hooks(env).managed_get_callback_closure(callback_closure_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_upgrade_from_source_contract(env: &VMHooksWrapper, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
-    env.vm_hooks.managed_upgrade_from_source_contract(dest_handle, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_handle)
+fn wasmer_import_managed_upgrade_from_source_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    create_vm_hooks(env).managed_upgrade_from_source_contract(dest_handle, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_upgrade_contract(env: &VMHooksWrapper, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
-    env.vm_hooks.managed_upgrade_contract(dest_handle, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_handle)
+fn wasmer_import_managed_upgrade_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    create_vm_hooks(env).managed_upgrade_contract(dest_handle, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_delete_contract(env: &VMHooksWrapper, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
-    env.vm_hooks.managed_delete_contract(dest_handle, gas_limit, arguments_handle)
+fn wasmer_import_managed_delete_contract(env: FunctionEnvMut<VMHooksWrapper>, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
+    create_vm_hooks(env).managed_delete_contract(dest_handle, gas_limit, arguments_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_deploy_from_source_contract(env: &VMHooksWrapper, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_deploy_from_source_contract(gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
+fn wasmer_import_managed_deploy_from_source_contract(env: FunctionEnvMut<VMHooksWrapper>, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_deploy_from_source_contract(gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_create_contract(env: &VMHooksWrapper, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_create_contract(gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
+fn wasmer_import_managed_create_contract(env: FunctionEnvMut<VMHooksWrapper>, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_create_contract(gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_execute_read_only(env: &VMHooksWrapper, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_execute_read_only(gas, address_handle, function_handle, arguments_handle, result_handle)
+fn wasmer_import_managed_execute_read_only(env: FunctionEnvMut<VMHooksWrapper>, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_execute_read_only(gas, address_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_execute_on_same_context(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_execute_on_same_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+fn wasmer_import_managed_execute_on_same_context(env: FunctionEnvMut<VMHooksWrapper>, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_execute_on_same_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_execute_on_dest_context(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_execute_on_dest_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+fn wasmer_import_managed_execute_on_dest_context(env: FunctionEnvMut<VMHooksWrapper>, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_execute_on_dest_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.vm_hooks.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: FunctionEnvMut<VMHooksWrapper>, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user(env: &VMHooksWrapper, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.vm_hooks.managed_multi_transfer_esdt_nft_execute_by_user(user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+fn wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user(env: FunctionEnvMut<VMHooksWrapper>, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_multi_transfer_esdt_nft_execute_by_user(user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_transfer_value_execute(env: &VMHooksWrapper, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.vm_hooks.managed_transfer_value_execute(dst_handle, value_handle, gas_limit, function_handle, arguments_handle)
+fn wasmer_import_managed_transfer_value_execute(env: FunctionEnvMut<VMHooksWrapper>, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_transfer_value_execute(dst_handle, value_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_is_esdt_frozen(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
-    env.vm_hooks.managed_is_esdt_frozen(address_handle, token_id_handle, nonce)
+fn wasmer_import_managed_is_esdt_frozen(env: FunctionEnvMut<VMHooksWrapper>, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
+    create_vm_hooks(env).managed_is_esdt_frozen(address_handle, token_id_handle, nonce)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_is_esdt_limited_transfer(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.vm_hooks.managed_is_esdt_limited_transfer(token_id_handle)
+fn wasmer_import_managed_is_esdt_limited_transfer(env: FunctionEnvMut<VMHooksWrapper>, token_id_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_is_esdt_limited_transfer(token_id_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_is_esdt_paused(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.vm_hooks.managed_is_esdt_paused(token_id_handle)
+fn wasmer_import_managed_is_esdt_paused(env: FunctionEnvMut<VMHooksWrapper>, token_id_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_is_esdt_paused(token_id_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_buffer_to_hex(env: &VMHooksWrapper, source_handle: i32, dest_handle: i32) {
-    env.vm_hooks.managed_buffer_to_hex(source_handle, dest_handle)
+fn wasmer_import_managed_buffer_to_hex(env: FunctionEnvMut<VMHooksWrapper>, source_handle: i32, dest_handle: i32) {
+    create_vm_hooks(env).managed_buffer_to_hex(source_handle, dest_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_get_code_metadata(env: &VMHooksWrapper, address_handle: i32, response_handle: i32) {
-    env.vm_hooks.managed_get_code_metadata(address_handle, response_handle)
+fn wasmer_import_managed_get_code_metadata(env: FunctionEnvMut<VMHooksWrapper>, address_handle: i32, response_handle: i32) {
+    create_vm_hooks(env).managed_get_code_metadata(address_handle, response_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_is_builtin_function(env: &VMHooksWrapper, function_name_handle: i32) -> i32 {
-    env.vm_hooks.managed_is_builtin_function(function_name_handle)
+fn wasmer_import_managed_is_builtin_function(env: FunctionEnvMut<VMHooksWrapper>, function_name_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_is_builtin_function(function_name_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_new_from_parts(env: &VMHooksWrapper, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
-    env.vm_hooks.big_float_new_from_parts(integral_part, fractional_part, exponent)
+fn wasmer_import_big_float_new_from_parts(env: FunctionEnvMut<VMHooksWrapper>, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
+    create_vm_hooks(env).big_float_new_from_parts(integral_part, fractional_part, exponent)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_new_from_frac(env: &VMHooksWrapper, numerator: i64, denominator: i64) -> i32 {
-    env.vm_hooks.big_float_new_from_frac(numerator, denominator)
+fn wasmer_import_big_float_new_from_frac(env: FunctionEnvMut<VMHooksWrapper>, numerator: i64, denominator: i64) -> i32 {
+    create_vm_hooks(env).big_float_new_from_frac(numerator, denominator)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_new_from_sci(env: &VMHooksWrapper, significand: i64, exponent: i64) -> i32 {
-    env.vm_hooks.big_float_new_from_sci(significand, exponent)
+fn wasmer_import_big_float_new_from_sci(env: FunctionEnvMut<VMHooksWrapper>, significand: i64, exponent: i64) -> i32 {
+    create_vm_hooks(env).big_float_new_from_sci(significand, exponent)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_add(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_float_add(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_float_add(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_float_add(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_sub(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_float_sub(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_float_sub(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_float_sub(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_mul(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_float_mul(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_float_mul(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_float_mul(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_div(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_float_div(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_float_div(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_float_div(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_neg(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_neg(destination_handle, op_handle)
+fn wasmer_import_big_float_neg(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_neg(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_clone(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_clone(destination_handle, op_handle)
+fn wasmer_import_big_float_clone(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_clone(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_cmp(env: &VMHooksWrapper, op1_handle: i32, op2_handle: i32) -> i32 {
-    env.vm_hooks.big_float_cmp(op1_handle, op2_handle)
+fn wasmer_import_big_float_cmp(env: FunctionEnvMut<VMHooksWrapper>, op1_handle: i32, op2_handle: i32) -> i32 {
+    create_vm_hooks(env).big_float_cmp(op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_abs(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_abs(destination_handle, op_handle)
+fn wasmer_import_big_float_abs(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_abs(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_sign(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.vm_hooks.big_float_sign(op_handle)
+fn wasmer_import_big_float_sign(env: FunctionEnvMut<VMHooksWrapper>, op_handle: i32) -> i32 {
+    create_vm_hooks(env).big_float_sign(op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_sqrt(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_sqrt(destination_handle, op_handle)
+fn wasmer_import_big_float_sqrt(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_sqrt(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_pow(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, exponent: i32) {
-    env.vm_hooks.big_float_pow(destination_handle, op_handle, exponent)
+fn wasmer_import_big_float_pow(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32, exponent: i32) {
+    create_vm_hooks(env).big_float_pow(destination_handle, op_handle, exponent)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_floor(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_floor(dest_big_int_handle, op_handle)
+fn wasmer_import_big_float_floor(env: FunctionEnvMut<VMHooksWrapper>, dest_big_int_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_floor(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_ceil(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_ceil(dest_big_int_handle, op_handle)
+fn wasmer_import_big_float_ceil(env: FunctionEnvMut<VMHooksWrapper>, dest_big_int_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_ceil(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_truncate(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_float_truncate(dest_big_int_handle, op_handle)
+fn wasmer_import_big_float_truncate(env: FunctionEnvMut<VMHooksWrapper>, dest_big_int_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_float_truncate(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_set_int64(env: &VMHooksWrapper, destination_handle: i32, value: i64) {
-    env.vm_hooks.big_float_set_int64(destination_handle, value)
+fn wasmer_import_big_float_set_int64(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, value: i64) {
+    create_vm_hooks(env).big_float_set_int64(destination_handle, value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_is_int(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.vm_hooks.big_float_is_int(op_handle)
+fn wasmer_import_big_float_is_int(env: FunctionEnvMut<VMHooksWrapper>, op_handle: i32) -> i32 {
+    create_vm_hooks(env).big_float_is_int(op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_set_big_int(env: &VMHooksWrapper, destination_handle: i32, big_int_handle: i32) {
-    env.vm_hooks.big_float_set_big_int(destination_handle, big_int_handle)
+fn wasmer_import_big_float_set_big_int(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, big_int_handle: i32) {
+    create_vm_hooks(env).big_float_set_big_int(destination_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_get_const_pi(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.big_float_get_const_pi(destination_handle)
+fn wasmer_import_big_float_get_const_pi(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).big_float_get_const_pi(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_float_get_const_e(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.big_float_get_const_e(destination_handle)
+fn wasmer_import_big_float_get_const_e(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).big_float_get_const_e(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_unsigned_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) {
-    env.vm_hooks.big_int_get_unsigned_argument(id, destination_handle)
+fn wasmer_import_big_int_get_unsigned_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32, destination_handle: i32) {
+    create_vm_hooks(env).big_int_get_unsigned_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_signed_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) {
-    env.vm_hooks.big_int_get_signed_argument(id, destination_handle)
+fn wasmer_import_big_int_get_signed_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32, destination_handle: i32) {
+    create_vm_hooks(env).big_int_get_signed_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_storage_store_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, source_handle: i32) -> i32 {
-    env.vm_hooks.big_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), source_handle)
+fn wasmer_import_big_int_storage_store_unsigned(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, source_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_storage_store_unsigned(convert_mem_ptr(key_offset), convert_mem_length(key_length), source_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_storage_load_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, destination_handle: i32) -> i32 {
-    env.vm_hooks.big_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), destination_handle)
+fn wasmer_import_big_int_storage_load_unsigned(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, destination_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_storage_load_unsigned(convert_mem_ptr(key_offset), convert_mem_length(key_length), destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_call_value(env: &VMHooksWrapper, destination_handle: i32) {
-    env.vm_hooks.big_int_get_call_value(destination_handle)
+fn wasmer_import_big_int_get_call_value(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) {
+    create_vm_hooks(env).big_int_get_call_value(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_esdt_call_value(env: &VMHooksWrapper, destination: i32) {
-    env.vm_hooks.big_int_get_esdt_call_value(destination)
+fn wasmer_import_big_int_get_esdt_call_value(env: FunctionEnvMut<VMHooksWrapper>, destination: i32) {
+    create_vm_hooks(env).big_int_get_esdt_call_value(destination)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_esdt_call_value_by_index(env: &VMHooksWrapper, destination_handle: i32, index: i32) {
-    env.vm_hooks.big_int_get_esdt_call_value_by_index(destination_handle, index)
+fn wasmer_import_big_int_get_esdt_call_value_by_index(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, index: i32) {
+    create_vm_hooks(env).big_int_get_esdt_call_value_by_index(destination_handle, index)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_external_balance(env: &VMHooksWrapper, address_offset: i32, result: i32) {
-    env.vm_hooks.big_int_get_external_balance(env.convert_mem_ptr(address_offset), result)
+fn wasmer_import_big_int_get_external_balance(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, result: i32) {
+    create_vm_hooks(env).big_int_get_external_balance(convert_mem_ptr(address_offset), result)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_esdt_external_balance(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_handle: i32) {
-    env.vm_hooks.big_int_get_esdt_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, result_handle)
+fn wasmer_import_big_int_get_esdt_external_balance(env: FunctionEnvMut<VMHooksWrapper>, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_handle: i32) {
+    create_vm_hooks(env).big_int_get_esdt_external_balance(convert_mem_ptr(address_offset), convert_mem_ptr(token_id_offset), convert_mem_length(token_id_len), nonce, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_new(env: &VMHooksWrapper, small_value: i64) -> i32 {
-    env.vm_hooks.big_int_new(small_value)
+fn wasmer_import_big_int_new(env: FunctionEnvMut<VMHooksWrapper>, small_value: i64) -> i32 {
+    create_vm_hooks(env).big_int_new(small_value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_unsigned_byte_length(env: &VMHooksWrapper, reference_handle: i32) -> i32 {
-    env.vm_hooks.big_int_unsigned_byte_length(reference_handle)
+fn wasmer_import_big_int_unsigned_byte_length(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_unsigned_byte_length(reference_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_signed_byte_length(env: &VMHooksWrapper, reference_handle: i32) -> i32 {
-    env.vm_hooks.big_int_signed_byte_length(reference_handle)
+fn wasmer_import_big_int_signed_byte_length(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_signed_byte_length(reference_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_unsigned_bytes(env: &VMHooksWrapper, reference_handle: i32, byte_offset: i32) -> i32 {
-    env.vm_hooks.big_int_get_unsigned_bytes(reference_handle, env.convert_mem_ptr(byte_offset))
+fn wasmer_import_big_int_get_unsigned_bytes(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32, byte_offset: i32) -> i32 {
+    create_vm_hooks(env).big_int_get_unsigned_bytes(reference_handle, convert_mem_ptr(byte_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_signed_bytes(env: &VMHooksWrapper, reference_handle: i32, byte_offset: i32) -> i32 {
-    env.vm_hooks.big_int_get_signed_bytes(reference_handle, env.convert_mem_ptr(byte_offset))
+fn wasmer_import_big_int_get_signed_bytes(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32, byte_offset: i32) -> i32 {
+    create_vm_hooks(env).big_int_get_signed_bytes(reference_handle, convert_mem_ptr(byte_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_set_unsigned_bytes(env: &VMHooksWrapper, destination_handle: i32, byte_offset: i32, byte_length: i32) {
-    env.vm_hooks.big_int_set_unsigned_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length))
+fn wasmer_import_big_int_set_unsigned_bytes(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, byte_offset: i32, byte_length: i32) {
+    create_vm_hooks(env).big_int_set_unsigned_bytes(destination_handle, convert_mem_ptr(byte_offset), convert_mem_length(byte_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_set_signed_bytes(env: &VMHooksWrapper, destination_handle: i32, byte_offset: i32, byte_length: i32) {
-    env.vm_hooks.big_int_set_signed_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length))
+fn wasmer_import_big_int_set_signed_bytes(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, byte_offset: i32, byte_length: i32) {
+    create_vm_hooks(env).big_int_set_signed_bytes(destination_handle, convert_mem_ptr(byte_offset), convert_mem_length(byte_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_is_int64(env: &VMHooksWrapper, destination_handle: i32) -> i32 {
-    env.vm_hooks.big_int_is_int64(destination_handle)
+fn wasmer_import_big_int_is_int64(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_is_int64(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_get_int64(env: &VMHooksWrapper, destination_handle: i32) -> i64 {
-    env.vm_hooks.big_int_get_int64(destination_handle)
+fn wasmer_import_big_int_get_int64(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32) -> i64 {
+    create_vm_hooks(env).big_int_get_int64(destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_set_int64(env: &VMHooksWrapper, destination_handle: i32, value: i64) {
-    env.vm_hooks.big_int_set_int64(destination_handle, value)
+fn wasmer_import_big_int_set_int64(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, value: i64) {
+    create_vm_hooks(env).big_int_set_int64(destination_handle, value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_add(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_add(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_add(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_add(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_sub(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_sub(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_sub(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_sub(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_mul(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_mul(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_mul(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_mul(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_tdiv(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_tdiv(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_tdiv(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_tdiv(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_tmod(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_tmod(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_tmod(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_tmod(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_ediv(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_ediv(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_ediv(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_ediv(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_emod(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_emod(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_emod(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_emod(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_sqrt(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_int_sqrt(destination_handle, op_handle)
+fn wasmer_import_big_int_sqrt(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_int_sqrt(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_pow(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_pow(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_pow(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_pow(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_log2(env: &VMHooksWrapper, op1_handle: i32) -> i32 {
-    env.vm_hooks.big_int_log2(op1_handle)
+fn wasmer_import_big_int_log2(env: FunctionEnvMut<VMHooksWrapper>, op1_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_log2(op1_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_abs(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_int_abs(destination_handle, op_handle)
+fn wasmer_import_big_int_abs(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_int_abs(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_neg(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_int_neg(destination_handle, op_handle)
+fn wasmer_import_big_int_neg(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_int_neg(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_sign(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.vm_hooks.big_int_sign(op_handle)
+fn wasmer_import_big_int_sign(env: FunctionEnvMut<VMHooksWrapper>, op_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_sign(op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_cmp(env: &VMHooksWrapper, op1_handle: i32, op2_handle: i32) -> i32 {
-    env.vm_hooks.big_int_cmp(op1_handle, op2_handle)
+fn wasmer_import_big_int_cmp(env: FunctionEnvMut<VMHooksWrapper>, op1_handle: i32, op2_handle: i32) -> i32 {
+    create_vm_hooks(env).big_int_cmp(op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_not(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.vm_hooks.big_int_not(destination_handle, op_handle)
+fn wasmer_import_big_int_not(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32) {
+    create_vm_hooks(env).big_int_not(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_and(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_and(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_and(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_and(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_or(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_or(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_or(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_or(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_xor(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.vm_hooks.big_int_xor(destination_handle, op1_handle, op2_handle)
+fn wasmer_import_big_int_xor(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    create_vm_hooks(env).big_int_xor(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_shr(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, bits: i32) {
-    env.vm_hooks.big_int_shr(destination_handle, op_handle, bits)
+fn wasmer_import_big_int_shr(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32, bits: i32) {
+    create_vm_hooks(env).big_int_shr(destination_handle, op_handle, bits)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_shl(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, bits: i32) {
-    env.vm_hooks.big_int_shl(destination_handle, op_handle, bits)
+fn wasmer_import_big_int_shl(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, op_handle: i32, bits: i32) {
+    create_vm_hooks(env).big_int_shl(destination_handle, op_handle, bits)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_finish_unsigned(env: &VMHooksWrapper, reference_handle: i32) {
-    env.vm_hooks.big_int_finish_unsigned(reference_handle)
+fn wasmer_import_big_int_finish_unsigned(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32) {
+    create_vm_hooks(env).big_int_finish_unsigned(reference_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_finish_signed(env: &VMHooksWrapper, reference_handle: i32) {
-    env.vm_hooks.big_int_finish_signed(reference_handle)
+fn wasmer_import_big_int_finish_signed(env: FunctionEnvMut<VMHooksWrapper>, reference_handle: i32) {
+    create_vm_hooks(env).big_int_finish_signed(reference_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_big_int_to_string(env: &VMHooksWrapper, big_int_handle: i32, destination_handle: i32) {
-    env.vm_hooks.big_int_to_string(big_int_handle, destination_handle)
+fn wasmer_import_big_int_to_string(env: FunctionEnvMut<VMHooksWrapper>, big_int_handle: i32, destination_handle: i32) {
+    create_vm_hooks(env).big_int_to_string(big_int_handle, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_new(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.mbuffer_new()
+fn wasmer_import_mbuffer_new(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).mbuffer_new()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_new_from_bytes(env: &VMHooksWrapper, data_offset: i32, data_length: i32) -> i32 {
-    env.vm_hooks.mbuffer_new_from_bytes(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_mbuffer_new_from_bytes(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32, data_length: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_new_from_bytes(convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_get_length(env: &VMHooksWrapper, m_buffer_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_get_length(m_buffer_handle)
+fn wasmer_import_mbuffer_get_length(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_get_length(m_buffer_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_get_bytes(env: &VMHooksWrapper, m_buffer_handle: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.mbuffer_get_bytes(m_buffer_handle, env.convert_mem_ptr(result_offset))
+fn wasmer_import_mbuffer_get_bytes(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_get_bytes(m_buffer_handle, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_get_byte_slice(env: &VMHooksWrapper, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.mbuffer_get_byte_slice(source_handle, starting_position, slice_length, env.convert_mem_ptr(result_offset))
+fn wasmer_import_mbuffer_get_byte_slice(env: FunctionEnvMut<VMHooksWrapper>, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_get_byte_slice(source_handle, starting_position, slice_length, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_copy_byte_slice(env: &VMHooksWrapper, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_copy_byte_slice(source_handle, starting_position, slice_length, destination_handle)
+fn wasmer_import_mbuffer_copy_byte_slice(env: FunctionEnvMut<VMHooksWrapper>, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_copy_byte_slice(source_handle, starting_position, slice_length, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_eq(env: &VMHooksWrapper, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
-    env.vm_hooks.mbuffer_eq(m_buffer_handle1, m_buffer_handle2)
+fn wasmer_import_mbuffer_eq(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_eq(m_buffer_handle1, m_buffer_handle2)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_set_bytes(env: &VMHooksWrapper, m_buffer_handle: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.vm_hooks.mbuffer_set_bytes(m_buffer_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_mbuffer_set_bytes(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, data_offset: i32, data_length: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_set_bytes(m_buffer_handle, convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_set_byte_slice(env: &VMHooksWrapper, m_buffer_handle: i32, starting_position: i32, data_length: i32, data_offset: i32) -> i32 {
-    env.vm_hooks.mbuffer_set_byte_slice(m_buffer_handle, starting_position, env.convert_mem_length(data_length), env.convert_mem_ptr(data_offset))
+fn wasmer_import_mbuffer_set_byte_slice(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, starting_position: i32, data_length: i32, data_offset: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_set_byte_slice(m_buffer_handle, starting_position, convert_mem_length(data_length), convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_append(env: &VMHooksWrapper, accumulator_handle: i32, data_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_append(accumulator_handle, data_handle)
+fn wasmer_import_mbuffer_append(env: FunctionEnvMut<VMHooksWrapper>, accumulator_handle: i32, data_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_append(accumulator_handle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_append_bytes(env: &VMHooksWrapper, accumulator_handle: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.vm_hooks.mbuffer_append_bytes(accumulator_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_mbuffer_append_bytes(env: FunctionEnvMut<VMHooksWrapper>, accumulator_handle: i32, data_offset: i32, data_length: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_append_bytes(accumulator_handle, convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_to_big_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_to_big_int_unsigned(m_buffer_handle, big_int_handle)
+fn wasmer_import_mbuffer_to_big_int_unsigned(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_to_big_int_unsigned(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_to_big_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_to_big_int_signed(m_buffer_handle, big_int_handle)
+fn wasmer_import_mbuffer_to_big_int_signed(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_to_big_int_signed(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_from_big_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_from_big_int_unsigned(m_buffer_handle, big_int_handle)
+fn wasmer_import_mbuffer_from_big_int_unsigned(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_from_big_int_unsigned(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_from_big_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_from_big_int_signed(m_buffer_handle, big_int_handle)
+fn wasmer_import_mbuffer_from_big_int_signed(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_from_big_int_signed(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_to_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_to_big_float(m_buffer_handle, big_float_handle)
+fn wasmer_import_mbuffer_to_big_float(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_to_big_float(m_buffer_handle, big_float_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_from_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_from_big_float(m_buffer_handle, big_float_handle)
+fn wasmer_import_mbuffer_from_big_float(env: FunctionEnvMut<VMHooksWrapper>, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_from_big_float(m_buffer_handle, big_float_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_storage_store(env: &VMHooksWrapper, key_handle: i32, source_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_storage_store(key_handle, source_handle)
+fn wasmer_import_mbuffer_storage_store(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, source_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_storage_store(key_handle, source_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_storage_load(env: &VMHooksWrapper, key_handle: i32, destination_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_storage_load(key_handle, destination_handle)
+fn wasmer_import_mbuffer_storage_load(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, destination_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_storage_load(key_handle, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_storage_load_from_address(env: &VMHooksWrapper, address_handle: i32, key_handle: i32, destination_handle: i32) {
-    env.vm_hooks.mbuffer_storage_load_from_address(address_handle, key_handle, destination_handle)
+fn wasmer_import_mbuffer_storage_load_from_address(env: FunctionEnvMut<VMHooksWrapper>, address_handle: i32, key_handle: i32, destination_handle: i32) {
+    create_vm_hooks(env).mbuffer_storage_load_from_address(address_handle, key_handle, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_get_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_get_argument(id, destination_handle)
+fn wasmer_import_mbuffer_get_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32, destination_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_get_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_finish(env: &VMHooksWrapper, source_handle: i32) -> i32 {
-    env.vm_hooks.mbuffer_finish(source_handle)
+fn wasmer_import_mbuffer_finish(env: FunctionEnvMut<VMHooksWrapper>, source_handle: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_finish(source_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_mbuffer_set_random(env: &VMHooksWrapper, destination_handle: i32, length: i32) -> i32 {
-    env.vm_hooks.mbuffer_set_random(destination_handle, length)
+fn wasmer_import_mbuffer_set_random(env: FunctionEnvMut<VMHooksWrapper>, destination_handle: i32, length: i32) -> i32 {
+    create_vm_hooks(env).mbuffer_set_random(destination_handle, length)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_map_new(env: &VMHooksWrapper) -> i32 {
-    env.vm_hooks.managed_map_new()
+fn wasmer_import_managed_map_new(env: FunctionEnvMut<VMHooksWrapper>) -> i32 {
+    create_vm_hooks(env).managed_map_new()
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_map_put(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
-    env.vm_hooks.managed_map_put(m_map_handle, key_handle, value_handle)
+fn wasmer_import_managed_map_put(env: FunctionEnvMut<VMHooksWrapper>, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_map_put(m_map_handle, key_handle, value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_map_get(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
-    env.vm_hooks.managed_map_get(m_map_handle, key_handle, out_value_handle)
+fn wasmer_import_managed_map_get(env: FunctionEnvMut<VMHooksWrapper>, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_map_get(m_map_handle, key_handle, out_value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_map_remove(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
-    env.vm_hooks.managed_map_remove(m_map_handle, key_handle, out_value_handle)
+fn wasmer_import_managed_map_remove(env: FunctionEnvMut<VMHooksWrapper>, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_map_remove(m_map_handle, key_handle, out_value_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_map_contains(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32) -> i32 {
-    env.vm_hooks.managed_map_contains(m_map_handle, key_handle)
+fn wasmer_import_managed_map_contains(env: FunctionEnvMut<VMHooksWrapper>, m_map_handle: i32, key_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_map_contains(m_map_handle, key_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_get_unsigned_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.vm_hooks.small_int_get_unsigned_argument(id)
+fn wasmer_import_small_int_get_unsigned_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32) -> i64 {
+    create_vm_hooks(env).small_int_get_unsigned_argument(id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_get_signed_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.vm_hooks.small_int_get_signed_argument(id)
+fn wasmer_import_small_int_get_signed_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32) -> i64 {
+    create_vm_hooks(env).small_int_get_signed_argument(id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_finish_unsigned(env: &VMHooksWrapper, value: i64) {
-    env.vm_hooks.small_int_finish_unsigned(value)
+fn wasmer_import_small_int_finish_unsigned(env: FunctionEnvMut<VMHooksWrapper>, value: i64) {
+    create_vm_hooks(env).small_int_finish_unsigned(value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_finish_signed(env: &VMHooksWrapper, value: i64) {
-    env.vm_hooks.small_int_finish_signed(value)
+fn wasmer_import_small_int_finish_signed(env: FunctionEnvMut<VMHooksWrapper>, value: i64) {
+    create_vm_hooks(env).small_int_finish_signed(value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_storage_store_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.vm_hooks.small_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
+fn wasmer_import_small_int_storage_store_unsigned(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    create_vm_hooks(env).small_int_storage_store_unsigned(convert_mem_ptr(key_offset), convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_storage_store_signed(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.vm_hooks.small_int_storage_store_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
+fn wasmer_import_small_int_storage_store_signed(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    create_vm_hooks(env).small_int_storage_store_signed(convert_mem_ptr(key_offset), convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_storage_load_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.vm_hooks.small_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_small_int_storage_load_unsigned(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i64 {
+    create_vm_hooks(env).small_int_storage_load_unsigned(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_small_int_storage_load_signed(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.vm_hooks.small_int_storage_load_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_small_int_storage_load_signed(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i64 {
+    create_vm_hooks(env).small_int_storage_load_signed(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_int64get_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.vm_hooks.int64get_argument(id)
+fn wasmer_import_int64get_argument(env: FunctionEnvMut<VMHooksWrapper>, id: i32) -> i64 {
+    create_vm_hooks(env).int64get_argument(id)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_int64finish(env: &VMHooksWrapper, value: i64) {
-    env.vm_hooks.int64finish(value)
+fn wasmer_import_int64finish(env: FunctionEnvMut<VMHooksWrapper>, value: i64) {
+    create_vm_hooks(env).int64finish(value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_int64storage_store(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.vm_hooks.int64storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
+fn wasmer_import_int64storage_store(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, value: i64) -> i32 {
+    create_vm_hooks(env).int64storage_store(convert_mem_ptr(key_offset), convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_int64storage_load(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.vm_hooks.int64storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
+fn wasmer_import_int64storage_load(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32) -> i64 {
+    create_vm_hooks(env).int64storage_load(convert_mem_ptr(key_offset), convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_sha256(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.sha256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
+fn wasmer_import_sha256(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).sha256(convert_mem_ptr(data_offset), convert_mem_length(length), convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_sha256(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.vm_hooks.managed_sha256(input_handle, output_handle)
+fn wasmer_import_managed_sha256(env: FunctionEnvMut<VMHooksWrapper>, input_handle: i32, output_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_sha256(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_keccak256(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.keccak256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
+fn wasmer_import_keccak256(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).keccak256(convert_mem_ptr(data_offset), convert_mem_length(length), convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_keccak256(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.vm_hooks.managed_keccak256(input_handle, output_handle)
+fn wasmer_import_managed_keccak256(env: FunctionEnvMut<VMHooksWrapper>, input_handle: i32, output_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_keccak256(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_ripemd160(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.ripemd160(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
+fn wasmer_import_ripemd160(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32, length: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).ripemd160(convert_mem_ptr(data_offset), convert_mem_length(length), convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_ripemd160(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.vm_hooks.managed_ripemd160(input_handle, output_handle)
+fn wasmer_import_managed_ripemd160(env: FunctionEnvMut<VMHooksWrapper>, input_handle: i32, output_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_ripemd160(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_verify_bls(env: &VMHooksWrapper, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.vm_hooks.verify_bls(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
+fn wasmer_import_verify_bls(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    create_vm_hooks(env).verify_bls(convert_mem_ptr(key_offset), convert_mem_ptr(message_offset), convert_mem_length(message_length), convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_bls(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_bls(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_bls(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_bls(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_verify_ed25519(env: &VMHooksWrapper, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.vm_hooks.verify_ed25519(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
+fn wasmer_import_verify_ed25519(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    create_vm_hooks(env).verify_ed25519(convert_mem_ptr(key_offset), convert_mem_ptr(message_offset), convert_mem_length(message_length), convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_ed25519(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_ed25519(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_ed25519(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_ed25519(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_verify_custom_secp256k1(env: &VMHooksWrapper, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32, hash_type: i32) -> i32 {
-    env.vm_hooks.verify_custom_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset), hash_type)
+fn wasmer_import_verify_custom_secp256k1(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32, hash_type: i32) -> i32 {
+    create_vm_hooks(env).verify_custom_secp256k1(convert_mem_ptr(key_offset), convert_mem_length(key_length), convert_mem_ptr(message_offset), convert_mem_length(message_length), convert_mem_ptr(sig_offset), hash_type)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_custom_secp256k1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
-    env.vm_hooks.managed_verify_custom_secp256k1(key_handle, message_handle, sig_handle, hash_type)
+fn wasmer_import_managed_verify_custom_secp256k1(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_custom_secp256k1(key_handle, message_handle, sig_handle, hash_type)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_verify_secp256k1(env: &VMHooksWrapper, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.vm_hooks.verify_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
+fn wasmer_import_verify_secp256k1(env: FunctionEnvMut<VMHooksWrapper>, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
+    create_vm_hooks(env).verify_secp256k1(convert_mem_ptr(key_offset), convert_mem_length(key_length), convert_mem_ptr(message_offset), convert_mem_length(message_length), convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_secp256k1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_secp256k1(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_secp256k1(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_secp256k1(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_encode_secp256k1_der_signature(env: &VMHooksWrapper, r_offset: i32, r_length: i32, s_offset: i32, s_length: i32, sig_offset: i32) -> i32 {
-    env.vm_hooks.encode_secp256k1_der_signature(env.convert_mem_ptr(r_offset), env.convert_mem_length(r_length), env.convert_mem_ptr(s_offset), env.convert_mem_length(s_length), env.convert_mem_ptr(sig_offset))
+fn wasmer_import_encode_secp256k1_der_signature(env: FunctionEnvMut<VMHooksWrapper>, r_offset: i32, r_length: i32, s_offset: i32, s_length: i32, sig_offset: i32) -> i32 {
+    create_vm_hooks(env).encode_secp256k1_der_signature(convert_mem_ptr(r_offset), convert_mem_length(r_length), convert_mem_ptr(s_offset), convert_mem_length(s_length), convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_encode_secp256k1_der_signature(env: &VMHooksWrapper, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_encode_secp256k1_der_signature(r_handle, s_handle, sig_handle)
+fn wasmer_import_managed_encode_secp256k1_der_signature(env: FunctionEnvMut<VMHooksWrapper>, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_encode_secp256k1_der_signature(r_handle, s_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_add_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
-    env.vm_hooks.add_ec(x_result_handle, y_result_handle, ec_handle, fst_point_xhandle, fst_point_yhandle, snd_point_xhandle, snd_point_yhandle)
+fn wasmer_import_add_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
+    create_vm_hooks(env).add_ec(x_result_handle, y_result_handle, ec_handle, fst_point_xhandle, fst_point_yhandle, snd_point_xhandle, snd_point_yhandle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_double_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
-    env.vm_hooks.double_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle)
+fn wasmer_import_double_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
+    create_vm_hooks(env).double_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_is_on_curve_ec(env: &VMHooksWrapper, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
-    env.vm_hooks.is_on_curve_ec(ec_handle, point_xhandle, point_yhandle)
+fn wasmer_import_is_on_curve_ec(env: FunctionEnvMut<VMHooksWrapper>, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
+    create_vm_hooks(env).is_on_curve_ec(ec_handle, point_xhandle, point_yhandle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_scalar_base_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.vm_hooks.scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_scalar_base_mult_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    create_vm_hooks(env).scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_scalar_base_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.vm_hooks.managed_scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
+fn wasmer_import_managed_scalar_base_mult_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_scalar_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: i32, length: i32) -> i32 {
-    env.vm_hooks.scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_scalar_mult_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: i32, length: i32) -> i32 {
+    create_vm_hooks(env).scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_scalar_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
-    env.vm_hooks.managed_scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, data_handle)
+fn wasmer_import_managed_scalar_mult_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_marshal_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.marshal_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset))
+fn wasmer_import_marshal_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).marshal_ec(x_pair_handle, y_pair_handle, ec_handle, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_marshal_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_marshal_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
+fn wasmer_import_managed_marshal_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_marshal_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_marshal_compressed_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset))
+fn wasmer_import_marshal_compressed_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_marshal_compressed_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
+fn wasmer_import_managed_marshal_compressed_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_unmarshal_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.vm_hooks.unmarshal_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_unmarshal_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    create_vm_hooks(env).unmarshal_ec(x_result_handle, y_result_handle, ec_handle, convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_unmarshal_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.vm_hooks.managed_unmarshal_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
+fn wasmer_import_managed_unmarshal_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_unmarshal_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_unmarshal_compressed_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.vm_hooks.unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
+fn wasmer_import_unmarshal_compressed_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
+    create_vm_hooks(env).unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, convert_mem_ptr(data_offset), convert_mem_length(length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_unmarshal_compressed_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.vm_hooks.managed_unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
+fn wasmer_import_managed_unmarshal_compressed_ec(env: FunctionEnvMut<VMHooksWrapper>, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_generate_key_ec(env: &VMHooksWrapper, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.vm_hooks.generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, env.convert_mem_ptr(result_offset))
+fn wasmer_import_generate_key_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
+    create_vm_hooks(env).generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_generate_key_ec(env: &VMHooksWrapper, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.vm_hooks.managed_generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, result_handle)
+fn wasmer_import_managed_generate_key_ec(env: FunctionEnvMut<VMHooksWrapper>, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_create_ec(env: &VMHooksWrapper, data_offset: i32, data_length: i32) -> i32 {
-    env.vm_hooks.create_ec(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
+fn wasmer_import_create_ec(env: FunctionEnvMut<VMHooksWrapper>, data_offset: i32, data_length: i32) -> i32 {
+    create_vm_hooks(env).create_ec(convert_mem_ptr(data_offset), convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_create_ec(env: &VMHooksWrapper, data_handle: i32) -> i32 {
-    env.vm_hooks.managed_create_ec(data_handle)
+fn wasmer_import_managed_create_ec(env: FunctionEnvMut<VMHooksWrapper>, data_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_create_ec(data_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_curve_length_ec(env: &VMHooksWrapper, ec_handle: i32) -> i32 {
-    env.vm_hooks.get_curve_length_ec(ec_handle)
+fn wasmer_import_get_curve_length_ec(env: FunctionEnvMut<VMHooksWrapper>, ec_handle: i32) -> i32 {
+    create_vm_hooks(env).get_curve_length_ec(ec_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_priv_key_byte_length_ec(env: &VMHooksWrapper, ec_handle: i32) -> i32 {
-    env.vm_hooks.get_priv_key_byte_length_ec(ec_handle)
+fn wasmer_import_get_priv_key_byte_length_ec(env: FunctionEnvMut<VMHooksWrapper>, ec_handle: i32) -> i32 {
+    create_vm_hooks(env).get_priv_key_byte_length_ec(ec_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_elliptic_curve_get_values(env: &VMHooksWrapper, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
-    env.vm_hooks.elliptic_curve_get_values(ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
+fn wasmer_import_elliptic_curve_get_values(env: FunctionEnvMut<VMHooksWrapper>, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
+    create_vm_hooks(env).elliptic_curve_get_values(ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_secp256r1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_secp256r1(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_secp256r1(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_secp256r1(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_blssignature_share(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_blssignature_share(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_blssignature_share(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_blssignature_share(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
-fn wasmer_import_managed_verify_blsaggregated_signature(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.vm_hooks.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle)
+fn wasmer_import_managed_verify_blsaggregated_signature(env: FunctionEnvMut<VMHooksWrapper>, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    create_vm_hooks(env).managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle)
 }
+
+pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> Imports {
+    let function_env = FunctionEnv::new(store, vh_wrapper);
 
-pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObject {
     imports! {
         "env" => {
-            "getGasLeft" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_gas_left),
-            "getSCAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_sc_address),
-            "getOwnerAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_owner_address),
-            "getShardOfAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_shard_of_address),
-            "isSmartContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_smart_contract),
-            "signalError" => Function::new_native_with_env(store, env.clone(), wasmer_import_signal_error),
-            "getExternalBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_external_balance),
-            "getBlockHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_hash),
-            "getESDTBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_balance),
-            "getESDTNFTNameLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_nft_name_length),
-            "getESDTNFTAttributeLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_nft_attribute_length),
-            "getESDTNFTURILength" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_nft_uri_length),
-            "getESDTTokenData" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_data),
-            "getESDTLocalRoles" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_local_roles),
-            "validateTokenIdentifier" => Function::new_native_with_env(store, env.clone(), wasmer_import_validate_token_identifier),
-            "transferValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_transfer_value),
-            "transferValueExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_transfer_value_execute),
-            "transferESDTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_transfer_esdt_execute),
-            "transferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_transfer_esdt_nft_execute),
-            "multiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_multi_transfer_esdt_nft_execute),
-            "createAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_create_async_call),
-            "setAsyncContextCallback" => Function::new_native_with_env(store, env.clone(), wasmer_import_set_async_context_callback),
-            "upgradeContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_upgrade_contract),
-            "upgradeFromSourceContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_upgrade_from_source_contract),
-            "deleteContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_delete_contract),
-            "asyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_async_call),
-            "getArgumentLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_argument_length),
-            "getArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_argument),
-            "getFunction" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_function),
-            "getNumArguments" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_num_arguments),
-            "storageStore" => Function::new_native_with_env(store, env.clone(), wasmer_import_storage_store),
-            "storageLoadLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_storage_load_length),
-            "storageLoadFromAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_storage_load_from_address),
-            "storageLoad" => Function::new_native_with_env(store, env.clone(), wasmer_import_storage_load),
-            "setStorageLock" => Function::new_native_with_env(store, env.clone(), wasmer_import_set_storage_lock),
-            "getStorageLock" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_storage_lock),
-            "isStorageLocked" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_storage_locked),
-            "clearStorageLock" => Function::new_native_with_env(store, env.clone(), wasmer_import_clear_storage_lock),
-            "getCaller" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_caller),
-            "checkNoPayment" => Function::new_native_with_env(store, env.clone(), wasmer_import_check_no_payment),
-            "getCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_call_value),
-            "getESDTValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_value),
-            "getESDTValueByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_value_by_index),
-            "getESDTTokenName" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_name),
-            "getESDTTokenNameByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_name_by_index),
-            "getESDTTokenNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_nonce),
-            "getESDTTokenNonceByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_nonce_by_index),
-            "getCurrentESDTNFTNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_current_esdt_nft_nonce),
-            "getESDTTokenType" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_type),
-            "getESDTTokenTypeByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_esdt_token_type_by_index),
-            "getNumESDTTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_num_esdt_transfers),
-            "getCallValueTokenName" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_call_value_token_name),
-            "getCallValueTokenNameByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_call_value_token_name_by_index),
-            "isReservedFunctionName" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_reserved_function_name),
-            "writeLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_log),
-            "writeEventLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_event_log),
-            "getBlockTimestamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_timestamp),
-            "getBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_nonce),
-            "getBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_round),
-            "getBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_epoch),
-            "getBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_random_seed),
-            "getStateRootHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_state_root_hash),
-            "getPrevBlockTimestamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_timestamp),
-            "getPrevBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_nonce),
-            "getPrevBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_round),
-            "getPrevBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_epoch),
-            "getPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_random_seed),
-            "finish" => Function::new_native_with_env(store, env.clone(), wasmer_import_finish),
-            "executeOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_same_context),
-            "executeOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_dest_context),
-            "executeReadOnly" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_read_only),
-            "createContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_create_contract),
-            "deployFromSourceContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_deploy_from_source_contract),
-            "getNumReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_num_return_data),
-            "getReturnDataSize" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_return_data_size),
-            "getReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_return_data),
-            "cleanReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_clean_return_data),
-            "deleteFromReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_delete_from_return_data),
-            "getOriginalTxHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_original_tx_hash),
-            "getCurrentTxHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_current_tx_hash),
-            "getPrevTxHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_tx_hash),
-            "managedSCAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_sc_address),
-            "managedOwnerAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_owner_address),
-            "managedCaller" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_caller),
-            "managedGetOriginalCallerAddr" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_original_caller_addr),
-            "managedGetRelayerAddr" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_relayer_addr),
-            "managedSignalError" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_signal_error),
-            "managedWriteLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_write_log),
-            "managedGetOriginalTxHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_original_tx_hash),
-            "managedGetStateRootHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_state_root_hash),
-            "managedGetBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_block_random_seed),
-            "managedGetPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_prev_block_random_seed),
-            "managedGetReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_return_data),
-            "managedGetMultiESDTCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_multi_esdt_call_value),
-            "managedGetBackTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_back_transfers),
-            "managedGetESDTBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_balance),
-            "managedGetESDTTokenData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_data),
-            "managedAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_async_call),
-            "managedCreateAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_create_async_call),
-            "managedGetCallbackClosure" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_callback_closure),
-            "managedUpgradeFromSourceContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_upgrade_from_source_contract),
-            "managedUpgradeContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_upgrade_contract),
-            "managedDeleteContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_delete_contract),
-            "managedDeployFromSourceContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_deploy_from_source_contract),
-            "managedCreateContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_create_contract),
-            "managedExecuteReadOnly" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_read_only),
-            "managedExecuteOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_same_context),
-            "managedExecuteOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context),
-            "managedMultiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute),
-            "managedMultiTransferESDTNFTExecuteByUser" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user),
-            "managedTransferValueExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_transfer_value_execute),
-            "managedIsESDTFrozen" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_frozen),
-            "managedIsESDTLimitedTransfer" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_limited_transfer),
-            "managedIsESDTPaused" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_paused),
-            "managedBufferToHex" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_buffer_to_hex),
-            "managedGetCodeMetadata" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_code_metadata),
-            "managedIsBuiltinFunction" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_builtin_function),
-            "bigFloatNewFromParts" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_parts),
-            "bigFloatNewFromFrac" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_frac),
-            "bigFloatNewFromSci" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_sci),
-            "bigFloatAdd" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_add),
-            "bigFloatSub" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_sub),
-            "bigFloatMul" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_mul),
-            "bigFloatDiv" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_div),
-            "bigFloatNeg" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_neg),
-            "bigFloatClone" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_clone),
-            "bigFloatCmp" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_cmp),
-            "bigFloatAbs" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_abs),
-            "bigFloatSign" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_sign),
-            "bigFloatSqrt" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_sqrt),
-            "bigFloatPow" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_pow),
-            "bigFloatFloor" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_floor),
-            "bigFloatCeil" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_ceil),
-            "bigFloatTruncate" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_truncate),
-            "bigFloatSetInt64" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_set_int64),
-            "bigFloatIsInt" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_is_int),
-            "bigFloatSetBigInt" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_set_big_int),
-            "bigFloatGetConstPi" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_get_const_pi),
-            "bigFloatGetConstE" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_get_const_e),
-            "bigIntGetUnsignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_unsigned_argument),
-            "bigIntGetSignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_signed_argument),
-            "bigIntStorageStoreUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_storage_store_unsigned),
-            "bigIntStorageLoadUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_storage_load_unsigned),
-            "bigIntGetCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_call_value),
-            "bigIntGetESDTCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_esdt_call_value),
-            "bigIntGetESDTCallValueByIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_esdt_call_value_by_index),
-            "bigIntGetExternalBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_external_balance),
-            "bigIntGetESDTExternalBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_esdt_external_balance),
-            "bigIntNew" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_new),
-            "bigIntUnsignedByteLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_unsigned_byte_length),
-            "bigIntSignedByteLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_signed_byte_length),
-            "bigIntGetUnsignedBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_unsigned_bytes),
-            "bigIntGetSignedBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_signed_bytes),
-            "bigIntSetUnsignedBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_set_unsigned_bytes),
-            "bigIntSetSignedBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_set_signed_bytes),
-            "bigIntIsInt64" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_is_int64),
-            "bigIntGetInt64" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_get_int64),
-            "bigIntSetInt64" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_set_int64),
-            "bigIntAdd" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_add),
-            "bigIntSub" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_sub),
-            "bigIntMul" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_mul),
-            "bigIntTDiv" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_tdiv),
-            "bigIntTMod" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_tmod),
-            "bigIntEDiv" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_ediv),
-            "bigIntEMod" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_emod),
-            "bigIntSqrt" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_sqrt),
-            "bigIntPow" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_pow),
-            "bigIntLog2" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_log2),
-            "bigIntAbs" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_abs),
-            "bigIntNeg" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_neg),
-            "bigIntSign" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_sign),
-            "bigIntCmp" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_cmp),
-            "bigIntNot" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_not),
-            "bigIntAnd" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_and),
-            "bigIntOr" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_or),
-            "bigIntXor" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_xor),
-            "bigIntShr" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_shr),
-            "bigIntShl" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_shl),
-            "bigIntFinishUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_finish_unsigned),
-            "bigIntFinishSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_finish_signed),
-            "bigIntToString" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_int_to_string),
-            "mBufferNew" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_new),
-            "mBufferNewFromBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_new_from_bytes),
-            "mBufferGetLength" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_get_length),
-            "mBufferGetBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_get_bytes),
-            "mBufferGetByteSlice" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_get_byte_slice),
-            "mBufferCopyByteSlice" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_copy_byte_slice),
-            "mBufferEq" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_eq),
-            "mBufferSetBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_set_bytes),
-            "mBufferSetByteSlice" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_set_byte_slice),
-            "mBufferAppend" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_append),
-            "mBufferAppendBytes" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_append_bytes),
-            "mBufferToBigIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_int_unsigned),
-            "mBufferToBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_int_signed),
-            "mBufferFromBigIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_unsigned),
-            "mBufferFromBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_signed),
-            "mBufferToBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_float),
-            "mBufferFromBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_float),
-            "mBufferStorageStore" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_storage_store),
-            "mBufferStorageLoad" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_storage_load),
-            "mBufferStorageLoadFromAddress" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_storage_load_from_address),
-            "mBufferGetArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_get_argument),
-            "mBufferFinish" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_finish),
-            "mBufferSetRandom" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_set_random),
-            "managedMapNew" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_new),
-            "managedMapPut" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_put),
-            "managedMapGet" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_get),
-            "managedMapRemove" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_remove),
-            "managedMapContains" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_contains),
-            "smallIntGetUnsignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_get_unsigned_argument),
-            "smallIntGetSignedArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_get_signed_argument),
-            "smallIntFinishUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_finish_unsigned),
-            "smallIntFinishSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_finish_signed),
-            "smallIntStorageStoreUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_storage_store_unsigned),
-            "smallIntStorageStoreSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_storage_store_signed),
-            "smallIntStorageLoadUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_storage_load_unsigned),
-            "smallIntStorageLoadSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_small_int_storage_load_signed),
-            "int64getArgument" => Function::new_native_with_env(store, env.clone(), wasmer_import_int64get_argument),
-            "int64finish" => Function::new_native_with_env(store, env.clone(), wasmer_import_int64finish),
-            "int64storageStore" => Function::new_native_with_env(store, env.clone(), wasmer_import_int64storage_store),
-            "int64storageLoad" => Function::new_native_with_env(store, env.clone(), wasmer_import_int64storage_load),
-            "sha256" => Function::new_native_with_env(store, env.clone(), wasmer_import_sha256),
-            "managedSha256" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_sha256),
-            "keccak256" => Function::new_native_with_env(store, env.clone(), wasmer_import_keccak256),
-            "managedKeccak256" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_keccak256),
-            "ripemd160" => Function::new_native_with_env(store, env.clone(), wasmer_import_ripemd160),
-            "managedRipemd160" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_ripemd160),
-            "verifyBLS" => Function::new_native_with_env(store, env.clone(), wasmer_import_verify_bls),
-            "managedVerifyBLS" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_bls),
-            "verifyEd25519" => Function::new_native_with_env(store, env.clone(), wasmer_import_verify_ed25519),
-            "managedVerifyEd25519" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_ed25519),
-            "verifyCustomSecp256k1" => Function::new_native_with_env(store, env.clone(), wasmer_import_verify_custom_secp256k1),
-            "managedVerifyCustomSecp256k1" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_custom_secp256k1),
-            "verifySecp256k1" => Function::new_native_with_env(store, env.clone(), wasmer_import_verify_secp256k1),
-            "managedVerifySecp256k1" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_secp256k1),
-            "encodeSecp256k1DerSignature" => Function::new_native_with_env(store, env.clone(), wasmer_import_encode_secp256k1_der_signature),
-            "managedEncodeSecp256k1DerSignature" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_encode_secp256k1_der_signature),
-            "addEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_add_ec),
-            "doubleEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_double_ec),
-            "isOnCurveEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_is_on_curve_ec),
-            "scalarBaseMultEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_scalar_base_mult_ec),
-            "managedScalarBaseMultEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_scalar_base_mult_ec),
-            "scalarMultEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_scalar_mult_ec),
-            "managedScalarMultEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_scalar_mult_ec),
-            "marshalEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_marshal_ec),
-            "managedMarshalEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_marshal_ec),
-            "marshalCompressedEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_marshal_compressed_ec),
-            "managedMarshalCompressedEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_marshal_compressed_ec),
-            "unmarshalEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_unmarshal_ec),
-            "managedUnmarshalEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_unmarshal_ec),
-            "unmarshalCompressedEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_unmarshal_compressed_ec),
-            "managedUnmarshalCompressedEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_unmarshal_compressed_ec),
-            "generateKeyEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_generate_key_ec),
-            "managedGenerateKeyEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_generate_key_ec),
-            "createEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_create_ec),
-            "managedCreateEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_create_ec),
-            "getCurveLengthEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_curve_length_ec),
-            "getPrivKeyByteLengthEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_priv_key_byte_length_ec),
-            "ellipticCurveGetValues" => Function::new_native_with_env(store, env.clone(), wasmer_import_elliptic_curve_get_values),
-            "managedVerifySecp256r1" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_secp256r1),
-            "managedVerifyBLSSignatureShare" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blssignature_share),
-            "managedVerifyBLSAggregatedSignature" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blsaggregated_signature),
+            "getGasLeft" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_gas_left),
+            "getSCAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_sc_address),
+            "getOwnerAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_owner_address),
+            "getShardOfAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_shard_of_address),
+            "isSmartContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_is_smart_contract),
+            "signalError" => Function::new_typed_with_env(store, &function_env, wasmer_import_signal_error),
+            "getExternalBalance" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_external_balance),
+            "getBlockHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_hash),
+            "getESDTBalance" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_balance),
+            "getESDTNFTNameLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_nft_name_length),
+            "getESDTNFTAttributeLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_nft_attribute_length),
+            "getESDTNFTURILength" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_nft_uri_length),
+            "getESDTTokenData" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_data),
+            "getESDTLocalRoles" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_local_roles),
+            "validateTokenIdentifier" => Function::new_typed_with_env(store, &function_env, wasmer_import_validate_token_identifier),
+            "transferValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_transfer_value),
+            "transferValueExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_transfer_value_execute),
+            "transferESDTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_transfer_esdt_execute),
+            "transferESDTNFTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_transfer_esdt_nft_execute),
+            "multiTransferESDTNFTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_multi_transfer_esdt_nft_execute),
+            "createAsyncCall" => Function::new_typed_with_env(store, &function_env, wasmer_import_create_async_call),
+            "setAsyncContextCallback" => Function::new_typed_with_env(store, &function_env, wasmer_import_set_async_context_callback),
+            "upgradeContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_upgrade_contract),
+            "upgradeFromSourceContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_upgrade_from_source_contract),
+            "deleteContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_delete_contract),
+            "asyncCall" => Function::new_typed_with_env(store, &function_env, wasmer_import_async_call),
+            "getArgumentLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_argument_length),
+            "getArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_argument),
+            "getFunction" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_function),
+            "getNumArguments" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_num_arguments),
+            "storageStore" => Function::new_typed_with_env(store, &function_env, wasmer_import_storage_store),
+            "storageLoadLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_storage_load_length),
+            "storageLoadFromAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_storage_load_from_address),
+            "storageLoad" => Function::new_typed_with_env(store, &function_env, wasmer_import_storage_load),
+            "setStorageLock" => Function::new_typed_with_env(store, &function_env, wasmer_import_set_storage_lock),
+            "getStorageLock" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_storage_lock),
+            "isStorageLocked" => Function::new_typed_with_env(store, &function_env, wasmer_import_is_storage_locked),
+            "clearStorageLock" => Function::new_typed_with_env(store, &function_env, wasmer_import_clear_storage_lock),
+            "getCaller" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_caller),
+            "checkNoPayment" => Function::new_typed_with_env(store, &function_env, wasmer_import_check_no_payment),
+            "getCallValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_call_value),
+            "getESDTValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_value),
+            "getESDTValueByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_value_by_index),
+            "getESDTTokenName" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_name),
+            "getESDTTokenNameByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_name_by_index),
+            "getESDTTokenNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_nonce),
+            "getESDTTokenNonceByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_nonce_by_index),
+            "getCurrentESDTNFTNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_current_esdt_nft_nonce),
+            "getESDTTokenType" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_type),
+            "getESDTTokenTypeByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_esdt_token_type_by_index),
+            "getNumESDTTransfers" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_num_esdt_transfers),
+            "getCallValueTokenName" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_call_value_token_name),
+            "getCallValueTokenNameByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_call_value_token_name_by_index),
+            "isReservedFunctionName" => Function::new_typed_with_env(store, &function_env, wasmer_import_is_reserved_function_name),
+            "writeLog" => Function::new_typed_with_env(store, &function_env, wasmer_import_write_log),
+            "writeEventLog" => Function::new_typed_with_env(store, &function_env, wasmer_import_write_event_log),
+            "getBlockTimestamp" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_timestamp),
+            "getBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_nonce),
+            "getBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_round),
+            "getBlockEpoch" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_epoch),
+            "getBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_random_seed),
+            "getStateRootHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_state_root_hash),
+            "getPrevBlockTimestamp" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_timestamp),
+            "getPrevBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_nonce),
+            "getPrevBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_round),
+            "getPrevBlockEpoch" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_epoch),
+            "getPrevBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_random_seed),
+            "finish" => Function::new_typed_with_env(store, &function_env, wasmer_import_finish),
+            "executeOnSameContext" => Function::new_typed_with_env(store, &function_env, wasmer_import_execute_on_same_context),
+            "executeOnDestContext" => Function::new_typed_with_env(store, &function_env, wasmer_import_execute_on_dest_context),
+            "executeReadOnly" => Function::new_typed_with_env(store, &function_env, wasmer_import_execute_read_only),
+            "createContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_create_contract),
+            "deployFromSourceContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_deploy_from_source_contract),
+            "getNumReturnData" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_num_return_data),
+            "getReturnDataSize" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_return_data_size),
+            "getReturnData" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_return_data),
+            "cleanReturnData" => Function::new_typed_with_env(store, &function_env, wasmer_import_clean_return_data),
+            "deleteFromReturnData" => Function::new_typed_with_env(store, &function_env, wasmer_import_delete_from_return_data),
+            "getOriginalTxHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_original_tx_hash),
+            "getCurrentTxHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_current_tx_hash),
+            "getPrevTxHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_tx_hash),
+            "managedSCAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_sc_address),
+            "managedOwnerAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_owner_address),
+            "managedCaller" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_caller),
+            "managedGetOriginalCallerAddr" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_original_caller_addr),
+            "managedGetRelayerAddr" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_relayer_addr),
+            "managedSignalError" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_signal_error),
+            "managedWriteLog" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_write_log),
+            "managedGetOriginalTxHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_original_tx_hash),
+            "managedGetStateRootHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_state_root_hash),
+            "managedGetBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_block_random_seed),
+            "managedGetPrevBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_prev_block_random_seed),
+            "managedGetReturnData" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_return_data),
+            "managedGetMultiESDTCallValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_multi_esdt_call_value),
+            "managedGetBackTransfers" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_back_transfers),
+            "managedGetESDTBalance" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_esdt_balance),
+            "managedGetESDTTokenData" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_esdt_token_data),
+            "managedAsyncCall" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_async_call),
+            "managedCreateAsyncCall" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_create_async_call),
+            "managedGetCallbackClosure" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_callback_closure),
+            "managedUpgradeFromSourceContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_upgrade_from_source_contract),
+            "managedUpgradeContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_upgrade_contract),
+            "managedDeleteContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_delete_contract),
+            "managedDeployFromSourceContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_deploy_from_source_contract),
+            "managedCreateContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_create_contract),
+            "managedExecuteReadOnly" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_execute_read_only),
+            "managedExecuteOnSameContext" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_execute_on_same_context),
+            "managedExecuteOnDestContext" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_execute_on_dest_context),
+            "managedMultiTransferESDTNFTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_multi_transfer_esdt_nft_execute),
+            "managedMultiTransferESDTNFTExecuteByUser" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user),
+            "managedTransferValueExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_transfer_value_execute),
+            "managedIsESDTFrozen" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_is_esdt_frozen),
+            "managedIsESDTLimitedTransfer" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_is_esdt_limited_transfer),
+            "managedIsESDTPaused" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_is_esdt_paused),
+            "managedBufferToHex" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_buffer_to_hex),
+            "managedGetCodeMetadata" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_code_metadata),
+            "managedIsBuiltinFunction" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_is_builtin_function),
+            "bigFloatNewFromParts" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_new_from_parts),
+            "bigFloatNewFromFrac" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_new_from_frac),
+            "bigFloatNewFromSci" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_new_from_sci),
+            "bigFloatAdd" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_add),
+            "bigFloatSub" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_sub),
+            "bigFloatMul" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_mul),
+            "bigFloatDiv" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_div),
+            "bigFloatNeg" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_neg),
+            "bigFloatClone" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_clone),
+            "bigFloatCmp" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_cmp),
+            "bigFloatAbs" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_abs),
+            "bigFloatSign" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_sign),
+            "bigFloatSqrt" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_sqrt),
+            "bigFloatPow" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_pow),
+            "bigFloatFloor" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_floor),
+            "bigFloatCeil" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_ceil),
+            "bigFloatTruncate" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_truncate),
+            "bigFloatSetInt64" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_set_int64),
+            "bigFloatIsInt" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_is_int),
+            "bigFloatSetBigInt" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_set_big_int),
+            "bigFloatGetConstPi" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_get_const_pi),
+            "bigFloatGetConstE" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_float_get_const_e),
+            "bigIntGetUnsignedArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_unsigned_argument),
+            "bigIntGetSignedArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_signed_argument),
+            "bigIntStorageStoreUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_storage_store_unsigned),
+            "bigIntStorageLoadUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_storage_load_unsigned),
+            "bigIntGetCallValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_call_value),
+            "bigIntGetESDTCallValue" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_esdt_call_value),
+            "bigIntGetESDTCallValueByIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_esdt_call_value_by_index),
+            "bigIntGetExternalBalance" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_external_balance),
+            "bigIntGetESDTExternalBalance" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_esdt_external_balance),
+            "bigIntNew" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_new),
+            "bigIntUnsignedByteLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_unsigned_byte_length),
+            "bigIntSignedByteLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_signed_byte_length),
+            "bigIntGetUnsignedBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_unsigned_bytes),
+            "bigIntGetSignedBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_signed_bytes),
+            "bigIntSetUnsignedBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_set_unsigned_bytes),
+            "bigIntSetSignedBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_set_signed_bytes),
+            "bigIntIsInt64" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_is_int64),
+            "bigIntGetInt64" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_get_int64),
+            "bigIntSetInt64" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_set_int64),
+            "bigIntAdd" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_add),
+            "bigIntSub" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_sub),
+            "bigIntMul" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_mul),
+            "bigIntTDiv" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_tdiv),
+            "bigIntTMod" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_tmod),
+            "bigIntEDiv" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_ediv),
+            "bigIntEMod" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_emod),
+            "bigIntSqrt" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_sqrt),
+            "bigIntPow" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_pow),
+            "bigIntLog2" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_log2),
+            "bigIntAbs" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_abs),
+            "bigIntNeg" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_neg),
+            "bigIntSign" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_sign),
+            "bigIntCmp" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_cmp),
+            "bigIntNot" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_not),
+            "bigIntAnd" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_and),
+            "bigIntOr" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_or),
+            "bigIntXor" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_xor),
+            "bigIntShr" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_shr),
+            "bigIntShl" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_shl),
+            "bigIntFinishUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_finish_unsigned),
+            "bigIntFinishSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_finish_signed),
+            "bigIntToString" => Function::new_typed_with_env(store, &function_env, wasmer_import_big_int_to_string),
+            "mBufferNew" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_new),
+            "mBufferNewFromBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_new_from_bytes),
+            "mBufferGetLength" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_get_length),
+            "mBufferGetBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_get_bytes),
+            "mBufferGetByteSlice" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_get_byte_slice),
+            "mBufferCopyByteSlice" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_copy_byte_slice),
+            "mBufferEq" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_eq),
+            "mBufferSetBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_set_bytes),
+            "mBufferSetByteSlice" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_set_byte_slice),
+            "mBufferAppend" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_append),
+            "mBufferAppendBytes" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_append_bytes),
+            "mBufferToBigIntUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_to_big_int_unsigned),
+            "mBufferToBigIntSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_to_big_int_signed),
+            "mBufferFromBigIntUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_from_big_int_unsigned),
+            "mBufferFromBigIntSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_from_big_int_signed),
+            "mBufferToBigFloat" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_to_big_float),
+            "mBufferFromBigFloat" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_from_big_float),
+            "mBufferStorageStore" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_storage_store),
+            "mBufferStorageLoad" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_storage_load),
+            "mBufferStorageLoadFromAddress" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_storage_load_from_address),
+            "mBufferGetArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_get_argument),
+            "mBufferFinish" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_finish),
+            "mBufferSetRandom" => Function::new_typed_with_env(store, &function_env, wasmer_import_mbuffer_set_random),
+            "managedMapNew" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_new),
+            "managedMapPut" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_put),
+            "managedMapGet" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_get),
+            "managedMapRemove" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_remove),
+            "managedMapContains" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_contains),
+            "smallIntGetUnsignedArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_get_unsigned_argument),
+            "smallIntGetSignedArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_get_signed_argument),
+            "smallIntFinishUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_finish_unsigned),
+            "smallIntFinishSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_finish_signed),
+            "smallIntStorageStoreUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_storage_store_unsigned),
+            "smallIntStorageStoreSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_storage_store_signed),
+            "smallIntStorageLoadUnsigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_storage_load_unsigned),
+            "smallIntStorageLoadSigned" => Function::new_typed_with_env(store, &function_env, wasmer_import_small_int_storage_load_signed),
+            "int64getArgument" => Function::new_typed_with_env(store, &function_env, wasmer_import_int64get_argument),
+            "int64finish" => Function::new_typed_with_env(store, &function_env, wasmer_import_int64finish),
+            "int64storageStore" => Function::new_typed_with_env(store, &function_env, wasmer_import_int64storage_store),
+            "int64storageLoad" => Function::new_typed_with_env(store, &function_env, wasmer_import_int64storage_load),
+            "sha256" => Function::new_typed_with_env(store, &function_env, wasmer_import_sha256),
+            "managedSha256" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_sha256),
+            "keccak256" => Function::new_typed_with_env(store, &function_env, wasmer_import_keccak256),
+            "managedKeccak256" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_keccak256),
+            "ripemd160" => Function::new_typed_with_env(store, &function_env, wasmer_import_ripemd160),
+            "managedRipemd160" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_ripemd160),
+            "verifyBLS" => Function::new_typed_with_env(store, &function_env, wasmer_import_verify_bls),
+            "managedVerifyBLS" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_bls),
+            "verifyEd25519" => Function::new_typed_with_env(store, &function_env, wasmer_import_verify_ed25519),
+            "managedVerifyEd25519" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_ed25519),
+            "verifyCustomSecp256k1" => Function::new_typed_with_env(store, &function_env, wasmer_import_verify_custom_secp256k1),
+            "managedVerifyCustomSecp256k1" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_custom_secp256k1),
+            "verifySecp256k1" => Function::new_typed_with_env(store, &function_env, wasmer_import_verify_secp256k1),
+            "managedVerifySecp256k1" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_secp256k1),
+            "encodeSecp256k1DerSignature" => Function::new_typed_with_env(store, &function_env, wasmer_import_encode_secp256k1_der_signature),
+            "managedEncodeSecp256k1DerSignature" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_encode_secp256k1_der_signature),
+            "addEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_add_ec),
+            "doubleEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_double_ec),
+            "isOnCurveEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_is_on_curve_ec),
+            "scalarBaseMultEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_scalar_base_mult_ec),
+            "managedScalarBaseMultEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_scalar_base_mult_ec),
+            "scalarMultEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_scalar_mult_ec),
+            "managedScalarMultEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_scalar_mult_ec),
+            "marshalEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_marshal_ec),
+            "managedMarshalEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_marshal_ec),
+            "marshalCompressedEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_marshal_compressed_ec),
+            "managedMarshalCompressedEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_marshal_compressed_ec),
+            "unmarshalEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_unmarshal_ec),
+            "managedUnmarshalEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_unmarshal_ec),
+            "unmarshalCompressedEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_unmarshal_compressed_ec),
+            "managedUnmarshalCompressedEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_unmarshal_compressed_ec),
+            "generateKeyEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_generate_key_ec),
+            "managedGenerateKeyEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_generate_key_ec),
+            "createEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_create_ec),
+            "managedCreateEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_create_ec),
+            "getCurveLengthEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_curve_length_ec),
+            "getPrivKeyByteLengthEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_priv_key_byte_length_ec),
+            "ellipticCurveGetValues" => Function::new_typed_with_env(store, &function_env, wasmer_import_elliptic_curve_get_values),
+            "managedVerifySecp256r1" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_secp256r1),
+            "managedVerifyBLSSignatureShare" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blssignature_share),
+            "managedVerifyBLSAggregatedSignature" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blsaggregated_signature),
 
         }
     }

@@ -41,7 +41,8 @@ impl ExecutorService for BasicExecutorService {
         &self,
         vm_hooks_builder: Box<dyn VMHooks>,
     ) -> Result<Box<dyn Executor>, ExecutorError> {
-        trace!("Initializing WasmerExecutor ...");
-        Ok(Box::new(WasmerExecutor::new(vm_hooks_builder)))
+        // trace!("Initializing WasmerExecutor ...");
+        // Ok(Box::new(WasmerExecutor::new(vm_hooks_builder)))
+        todo!()
     }
 }

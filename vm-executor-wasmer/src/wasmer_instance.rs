@@ -1,12 +1,13 @@
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
+use crate::WasmerInstanceState;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -218,7 +219,7 @@ fn push_middlewares(
 }
 
 impl Instance for WasmerInstance {
-    fn call(&self, func_name: &str) -> Result<(), String> {
+    fn call(&mut self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
         let func = self
@@ -268,6 +269,13 @@ impl Instance for WasmerInstance {
             })
             .cloned()
             .collect()
+    }
+
+    fn state_ref(&mut self) -> Box<dyn InstanceState + '_> {
+        Box::new(WasmerInstanceState {
+            wasmer_instance: &self.wasmer_instance,
+            memory_name: &self.memory_name,
+        })
     }
 
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {
@@ -323,7 +331,7 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let result = self.get_memory_ref();
         match result {
             Ok(memory) => {
@@ -334,11 +342,11 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
+    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String> {
         get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 

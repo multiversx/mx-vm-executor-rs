@@ -18,7 +18,8 @@ use crate::{
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
 
-#[derive(Clone, Debug, MemoryUsage)]
+#[derive(Clone, Debug)]
+// #[derive(Clone, Debug, MemoryUsage)]
 struct OpcodeControlGlobalIndexes {
     memory_grow_count_global_index: GlobalIndex,
     operand_backup_global_index: GlobalIndex,
@@ -73,12 +74,12 @@ impl OpcodeControl {
 unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
 
-impl MemoryUsage for OpcodeControl {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
-            - mem::size_of_val(&self.global_indexes)
-    }
-}
+// impl MemoryUsage for OpcodeControl {
+//     fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
+//         mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
+//             - mem::size_of_val(&self.global_indexes)
+//     }
+// }
 
 impl ModuleMiddleware for OpcodeControl {
     fn generate_function_middleware(
@@ -95,7 +96,7 @@ impl ModuleMiddleware for OpcodeControl {
         })
     }
 
-    fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
@@ -110,6 +111,8 @@ impl ModuleMiddleware for OpcodeControl {
                 0,
             ),
         });
+
+        Ok(())
     }
 }
 
