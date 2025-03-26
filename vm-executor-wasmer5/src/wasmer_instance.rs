@@ -4,8 +4,8 @@ use crate::wasmer_instance_state::WasmerInstanceState;
 // use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
 use crate::{
+    wasmer5_imports::generate_import_object,
     wasmer_breakpoints::*,
-    wasmer_imports::generate_import_object,
     // wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl,
     wasmer_vm_hooks::VMHooksWrapper,
@@ -18,10 +18,12 @@ use multiversx_chain_vm_executor::{
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
 use std::cell::RefCell;
+use std::mem::MaybeUninit;
 use std::ops::Deref;
+use std::rc::Weak;
 use std::{rc::Rc, sync::Arc};
 use wasmer::{
-    imports, AsStoreMut, CompilerConfig, Extern, Module, Pages, Singlepass, Store, StoreMut,
+    imports, AsStoreMut, CompilerConfig, Extern, Memory, Module, Pages, Singlepass, Store, StoreMut,
 };
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
@@ -34,6 +36,76 @@ pub struct WasmerInstance {
 pub struct WasmerInstanceInner {
     pub wasmer_instance: wasmer::Instance,
     pub memory_name: String,
+}
+
+impl WasmerInstanceInner {
+    pub fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
+        let result = self
+            .wasmer_instance
+            .exports
+            .get_memory(&self.memory_name);
+        match result {
+            Ok(memory) => Ok(memory),
+            Err(err) => Err(err.to_string()),
+        }
+    }
+}
+
+fn prepare_wasmer_instance_inner(
+    module: &Module,
+    store: &mut Store,
+    weak: Weak<WasmerInstanceInner>,
+) -> Result<WasmerInstanceInner, ExecutorError> {
+    // Create an empty import object.
+    trace!("Generating imports ...");
+    let vm_hooks_wrapper = VMHooksWrapper {
+        // vm_hooks: executor_data.borrow().get_vm_hooks(),
+        vm_hooks_builder: todo!(),
+        wasmer_inner: weak,
+    };
+    let import_object = generate_import_object(&mut store, vm_hooks_wrapper);
+
+    trace!("Instantiating WasmerInstance ...");
+    let wasmer_instance = wasmer::Instance::new(&mut store, &module, &import_object)?;
+    // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
+
+    // Check that there is exactly one memory in the smart contract, no more, no less
+    let memories = get_memories(&wasmer_instance);
+    validate_memories(&memories)?;
+
+    // At this point we know that there is exactly one memory
+    let memory = memories[0].1;
+    // Checks that the memory size is not greater than the maximum allowed
+    validate_memory(memory, &store)?;
+
+    trace!("WasmerMemory size: {:#?}", memory.view(&store).size());
+    let memory_name = memories[0].0.clone();
+
+    Ok(WasmerInstanceInner {
+        wasmer_instance,
+        memory_name,
+    })
+}
+
+fn new_cyclic_fallible<T, E, F>(f: F) -> Result<Rc<T>, E>
+where
+    F: FnOnce(Weak<T>) -> Result<T, E>,
+{
+    let mut result: Result<(), E> = Ok(());
+    let maybe_uninit_rc = Rc::<MaybeUninit<T>>::new_cyclic(|weak_uninit| unsafe {
+        let raw = Weak::into_raw(weak_uninit.clone());
+        let weak = Weak::<T>::from_raw(raw as *const T);
+        match f(weak) {
+            Ok(t) => MaybeUninit::<T>::new(t),
+            Err(err) => {
+                result = Err(err);
+                MaybeUninit::<T>::uninit()
+            }
+        }
+    });
+    result?;
+    let raw = Rc::into_raw(maybe_uninit_rc);
+    unsafe { Ok(Rc::from_raw(raw as *const T)) }
 }
 
 impl WasmerInstance {
@@ -54,37 +126,8 @@ impl WasmerInstance {
         trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
-        let inner = Rc::new_cyclic(|weak| {
-            // Create an empty import object.
-            trace!("Generating imports ...");
-            let vm_hooks_wrapper = VMHooksWrapper {
-                // vm_hooks: executor_data.borrow().get_vm_hooks(),
-                vm_hooks_builder: todo!(),
-                wasmer_inner: todo!(),
-            };
-            let import_object = generate_import_object(&mut store, vm_hooks_wrapper);
-
-            trace!("Instantiating WasmerInstance ...");
-            let wasmer_instance = wasmer::Instance::new(&mut store, &module, &import_object).expect("TODO");
-            // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
-
-            // Check that there is exactly one memory in the smart contract, no more, no less
-            let memories = get_memories(&wasmer_instance);
-            validate_memories(&memories).expect("TODO");
-
-            // At this point we know that there is exactly one memory
-            let memory = memories[0].1;
-            // Checks that the memory size is not greater than the maximum allowed
-            validate_memory(memory, &store).expect("TODO");
-
-            trace!("WasmerMemory size: {:#?}", memory.view(&store).size());
-            let memory_name = memories[0].0.clone();
-
-            WasmerInstanceInner {
-                wasmer_instance,
-                memory_name,
-            }
-        });
+        let inner =
+            new_cyclic_fallible(|weak| prepare_wasmer_instance_inner(&module, &mut store, weak))?;
 
         Ok(WasmerInstance {
             wasmer_store: store,
@@ -306,10 +349,11 @@ impl Instance for WasmerInstance {
     }
 
     fn state_ref(&mut self) -> Box<dyn InstanceState + '_> {
-        Box::new(WasmerInstanceState {
-            wasmer_inner: &self.inner,
-            store_ref: self.wasmer_store.as_store_mut(),
-        })
+        // Box::new(WasmerInstanceState {
+        //     wasmer_inner: &self.inner,
+        //     store_ref: self.wasmer_store.as_store_mut(),
+        // })
+        todo!()
     }
 
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {

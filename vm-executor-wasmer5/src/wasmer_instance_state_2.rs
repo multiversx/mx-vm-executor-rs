@@ -5,7 +5,7 @@ use crate::wasmer_protected_globals::ProtectedGlobals;
 use crate::WasmerInstanceInner;
 use crate::{
     wasmer_breakpoints::*,
-    wasmer_imports::generate_import_object,
+    wasmer5_imports::generate_import_object,
     // wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl,
     wasmer_vm_hooks::VMHooksWrapper,

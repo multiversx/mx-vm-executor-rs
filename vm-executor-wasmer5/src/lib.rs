@@ -1,7 +1,7 @@
 mod wasmer_breakpoints;
 mod wasmer_executor;
 mod wasmer_helpers;
-mod wasmer_imports;
+mod wasmer5_imports;
 mod wasmer_instance;
 mod wasmer_logger;
 // mod wasmer_metering;

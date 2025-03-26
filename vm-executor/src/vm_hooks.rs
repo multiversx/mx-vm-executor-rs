@@ -10,7 +10,7 @@ use crate::{MemLength, MemPtr};
 
 #[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
-pub trait VMHooks: core::fmt::Debug + 'static {
+pub trait VMHooks: core::fmt::Debug {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void);
 
     fn get_gas_left(&self) -> i64;
