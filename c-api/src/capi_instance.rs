@@ -5,8 +5,8 @@ use crate::{
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
-use meta::capi_safe_unwind;
 use libc::{c_char, c_int};
+use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::{CompilationOptions, Instance};
 use std::{ffi::CStr, slice};
 

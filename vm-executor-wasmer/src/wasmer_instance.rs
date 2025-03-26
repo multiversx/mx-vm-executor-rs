@@ -7,7 +7,7 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 

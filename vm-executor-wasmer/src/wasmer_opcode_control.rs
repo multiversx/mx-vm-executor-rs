@@ -202,10 +202,16 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
         if matches!(operator, Operator::MemoryGrow { .. }) {
-            let mut grow_count = self.total_memory_grow_count.lock().map_err(|_| MiddlewareError::new("MemoryGrowLimit", "failed to lock counter"))?;
+            let mut grow_count = self
+                .total_memory_grow_count
+                .lock()
+                .map_err(|_| MiddlewareError::new("MemoryGrowLimit", "failed to lock counter"))?;
             *grow_count += 1;
             if *grow_count > self.max_memory_grow_count {
-                return Err(MiddlewareError::new("MemoryGrowLimit", "memory.grow limit exceeded"));
+                return Err(MiddlewareError::new(
+                    "MemoryGrowLimit",
+                    "memory.grow limit exceeded",
+                ));
             }
 
             self.inject_memory_grow_check(state);
