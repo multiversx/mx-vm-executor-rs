@@ -29,11 +29,11 @@ pub trait InstanceState {
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError>;
 
     /// Grows a memory by the given number of pages (of 65Kb each).
-    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError>;
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String>;
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
 }

@@ -1,13 +1,9 @@
-use std::mem;
 use std::sync::Mutex;
 
-use loupe::{MemoryUsage, MemoryUsageTracker};
-use wasmer::wasmparser::{
-    Operator,
-    // Type as WpType, TypeOrFuncType as WpTypeOrFuncType
-};
+use wasmer::wasmparser::Operator;
 use wasmer::{
-    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState, ModuleMiddleware, Store
+    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError,
+    MiddlewareReaderState, ModuleMiddleware,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
@@ -69,13 +65,6 @@ impl Breakpoints {
 
 unsafe impl Send for Breakpoints {}
 unsafe impl Sync for Breakpoints {}
-
-// impl MemoryUsage for Breakpoints {
-//     fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-//         mem::size_of_val(self) + self.global_index.size_of_val(tracker)
-//             - mem::size_of_val(&self.global_index)
-//     }
-// }
 
 impl ModuleMiddleware for Breakpoints {
     fn generate_function_middleware(
@@ -168,7 +157,10 @@ pub(crate) fn set_breakpoint_value(
     }
 }
 
-pub(crate) fn get_breakpoint_value(instance: &Instance, store: &mut impl AsStoreMut) -> Result<u64, String> {
+pub(crate) fn get_breakpoint_value(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+) -> Result<u64, String> {
     let result = instance.exports.get_global(BREAKPOINT_VALUE);
     match result {
         Ok(global) => {

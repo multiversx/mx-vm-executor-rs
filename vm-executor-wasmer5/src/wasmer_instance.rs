@@ -14,6 +14,7 @@ use crate::{
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError,
+    VMHooksBuilder,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -29,7 +30,7 @@ use wasmer::{
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
-    wasmer_store: wasmer::Store,
+    wasmer_store: RefCell<wasmer::Store>,
     inner: Rc<WasmerInstanceInner>,
 }
 
@@ -40,10 +41,7 @@ pub struct WasmerInstanceInner {
 
 impl WasmerInstanceInner {
     pub fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
-        let result = self
-            .wasmer_instance
-            .exports
-            .get_memory(&self.memory_name);
+        let result = self.wasmer_instance.exports.get_memory(&self.memory_name);
         match result {
             Ok(memory) => Ok(memory),
             Err(err) => Err(err.to_string()),
@@ -52,6 +50,7 @@ impl WasmerInstanceInner {
 }
 
 fn prepare_wasmer_instance_inner(
+    vm_hooks_builder: Rc<dyn VMHooksBuilder>,
     module: &Module,
     store: &mut Store,
     weak: Weak<WasmerInstanceInner>,
@@ -59,14 +58,13 @@ fn prepare_wasmer_instance_inner(
     // Create an empty import object.
     trace!("Generating imports ...");
     let vm_hooks_wrapper = VMHooksWrapper {
-        // vm_hooks: executor_data.borrow().get_vm_hooks(),
-        vm_hooks_builder: todo!(),
+        vm_hooks_builder,
         wasmer_inner: weak,
     };
-    let import_object = generate_import_object(&mut store, vm_hooks_wrapper);
+    let import_object = generate_import_object(store, vm_hooks_wrapper);
 
     trace!("Instantiating WasmerInstance ...");
-    let wasmer_instance = wasmer::Instance::new(&mut store, &module, &import_object)?;
+    let wasmer_instance = wasmer::Instance::new(store, &module, &import_object)?;
     // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
     // Check that there is exactly one memory in the smart contract, no more, no less
@@ -126,11 +124,17 @@ impl WasmerInstance {
         trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
-        let inner =
-            new_cyclic_fallible(|weak| prepare_wasmer_instance_inner(&module, &mut store, weak))?;
+        let inner = new_cyclic_fallible(|weak| {
+            prepare_wasmer_instance_inner(
+                executor_data.borrow().vm_hooks_builder.clone(),
+                &module,
+                &mut store,
+                weak,
+            )
+        })?;
 
         Ok(WasmerInstance {
-            wasmer_store: store,
+            wasmer_store: RefCell::new(store),
             inner,
         })
     }
@@ -290,7 +294,7 @@ fn push_middlewares(
 }
 
 impl Instance for WasmerInstance {
-    fn call(&mut self, func_name: &str) -> Result<(), String> {
+    fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
         let func = self
@@ -300,7 +304,7 @@ impl Instance for WasmerInstance {
             .get_function(func_name)
             .map_err(|_| "function not found".to_string())?;
 
-        match func.call(&mut self.wasmer_store, &[]) {
+        match func.call(&mut *self.wasmer_store.borrow_mut(), &[]) {
             Ok(_) => {
                 trace!("Call succeeded: {func_name}");
                 Ok(())
@@ -315,10 +319,10 @@ impl Instance for WasmerInstance {
     fn check_signatures(&self) -> bool {
         for (_, export) in self.inner.wasmer_instance.exports.iter() {
             if let Extern::Function(endpoint) = export {
-                if endpoint.param_arity(&self.wasmer_store) > 0 {
+                if endpoint.param_arity(&self.wasmer_store.borrow()) > 0 {
                     return false;
                 }
-                if endpoint.result_arity(&self.wasmer_store) > 0 {
+                if endpoint.result_arity(&self.wasmer_store.borrow()) > 0 {
                     return false;
                 }
             }
@@ -348,7 +352,7 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    fn state_ref(&mut self) -> Box<dyn InstanceState + '_> {
+    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
         // Box::new(WasmerInstanceState {
         //     wasmer_inner: &self.inner,
         //     store_ref: self.wasmer_store.as_store_mut(),
@@ -374,7 +378,7 @@ impl Instance for WasmerInstance {
     fn memory_length(&self) -> Result<u64, String> {
         let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
         match result {
-            Ok(memory) => Ok(memory.view(&self.wasmer_store).data_size()),
+            Ok(memory) => Ok(memory.view(&self.wasmer_store.borrow()).data_size()),
             Err(err) => Err(err),
         }
     }
@@ -382,7 +386,7 @@ impl Instance for WasmerInstance {
     fn memory_ptr(&self) -> Result<*mut u8, String> {
         let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
         match result {
-            Ok(memory) => Ok(memory.view(&self.wasmer_store).data_ptr()),
+            Ok(memory) => Ok(memory.view(&self.wasmer_store.borrow()).data_ptr()),
             Err(err) => Err(err),
         }
     }
@@ -405,43 +409,52 @@ impl Instance for WasmerInstance {
     }
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
-        let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        // let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => unsafe {
-                let view = memory.view(&self.wasmer_store);
-                view.write(mem_ptr as u64, data);
-                // let mem_data = memory.data_unchecked_mut();
-                // mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
-                Ok(())
-            },
-            Err(err) => Err(err.into()),
-        }
+        // let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
+        // // let result = self.get_memory_ref();
+        // match result {
+        //     Ok(memory) => unsafe {
+        //         let view = memory.view(&self.wasmer_store);
+        //         view.write(mem_ptr as u64, data);
+        //         // let mem_data = memory.data_unchecked_mut();
+        //         // mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
+        //         Ok(())
+        //     },
+        //     Err(err) => Err(err.into()),
+        // }
+
+        todo!()
     }
 
-    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        // let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => {
-                let pages = memory.grow(&mut self.wasmer_store, wasmer::Pages(by_num_pages))?;
-                Ok(pages.0)
-            }
-            Err(err) => Err(err.into()),
-        }
-        // todo!()
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+        // let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
+        // // let result = self.get_memory_ref();
+        // match result {
+        //     Ok(memory) => {
+        //         let pages = memory.grow(&mut self.wasmer_store, wasmer::Pages(by_num_pages))?;
+        //         Ok(pages.0)
+        //     }
+        //     Err(err) => Err(err.into()),
+        // }
+        todo!()
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
-        set_breakpoint_value(
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+        // set_breakpoint_value(
+        //     &self.inner.wasmer_instance,
+        //     &mut self.wasmer_store,
+        //     value.as_u64(),
+        // )
+        todo!()
+    }
+
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
+        get_breakpoint_value(
             &self.inner.wasmer_instance,
-            &mut self.wasmer_store,
-            value.as_u64(),
-        )
-    }
-
-    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String> {
-        get_breakpoint_value(&self.inner.wasmer_instance, &mut self.wasmer_store)?.try_into()
+            &mut self.wasmer_store.borrow_mut(),
+        )?
+        .try_into()
+        // todo!()
+        // self.inner.
     }
 
     fn reset(&self) -> Result<(), String> {

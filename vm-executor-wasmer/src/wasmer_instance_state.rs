@@ -71,7 +71,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         }
     }
 
-    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let result = self.get_memory_ref();
         match result {
             Ok(memory) => {
@@ -82,11 +82,11 @@ impl InstanceState for WasmerInstanceState<'_> {
         }
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String> {
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
         get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 }

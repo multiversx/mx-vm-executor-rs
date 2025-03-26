@@ -15,5 +15,5 @@ pub use instance_state::*;
 pub use opcode_cost::OpcodeCost;
 pub use service_error::ServiceError;
 pub use service_trait::*;
-pub use vm_hooks::*;
-pub use vm_hooks_builder::VMHooksBuilder;
+pub use vm_hooks::{VMHooks, VMHooksDefault};
+pub use vm_hooks_builder::{VMHooksBuilder, VMHooksBuilderDefault};

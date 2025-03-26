@@ -1,7 +1,8 @@
 use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks, VMHooksBuilder,
+    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
+    VMHooksBuilder,
 };
 use std::cell::RefCell;
 use std::ffi::c_void;
@@ -17,12 +18,12 @@ pub fn force_sighandler_reinstall() {
 }
 
 pub struct WasmerExecutorData {
-    vm_hooks_builder: Box<dyn VMHooksBuilder>,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    pub vm_hooks_builder: Rc<dyn VMHooksBuilder>,
+    pub opcode_cost: Arc<Mutex<OpcodeCost>>,
 }
 
 impl WasmerExecutorData {
-    pub fn new(vm_hooks_builder: Box<dyn VMHooksBuilder>) -> Self {
+    pub fn new(vm_hooks_builder: Rc<dyn VMHooksBuilder>) -> Self {
         Self {
             vm_hooks_builder,
             opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
@@ -61,7 +62,7 @@ pub struct WasmerExecutor {
 }
 
 impl WasmerExecutor {
-    pub fn new(vm_hooks_builder: Box<dyn VMHooksBuilder>) -> Self {
+    pub fn new(vm_hooks_builder: Rc<dyn VMHooksBuilder>) -> Self {
         Self {
             data: Rc::new(RefCell::new(WasmerExecutorData::new(vm_hooks_builder))),
         }

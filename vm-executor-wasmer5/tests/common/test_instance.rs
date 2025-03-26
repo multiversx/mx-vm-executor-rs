@@ -1,5 +1,7 @@
-use multiversx_chain_vm_executor::{CompilationOptions, ExecutorService, Instance, VMHooksDefault};
-use multiversx_chain_vm_executor_wasmer5::BasicExecutorService;
+use std::rc::Rc;
+
+use multiversx_chain_vm_executor::{CompilationOptions, Executor, Instance, VMHooksBuilderDefault};
+use multiversx_chain_vm_executor_wasmer5::WasmerExecutor;
 use wasmer::wat2wasm;
 
 const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
@@ -14,8 +16,10 @@ const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
 
 pub fn test_instance(wat: &str) -> Box<dyn Instance> {
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
-    let service = BasicExecutorService::new();
-    let executor = service.new_executor(Box::new(VMHooksDefault)).unwrap();
+    let executor = WasmerExecutor::new(Rc::new(VMHooksBuilderDefault));
+
+    // service.new_executor(Box::new(VMHooksDefault)).unwrap();
+
     executor
         .new_instance(&wasm_bytes, &DUMMY_COMPILATION_OPTIONS)
         .unwrap()

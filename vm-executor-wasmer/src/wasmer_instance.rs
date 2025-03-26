@@ -219,7 +219,7 @@ fn push_middlewares(
 }
 
 impl Instance for WasmerInstance {
-    fn call(&mut self, func_name: &str) -> Result<(), String> {
+    fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
         let func = self
@@ -271,7 +271,7 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    fn state_ref(&mut self) -> Box<dyn InstanceState + '_> {
+    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
         Box::new(WasmerInstanceState {
             wasmer_instance: &self.wasmer_instance,
             memory_name: &self.memory_name,
@@ -331,7 +331,7 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         let result = self.get_memory_ref();
         match result {
             Ok(memory) => {
@@ -342,11 +342,11 @@ impl Instance for WasmerInstance {
         }
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String> {
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
         get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 

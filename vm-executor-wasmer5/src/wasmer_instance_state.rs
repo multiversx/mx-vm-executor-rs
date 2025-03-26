@@ -4,8 +4,8 @@
 use crate::wasmer_protected_globals::ProtectedGlobals;
 use crate::WasmerInstanceInner;
 use crate::{
-    wasmer_breakpoints::*,
     wasmer5_imports::generate_import_object,
+    wasmer_breakpoints::*,
     // wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl,
     wasmer_vm_hooks::VMHooksWrapper,
@@ -27,17 +27,17 @@ use wasmer::{
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
-pub struct WasmerInstanceState<'a> {
+pub struct WasmerInstanceState {
     pub wasmer_inner: Weak<WasmerInstanceInner>,
     // pub memory: &'a wasmer::Memory,
     // pub store_ref: StoreMut<'a>,
-    pub memory_view: wasmer::MemoryView<'a>,
+    // pub memory_view: wasmer::MemoryView<'a>,
     pub breakpoint: RefCell<BreakpointValue>,
-    // pub memory_ptr: *const u8,
-    // pub memory_size: usize,
+    pub memory_ptr: *mut u8,
+    pub memory_size: u64,
 }
 
-impl WasmerInstanceState<'_> {
+impl WasmerInstanceState {
     // fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
     //     let inner = self.wasmer_inner .upgrade().unwrap();
     //     let result = inner
@@ -93,7 +93,7 @@ impl WasmerInstanceState<'_> {
 //     Ok(())
 // }
 
-impl InstanceState for WasmerInstanceState<'_> {
+impl InstanceState for WasmerInstanceState {
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {
         // set_points_limit(&self.wasmer_instance, limit)
         Ok(())
@@ -116,7 +116,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         //     Err(err) => Err(err),
         // }
 
-        Ok(self.memory_view.data_size())
+        Ok(self.memory_size)
     }
 
     fn memory_ptr(&self) -> Result<*mut u8, String> {
@@ -126,11 +126,11 @@ impl InstanceState for WasmerInstanceState<'_> {
         //     Err(err) => Err(err),
         // }
 
-        Ok(self.memory_view.data_ptr())
+        Ok(self.memory_ptr)
     }
 
     fn memory_load(&self, offset: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
-        let memory_ptr = self.memory_ptr()? as *const u8;
+        let memory_ptr = self.memory_ptr()?;
         let ptr = unsafe { memory_ptr.offset(offset) };
         let slice = std::ptr::slice_from_raw_parts(ptr, mem_length as usize);
         unsafe { Ok(&*slice) }
@@ -147,14 +147,19 @@ impl InstanceState for WasmerInstanceState<'_> {
         //     Err(err) => Err(err.into()),
         // }
 
-                // let mem_data = self.memory_view.read(mem_ptr as u64, buf);
-                // let start = mem_ptr as usize;
-                // let end = (mem_ptr + mem_length) as usize;
-                // Ok(&mem_data[start..end])
+        // let mem_data = self.memory_view.read(mem_ptr as u64, buf);
+        // let start = mem_ptr as usize;
+        // let end = (mem_ptr + mem_length) as usize;
+        // Ok(&mem_data[start..end])
     }
 
-    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
-        self.memory_view.write(mem_ptr as u64, data)?;
+    fn memory_store(&self, offset: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
+        let memory_ptr = self.memory_ptr()?;
+        let ptr = unsafe { memory_ptr.offset(offset) };
+        let slice = std::ptr::slice_from_raw_parts(ptr, data.len());
+        unsafe {
+            std::ptr::copy(data.as_ptr(), ptr, data.len());
+        }
         Ok(())
 
         // let result = self.get_memory_ref();
@@ -171,7 +176,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         // }
     }
 
-    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
         // let result = self.get_memory_ref();
         // match result {
         //     Ok(memory) => {
@@ -183,7 +188,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         todo!()
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
         // set_breakpoint_value(
         //     &self.wasmer_inner.wasmer_instance,
         //     &mut self.store_ref,
@@ -193,7 +198,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         Ok(())
     }
 
-    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, String> {
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
         // get_breakpoint_value(&self.wasmer_inner.wasmer_instance, &mut self.store_ref)?.try_into()
         Ok((*self.breakpoint.borrow()))
     }

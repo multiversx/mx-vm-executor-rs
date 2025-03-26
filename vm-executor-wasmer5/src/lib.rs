@@ -1,7 +1,7 @@
+mod wasmer5_imports;
 mod wasmer_breakpoints;
 mod wasmer_executor;
 mod wasmer_helpers;
-mod wasmer5_imports;
 mod wasmer_instance;
 mod wasmer_logger;
 // mod wasmer_metering;
@@ -9,17 +9,13 @@ mod wasmer_metering_helpers;
 mod wasmer_opcode_control;
 // mod wasmer_opcode_trace;
 mod wasmer_protected_globals;
-mod wasmer_service;
 // mod vibe_instance;
 mod wasmer_instance_state;
-mod wasmer_instance_state_2;
 mod wasmer_vm_hooks;
 mod wasmer_vm_hooks_builder;
 
 pub use wasmer_executor::*;
 pub use wasmer_instance::*;
 pub use wasmer_instance_state::*;
-pub use wasmer_instance_state_2::*;
 // pub use wasmer_logger::*;
 // pub use wasmer_metering_helpers::*;
-pub use wasmer_service::*;

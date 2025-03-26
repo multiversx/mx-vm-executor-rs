@@ -1,11 +1,16 @@
 use std::rc::Rc;
 
-use crate::{InstanceState, VMHooks};
+use crate::{InstanceState, VMHooks, VMHooksDefault};
 
 pub trait VMHooksBuilder {
-    // fn create_vm_hooks<'a, 'b, 'c>(&'a self, instance_state_ref: &'b dyn InstanceState) -> Box<dyn VMHooks + 'c>;
+    fn create_vm_hooks(&self, instance_state_ref: Rc<dyn InstanceState>) -> Box<dyn VMHooks>;
+}
 
-    // fn create_vm_hooks(&self, instance_state_ref: Rc<dyn InstanceState>) -> Box<dyn VMHooks>;
+#[derive(Debug)]
+pub struct VMHooksBuilderDefault;
 
-    fn with_vm_hooks(&self, instance_state_ref: &dyn InstanceState, f: &dyn FnOnce(&dyn VMHooks));
+impl VMHooksBuilder for VMHooksBuilderDefault {
+    fn create_vm_hooks(&self, _instance_state_ref: Rc<dyn InstanceState>) -> Box<dyn VMHooks> {
+        Box::new(VMHooksDefault)
+    }
 }
