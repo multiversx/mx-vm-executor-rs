@@ -11,8 +11,8 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
-    wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
+    we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
+    we_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";

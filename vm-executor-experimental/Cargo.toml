@@ -1,5 +1,5 @@
 [package]
-name = "multiversx-chain-vm-executor-wasmer5"
+name = "multiversx-chain-vm-executor-wasmer-experimental"
 version = "0.3.0"
 edition = "2021"
 publish = false # will also be published, but it is not yet ready for that
@@ -14,7 +14,6 @@ path = "../vm-executor"
 wasmer = { version = "5.0.4", default-features = false, features = [
     "singlepass",
     "sys",
-    # "universal",
     "wat",
 ] }
 wasmer-types = "5.0.4"

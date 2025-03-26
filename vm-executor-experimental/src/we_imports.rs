@@ -8,7 +8,7 @@
 
 use wasmer::{imports, Function, FunctionEnv, FunctionEnvMut, Imports, Store};
 
-use crate::wasmer_vm_hooks::{convert_mem_length, convert_mem_ptr, with_vm_hooks, VMHooksWrapper};
+use crate::we_vm_hooks::{convert_mem_length, convert_mem_ptr, with_vm_hooks, VMHooksWrapper};
 
 #[rustfmt::skip]
 fn wasmer_import_get_gas_left(env: FunctionEnvMut<VMHooksWrapper>) -> i64 {

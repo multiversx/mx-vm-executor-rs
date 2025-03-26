@@ -7,7 +7,7 @@ use wasmer::{
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_helpers::{
+use crate::we_helpers::{
     create_global_index, is_control_flow_operator, MiddlewareWithProtectedGlobals,
 };
 

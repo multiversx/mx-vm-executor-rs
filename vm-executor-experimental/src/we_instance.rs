@@ -1,14 +1,14 @@
 #![allow(unused)]
 
-use crate::wasmer_instance_state::WasmerInstanceState;
+use crate::we_instance_state::WasmerInstanceState;
 // use crate::wasmer_opcode_trace::OpcodeTracer;
-use crate::wasmer_protected_globals::ProtectedGlobals;
+use crate::we_protected_globals::ProtectedGlobals;
 use crate::{
-    wasmer5_imports::generate_import_object,
-    wasmer_breakpoints::*,
+    we_breakpoints::*,
+    we_imports::generate_import_object,
     // wasmer_metering::*,
-    wasmer_opcode_control::OpcodeControl,
-    wasmer_vm_hooks::VMHooksWrapper,
+    we_opcode_control::OpcodeControl,
+    we_vm_hooks::VMHooksWrapper,
     WasmerExecutorData,
 };
 use log::trace;
@@ -64,7 +64,7 @@ fn prepare_wasmer_instance_inner(
     let import_object = generate_import_object(store, vm_hooks_wrapper);
 
     trace!("Instantiating WasmerInstance ...");
-    let wasmer_instance = wasmer::Instance::new(store, &module, &import_object)?;
+    let wasmer_instance = wasmer::Instance::new(store, module, &import_object)?;
     // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
 
     // Check that there is exactly one memory in the smart contract, no more, no less
@@ -74,7 +74,7 @@ fn prepare_wasmer_instance_inner(
     // At this point we know that there is exactly one memory
     let memory = memories[0].1;
     // Checks that the memory size is not greater than the maximum allowed
-    validate_memory(memory, &store)?;
+    validate_memory(memory, store)?;
 
     trace!("WasmerMemory size: {:#?}", memory.view(&store).size());
     let memory_name = memories[0].0.clone();

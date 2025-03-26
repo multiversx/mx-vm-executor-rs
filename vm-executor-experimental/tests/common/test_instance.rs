@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use multiversx_chain_vm_executor::{CompilationOptions, Executor, Instance, VMHooksBuilderDefault};
-use multiversx_chain_vm_executor_wasmer5::WasmerExecutor;
+use multiversx_chain_vm_executor_wasmer_experimental::WasmerExecutor;
 use wasmer::wat2wasm;
 
 const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {

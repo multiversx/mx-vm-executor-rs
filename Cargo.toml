@@ -5,6 +5,6 @@ members = [
     "meta",
     "c-api",
     "vm-executor",
+    "vm-executor-experimental",
     "vm-executor-wasmer",
-    "vm-executor-wasmer5",
 ]

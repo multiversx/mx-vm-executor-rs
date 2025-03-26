@@ -7,7 +7,7 @@ use wasmer::{
 };
 use wasmer_types::ModuleInfo;
 
-use crate::wasmer_helpers::MiddlewareWithProtectedGlobals;
+use crate::we_helpers::MiddlewareWithProtectedGlobals;
 
 #[derive(Debug)]
 pub(crate) struct ProtectedGlobals {

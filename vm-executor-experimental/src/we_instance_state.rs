@@ -1,14 +1,14 @@
 #![allow(unused)]
 
 // use crate::wasmer_opcode_trace::OpcodeTracer;
-use crate::wasmer_protected_globals::ProtectedGlobals;
+use crate::we_protected_globals::ProtectedGlobals;
 use crate::WasmerInstanceInner;
 use crate::{
-    wasmer5_imports::generate_import_object,
-    wasmer_breakpoints::*,
+    we_breakpoints::*,
+    we_imports::generate_import_object,
     // wasmer_metering::*,
-    wasmer_opcode_control::OpcodeControl,
-    wasmer_vm_hooks::VMHooksWrapper,
+    we_opcode_control::OpcodeControl,
+    we_vm_hooks::VMHooksWrapper,
     WasmerExecutorData,
 };
 use log::trace;
