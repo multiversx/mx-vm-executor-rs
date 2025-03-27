@@ -7,7 +7,7 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -218,7 +218,7 @@ fn push_middlewares(
     }
 }
 
-impl Instance for WasmerInstance {
+impl InstanceFull for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 

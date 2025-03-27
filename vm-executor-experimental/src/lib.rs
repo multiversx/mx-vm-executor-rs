@@ -1,9 +1,10 @@
+#![allow(unused)] // TODO: temporary
+
 mod we_breakpoints;
 mod we_executor;
 mod we_helpers;
 mod we_imports;
 mod we_instance;
-mod we_logger;
 // mod wasmer_metering;
 mod we_metering_helpers;
 mod we_opcode_control;

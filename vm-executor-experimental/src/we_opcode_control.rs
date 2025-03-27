@@ -1,9 +1,5 @@
-use std::{
-    mem,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
     wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
     MiddlewareReaderState, ModuleMiddleware,

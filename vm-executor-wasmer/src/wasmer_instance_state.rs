@@ -85,8 +85,4 @@ impl InstanceState for WasmerInstanceState<'_> {
     fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
-
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
-        get_breakpoint_value(self.wasmer_instance)?.try_into()
-    }
 }

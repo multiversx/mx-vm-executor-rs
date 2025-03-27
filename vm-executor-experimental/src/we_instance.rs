@@ -13,8 +13,8 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceState, ServiceError,
-    VMHooksBuilder,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceFull, InstanceState,
+    ServiceError, VMHooksBuilder,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -352,99 +352,14 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
-    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
-        // Box::new(WasmerInstanceState {
-        //     wasmer_inner: &self.inner,
-        //     store_ref: self.wasmer_store.as_store_mut(),
-        // })
-        todo!()
-    }
-
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {
         // set_points_limit(&self.wasmer_instance, limit)
-        Ok(())
-    }
-
-    fn set_points_used(&self, points: u64) -> Result<(), String> {
-        // set_points_used(&self.wasmer_instance, points)
         Ok(())
     }
 
     fn get_points_used(&self) -> Result<u64, String> {
         // get_points_used(&self.wasmer_instance)
         Ok(0)
-    }
-
-    fn memory_length(&self) -> Result<u64, String> {
-        let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        match result {
-            Ok(memory) => Ok(memory.view(&self.wasmer_store.borrow()).data_size()),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn memory_ptr(&self) -> Result<*mut u8, String> {
-        let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        match result {
-            Ok(memory) => Ok(memory.view(&self.wasmer_store.borrow()).data_ptr()),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
-        let ptr = self.memory_ptr()?;
-        let slice = std::ptr::slice_from_raw_parts(mem_ptr as *const u8, mem_length as usize);
-        unsafe { Ok(&*slice) }
-        // let result = self.get_memory_ref();
-        // match result {
-        //     Ok(memory) => unsafe {
-        //         let view = memory.view(&self.wasmer_store);
-        //         let mem_data = view.read(offset, buf) memory.data_unchecked();
-        //         let start = mem_ptr as usize;
-        //         let end = (mem_ptr + mem_length) as usize;
-        //         Ok(&mem_data[start..end])
-        //     },
-        //     Err(err) => Err(err.into()),
-        // }
-    }
-
-    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
-        // let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        // // let result = self.get_memory_ref();
-        // match result {
-        //     Ok(memory) => unsafe {
-        //         let view = memory.view(&self.wasmer_store);
-        //         view.write(mem_ptr as u64, data);
-        //         // let mem_data = memory.data_unchecked_mut();
-        //         // mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
-        //         Ok(())
-        //     },
-        //     Err(err) => Err(err.into()),
-        // }
-
-        todo!()
-    }
-
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        // let result = get_memory_ref(&self.inner.wasmer_instance, &self.inner.memory_name);
-        // // let result = self.get_memory_ref();
-        // match result {
-        //     Ok(memory) => {
-        //         let pages = memory.grow(&mut self.wasmer_store, wasmer::Pages(by_num_pages))?;
-        //         Ok(pages.0)
-        //     }
-        //     Err(err) => Err(err.into()),
-        // }
-        todo!()
-    }
-
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
-        // set_breakpoint_value(
-        //     &self.inner.wasmer_instance,
-        //     &mut self.wasmer_store,
-        //     value.as_u64(),
-        // )
-        todo!()
     }
 
     fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
@@ -454,7 +369,6 @@ impl Instance for WasmerInstance {
         )?
         .try_into()
         // todo!()
-        // self.inner.
     }
 
     fn reset(&self) -> Result<(), String> {

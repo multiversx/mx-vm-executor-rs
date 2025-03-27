@@ -18,8 +18,6 @@ pub fn test_instance(wat: &str) -> Box<dyn Instance> {
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
     let executor = WasmerExecutor::new(Rc::new(VMHooksBuilderDefault));
 
-    // service.new_executor(Box::new(VMHooksDefault)).unwrap();
-
     executor
         .new_instance(&wasm_bytes, &DUMMY_COMPILATION_OPTIONS)
         .unwrap()
