@@ -8,7 +8,7 @@ mod we_instance;
 // mod wasmer_metering;
 mod we_metering_helpers;
 mod we_opcode_control;
-// mod wasmer_opcode_trace;
+mod we_opcode_trace;
 mod we_instance_state;
 mod we_protected_globals;
 mod we_vm_hooks;

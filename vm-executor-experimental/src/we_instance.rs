@@ -144,49 +144,6 @@ impl WasmerInstance {
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Self, ExecutorError> {
-        // // Use Singlepass compiler with the default settings
-        // let mut compiler = Singlepass::default();
-
-        // // Push middlewares
-        // push_middlewares(&mut compiler, compilation_options, executor_data.clone());
-
-        // // Create the store
-        // let store = Store::new(&Universal::new(compiler).engine());
-
-        // trace!("Deserializing module ...");
-        // let module;
-        // unsafe {
-        //     module = Module::deserialize(&store, cache_bytes)?;
-        // };
-
-        // // Create an empty import object.
-        // trace!("Generating imports ...");
-        // let vm_hooks_wrapper = VMHooksWrapper {
-        //     vm_hooks: executor_data.borrow().get_vm_hooks(),
-        // };
-        // let import_object = generate_import_object(&store, &vm_hooks_wrapper);
-
-        // trace!("Instantiating WasmerInstance ...");
-        // let wasmer_instance = wasmer::Instance::new(&module, &import_object)?;
-        // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
-
-        // // Check that there is exactly one memory in the smart contract, no more, no less
-        // let memories = get_memories(&wasmer_instance);
-        // validate_memories(&memories)?;
-
-        // // At this point we know that there is exactly one memory
-        // let memory = memories[0].1;
-        // // Checks that the memory size is not greater than the maximum allowed
-        // validate_memory(memory)?;
-
-        // trace!("WasmerMemory size: {:#?}", memory.size());
-        // let memory_name = memories[0].0.clone();
-
-        // Ok(WasmerInstance {
-        //     wasmer_instance,
-        //     memory_name,
-        // })
-
         Err(Box::new(ServiceError::new(
             "new instance from cache not yet supported",
         )))
@@ -254,13 +211,13 @@ fn push_middlewares(
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
-    // // Create opcode_control middleware
-    // let opcode_control_middleware = Arc::new(OpcodeControl::new(
-    //     100, // TODO: should be compilation_options.max_memory_grow_count,
-    //     compilation_options.max_memory_grow,
-    //     compilation_options.max_memory_grow_delta,
-    //     breakpoints_middleware.clone(),
-    // ));
+    // Create opcode_control middleware
+    let opcode_control_middleware = Arc::new(OpcodeControl::new(
+        100, // TODO: should be compilation_options.max_memory_grow_count,
+        compilation_options.max_memory_grow,
+        compilation_options.max_memory_grow_delta,
+        breakpoints_middleware.clone(),
+    ));
 
     // // Create metering middleware
     // let metering_middleware = Arc::new(Metering::new(
@@ -280,9 +237,9 @@ fn push_middlewares(
     compiler.push_middleware(protected_globals_middleware);
     // trace!("Adding metering middleware ...");
     // compiler.push_middleware(metering_middleware);
-    // trace!("Adding opcode_control middleware ...");
-    // compiler.push_middleware(opcode_control_middleware);
-    // trace!("Adding breakpoints middleware ...");
+    trace!("Adding opcode_control middleware ...");
+    compiler.push_middleware(opcode_control_middleware);
+    trace!("Adding breakpoints middleware ...");
     compiler.push_middleware(breakpoints_middleware);
 
     // if compilation_options.opcode_trace {

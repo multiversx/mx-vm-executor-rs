@@ -70,13 +70,6 @@ impl OpcodeControl {
 unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
 
-// impl MemoryUsage for OpcodeControl {
-//     fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-//         mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
-//             - mem::size_of_val(&self.global_indexes)
-//     }
-// }
-
 impl ModuleMiddleware for OpcodeControl {
     fn generate_function_middleware(
         &self,
