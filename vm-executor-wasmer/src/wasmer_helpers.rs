@@ -1,4 +1,6 @@
-use wasmer::{wasmparser::Operator, ExportIndex, GlobalInit, GlobalType, Mutability, Type};
+use wasmer::{
+    wasmparser::Operator, ExportIndex, GlobalInit, GlobalType, Instance, Mutability, Type,
+};
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 pub trait MiddlewareWithProtectedGlobals {
@@ -29,6 +31,38 @@ pub(crate) fn create_global_index(
         .insert(key.to_string(), ExportIndex::Global(global_index));
 
     global_index
+}
+
+pub(crate) fn set_global_value_u64(
+    instance: &Instance,
+    global_name: &str,
+    points: u64,
+) -> Result<(), String> {
+    let result = instance.exports.get_global(global_name);
+    match result {
+        Ok(global) => {
+            let result = global.set(points.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+pub(crate) fn get_global_value_u64(instance: &Instance, global_name: &str) -> Result<u64, String> {
+    let result = instance.exports.get_global(global_name);
+    match result {
+        Ok(global) => {
+            let result = global.get().try_into();
+            match result {
+                Ok(points) => Ok(points),
+                Err(err) => Err(err.to_string()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }
 
 pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {

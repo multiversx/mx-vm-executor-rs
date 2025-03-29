@@ -6,12 +6,15 @@ use std::{
 use multiversx_chain_vm_executor::{BreakpointValue, MemLength, MemPtr, VMHooks, VMHooksBuilder};
 use wasmer::FunctionEnvMut;
 
-use crate::{we_breakpoints::set_breakpoint_value, WasmerInstanceInner, WasmerInstanceState};
+use crate::{
+    we_breakpoints::set_breakpoint_value,
+    we_metering::{get_points_limit, get_points_used, set_points_used},
+    ExperimentalInstanceState, ExperimentalInstanceInner,
+};
 
-// #[derive(Clone, Debug)]
 pub struct VMHooksWrapper {
     pub vm_hooks_builder: Rc<dyn VMHooksBuilder>,
-    pub wasmer_inner: Weak<WasmerInstanceInner>,
+    pub wasmer_inner: Weak<ExperimentalInstanceInner>,
 }
 
 unsafe impl Send for VMHooksWrapper {}
@@ -34,13 +37,17 @@ where
 
     let wasmer_inner = data.wasmer_inner.upgrade().unwrap();
 
+    let points_limit = get_points_limit(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
+    let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
     let memory_view = wasmer_inner.get_memory_ref().unwrap().view(&store_mut);
 
-    let instance_state = Rc::new(WasmerInstanceState {
+    let instance_state = Rc::new(ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
         breakpoint: RefCell::new(BreakpointValue::None),
         memory_ptr: memory_view.data_ptr(),
         memory_size: memory_view.data_size(),
+        points_limit,
+        points_used: RefCell::new(points_used),
     });
 
     let vm_hooks = data
@@ -48,10 +55,17 @@ where
         .create_vm_hooks(instance_state.clone());
     let result = f(&*vm_hooks);
 
+    set_points_used(
+        &wasmer_inner.wasmer_instance,
+        &mut store_mut,
+        *instance_state.points_used.borrow(),
+    )
+    .unwrap();
+
     let breakpoint = *instance_state.breakpoint.borrow();
     if breakpoint != BreakpointValue::None {
         set_breakpoint_value(
-            &data.wasmer_inner.upgrade().unwrap().wasmer_instance,
+            &wasmer_inner.wasmer_instance,
             &mut store_mut,
             breakpoint.as_u64(),
         )

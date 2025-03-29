@@ -8,8 +8,9 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::we_helpers::{
-    create_global_index, is_control_flow_operator, MiddlewareWithProtectedGlobals,
+    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
+use crate::MiddlewareWithProtectedGlobals;
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -144,32 +145,12 @@ pub(crate) fn set_breakpoint_value(
     store: &mut impl AsStoreMut,
     value: u64,
 ) -> Result<(), String> {
-    let result = instance.exports.get_global(BREAKPOINT_VALUE);
-    match result {
-        Ok(global) => {
-            let result = global.set(store, value.into());
-            match result {
-                Ok(_) => Ok(()),
-                Err(err) => Err(err.message()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+    set_global_value_u64(instance, store, BREAKPOINT_VALUE, value)
 }
 
 pub(crate) fn get_breakpoint_value(
     instance: &Instance,
     store: &mut impl AsStoreMut,
 ) -> Result<u64, String> {
-    let result = instance.exports.get_global(BREAKPOINT_VALUE);
-    match result {
-        Ok(global) => {
-            let result = global.get(store).try_into();
-            match result {
-                Ok(value) => Ok(value),
-                Err(err) => Err(err.to_string()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+    get_global_value_u64(instance, store, BREAKPOINT_VALUE)
 }

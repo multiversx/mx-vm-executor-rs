@@ -1,15 +1,10 @@
 #![allow(unused)]
 
-// use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::we_protected_globals::ProtectedGlobals;
-use crate::WasmerInstanceInner;
+use crate::ExperimentalInstanceInner;
 use crate::{
-    we_breakpoints::*,
-    we_imports::generate_import_object,
-    // wasmer_metering::*,
-    we_opcode_control::OpcodeControl,
+    we_breakpoints::*, we_imports::generate_import_object, we_opcode_control::OpcodeControl,
     we_vm_hooks::VMHooksWrapper,
-    WasmerExecutorData,
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
@@ -27,27 +22,27 @@ use wasmer::{
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
-pub struct WasmerInstanceState {
-    pub wasmer_inner: Weak<WasmerInstanceInner>,
+pub struct ExperimentalInstanceState {
+    pub wasmer_inner: Weak<ExperimentalInstanceInner>,
     pub breakpoint: RefCell<BreakpointValue>,
     pub memory_ptr: *mut u8,
     pub memory_size: u64,
+    pub points_limit: u64,
+    pub points_used: RefCell<u64>,
 }
 
-impl InstanceState for WasmerInstanceState {
-    fn set_points_limit(&self, limit: u64) -> Result<(), String> {
-        // set_points_limit(&self.wasmer_instance, limit)
-        Ok(())
+impl InstanceState for ExperimentalInstanceState {
+    fn get_points_limit(&self) -> Result<u64, String> {
+        Ok(self.points_limit)
     }
 
     fn set_points_used(&self, points: u64) -> Result<(), String> {
-        // set_points_used(&self.wasmer_instance, points)
+        *self.points_used.borrow_mut() = points;
         Ok(())
     }
 
     fn get_points_used(&self) -> Result<u64, String> {
-        // get_points_used(&self.wasmer_instance)
-        Ok(0)
+        Ok(*self.points_used.borrow())
     }
 
     fn memory_length(&self) -> Result<u64, String> {
@@ -83,8 +78,4 @@ impl InstanceState for WasmerInstanceState {
         *self.breakpoint.borrow_mut() = value;
         Ok(())
     }
-
-    // fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
-    //     Ok((*self.breakpoint.borrow()))
-    // }
 }

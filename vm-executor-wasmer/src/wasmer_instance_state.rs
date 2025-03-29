@@ -9,7 +9,7 @@ pub struct WasmerInstanceState<'a> {
 
 impl WasmerInstanceState<'_> {
     fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
-        let result = self.wasmer_instance.exports.get_memory(&self.memory_name);
+        let result = self.wasmer_instance.exports.get_memory(self.memory_name);
         match result {
             Ok(memory) => Ok(memory),
             Err(err) => Err(err.to_string()),
@@ -18,16 +18,16 @@ impl WasmerInstanceState<'_> {
 }
 
 impl InstanceState for WasmerInstanceState<'_> {
-    fn set_points_limit(&self, limit: u64) -> Result<(), String> {
-        set_points_limit(&self.wasmer_instance, limit)
+    fn get_points_limit(&self) -> Result<u64, String> {
+        get_points_limit(self.wasmer_instance)
     }
 
     fn set_points_used(&self, points: u64) -> Result<(), String> {
-        set_points_used(&self.wasmer_instance, points)
+        set_points_used(self.wasmer_instance, points)
     }
 
     fn get_points_used(&self) -> Result<u64, String> {
-        get_points_used(&self.wasmer_instance)
+        get_points_used(self.wasmer_instance)
     }
 
     fn memory_length(&self) -> Result<u64, String> {
@@ -83,6 +83,6 @@ impl InstanceState for WasmerInstanceState<'_> {
     }
 
     fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
-        set_breakpoint_value(&self.wasmer_instance, value.as_u64())
+        set_breakpoint_value(self.wasmer_instance, value.as_u64())
     }
 }

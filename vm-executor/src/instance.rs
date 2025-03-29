@@ -103,8 +103,8 @@ pub trait Instance {
 
 /// The interface through which VM hooks update the instance state.
 pub trait InstanceState {
-    /// Sets the number of points(gas) limit for the given instance.
-    fn set_points_limit(&self, limit: u64) -> Result<(), String>;
+    /// Gets the number of points(gas) limit for the given instance.
+    fn get_points_limit(&self) -> Result<u64, String>;
 
     /// Sets the number of points(gas) for the given instance.
     fn set_points_used(&self, points: u64) -> Result<(), String>;

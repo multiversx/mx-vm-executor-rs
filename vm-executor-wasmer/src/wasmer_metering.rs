@@ -1,6 +1,7 @@
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{
-    create_global_index, is_control_flow_operator, MiddlewareWithProtectedGlobals,
+    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
+    MiddlewareWithProtectedGlobals,
 };
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
@@ -205,45 +206,19 @@ impl FunctionMiddleware for FunctionMetering {
 }
 
 pub(crate) fn set_points_limit(instance: &Instance, limit: u64) -> Result<(), String> {
-    let result = instance.exports.get_global(METERING_POINTS_LIMIT);
-    match result {
-        Ok(global) => {
-            let result = global.set(limit.into());
-            match result {
-                Ok(_) => Ok(()),
-                Err(err) => Err(err.message()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+    set_global_value_u64(instance, METERING_POINTS_LIMIT, limit)
+}
+
+pub(crate) fn get_points_limit(instance: &Instance) -> Result<u64, String> {
+    get_global_value_u64(instance, METERING_POINTS_LIMIT)
 }
 
 pub(crate) fn set_points_used(instance: &Instance, points: u64) -> Result<(), String> {
-    let result = instance.exports.get_global(METERING_POINTS_USED);
-    match result {
-        Ok(global) => {
-            let result = global.set(points.into());
-            match result {
-                Ok(_) => Ok(()),
-                Err(err) => Err(err.message()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+    set_global_value_u64(instance, METERING_POINTS_USED, points)
 }
 
 pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
-    let result = instance.exports.get_global(METERING_POINTS_USED);
-    match result {
-        Ok(global) => {
-            let result = global.get().try_into();
-            match result {
-                Ok(points) => Ok(points),
-                Err(err) => Err(err.to_string()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+    get_global_value_u64(instance, METERING_POINTS_USED)
 }
 
 fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {

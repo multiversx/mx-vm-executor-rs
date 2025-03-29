@@ -8,14 +8,14 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
     we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    we_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
+    we_helpers::create_global_index,
+    MiddlewareWithProtectedGlobals,
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
 
 #[derive(Clone, Debug)]
-// #[derive(Clone, Debug, MemoryUsage)]
 struct OpcodeControlGlobalIndexes {
     memory_grow_count_global_index: GlobalIndex,
     operand_backup_global_index: GlobalIndex,
