@@ -10,7 +10,6 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use crate::MiddlewareWithProtectedGlobals;
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -54,7 +53,7 @@ impl Breakpoints {
         ]);
     }
 
-    fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
+    pub fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
         self.global_index
             .lock()
             .unwrap()
@@ -89,12 +88,6 @@ impl ModuleMiddleware for Breakpoints {
         });
 
         Ok(())
-    }
-}
-
-impl MiddlewareWithProtectedGlobals for Breakpoints {
-    fn protected_globals(&self) -> Vec<u32> {
-        vec![self.get_breakpoint_value_global_index().as_u32()]
     }
 }
 

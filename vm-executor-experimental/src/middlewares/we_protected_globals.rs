@@ -7,15 +7,7 @@ use wasmer::{
 };
 use wasmer_types::ModuleInfo;
 
-pub trait MiddlewareWithProtectedGlobals {
-    fn protected_globals(&self) -> Vec<u32>;
-}
-
-impl std::fmt::Debug for dyn MiddlewareWithProtectedGlobals {
-    fn fmt(&self, _f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        Ok(())
-    }
-}
+use super::MiddlewareWithProtectedGlobals;
 
 #[derive(Debug)]
 pub struct ProtectedGlobals {

@@ -1,11 +1,7 @@
 #![allow(unused)]
 
-use crate::we_protected_globals::ProtectedGlobals;
 use crate::ExperimentalInstanceInner;
-use crate::{
-    we_breakpoints::*, we_imports::generate_import_object, we_opcode_control::OpcodeControl,
-    we_vm_hooks::VMHooksWrapper,
-};
+use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,

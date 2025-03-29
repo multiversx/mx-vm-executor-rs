@@ -12,7 +12,7 @@ use wasmer_types::ModuleInfo;
 const OPCODE_TRACE_PATH: &str = "opcode.trace2";
 
 #[derive(Debug)]
-pub(crate) struct OpcodeTracer {}
+pub struct OpcodeTracer {}
 
 impl OpcodeTracer {
     pub(crate) fn new() -> Self {

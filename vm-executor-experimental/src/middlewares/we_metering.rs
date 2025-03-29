@@ -1,8 +1,11 @@
-use crate::we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+// use crate::we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+use super::{
+    get_local_cost, get_opcode_cost, Breakpoints, MiddlewareWithProtectedGlobals,
+    BREAKPOINT_VALUE_OUT_OF_GAS,
+};
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use crate::{get_local_cost, get_opcode_cost, MiddlewareWithProtectedGlobals};
 use multiversx_chain_vm_executor::OpcodeCost;
 use std::mem;
 use std::sync::{Arc, Mutex};
@@ -48,7 +51,7 @@ impl Metering {
         }
     }
 
-    fn get_points_limit_global_index(&self) -> GlobalIndex {
+    pub fn get_points_limit_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -57,7 +60,7 @@ impl Metering {
             .points_limit_global_index
     }
 
-    fn get_points_used_global_index(&self) -> GlobalIndex {
+    pub fn get_points_used_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -99,15 +102,6 @@ impl ModuleMiddleware for Metering {
         });
 
         Ok(())
-    }
-}
-
-impl MiddlewareWithProtectedGlobals for Metering {
-    fn protected_globals(&self) -> Vec<u32> {
-        vec![
-            self.get_points_limit_global_index().as_u32(),
-            self.get_points_used_global_index().as_u32(),
-        ]
     }
 }
 

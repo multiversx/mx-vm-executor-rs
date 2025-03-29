@@ -7,9 +7,8 @@ use multiversx_chain_vm_executor::{BreakpointValue, MemLength, MemPtr, VMHooks, 
 use wasmer::FunctionEnvMut;
 
 use crate::{
-    we_breakpoints::set_breakpoint_value,
-    we_metering::{get_points_limit, get_points_used, set_points_used},
-    ExperimentalInstanceState, ExperimentalInstanceInner,
+    middlewares::{get_points_limit, get_points_used, set_breakpoint_value, set_points_used},
+    ExperimentalInstanceInner, ExperimentalInstanceState,
 };
 
 pub struct VMHooksWrapper {

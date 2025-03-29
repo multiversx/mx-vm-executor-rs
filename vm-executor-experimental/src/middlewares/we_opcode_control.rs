@@ -7,10 +7,12 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
-    we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
+    // we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
     we_helpers::create_global_index,
-    MiddlewareWithProtectedGlobals,
+    // MiddlewareWithProtectedGlobals,
 };
+
+use super::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
@@ -22,7 +24,7 @@ struct OpcodeControlGlobalIndexes {
 }
 
 #[derive(Debug)]
-pub(crate) struct OpcodeControl {
+pub struct OpcodeControl {
     total_memory_grow_count: Arc<Mutex<usize>>,
     max_memory_grow_count: usize,
     max_memory_grow: usize,
@@ -48,7 +50,7 @@ impl OpcodeControl {
         }
     }
 
-    fn get_memory_grow_count_global_index(&self) -> GlobalIndex {
+    pub fn get_memory_grow_count_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -57,7 +59,7 @@ impl OpcodeControl {
             .memory_grow_count_global_index
     }
 
-    fn get_operand_backup_global_index(&self) -> GlobalIndex {
+    pub fn get_operand_backup_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -102,15 +104,6 @@ impl ModuleMiddleware for OpcodeControl {
         });
 
         Ok(())
-    }
-}
-
-impl MiddlewareWithProtectedGlobals for OpcodeControl {
-    fn protected_globals(&self) -> Vec<u32> {
-        vec![
-            self.get_memory_grow_count_global_index().as_u32(),
-            self.get_operand_backup_global_index().as_u32(),
-        ]
     }
 }
 
