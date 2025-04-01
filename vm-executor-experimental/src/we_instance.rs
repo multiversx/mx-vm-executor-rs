@@ -4,6 +4,7 @@ use crate::middlewares::{
     get_breakpoint_value, get_points_used, set_points_limit, Breakpoints, Metering, OpcodeControl,
     OpcodeTracer, ProtectedGlobals,
 };
+use crate::new_cyclic_fallible::new_cyclic_fallible;
 use crate::we_instance_state::ExperimentalInstanceState;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
@@ -16,8 +17,7 @@ use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use std::cell::RefCell;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
-use std::rc::Weak;
-use std::{rc::Rc, sync::Arc};
+use std::{rc::Rc, rc::Weak, sync::Arc};
 use wasmer::{
     imports, AsStoreMut, CompilerConfig, Extern, Memory, Module, Pages, Singlepass, Store, StoreMut,
 };
@@ -78,27 +78,6 @@ fn prepare_wasmer_instance_inner(
         wasmer_instance,
         memory_name,
     })
-}
-
-fn new_cyclic_fallible<T, E, F>(f: F) -> Result<Rc<T>, E>
-where
-    F: FnOnce(Weak<T>) -> Result<T, E>,
-{
-    let mut result: Result<(), E> = Ok(());
-    let maybe_uninit_rc = Rc::<MaybeUninit<T>>::new_cyclic(|weak_uninit| unsafe {
-        let raw = Weak::into_raw(weak_uninit.clone());
-        let weak = Weak::<T>::from_raw(raw as *const T);
-        match f(weak) {
-            Ok(t) => MaybeUninit::<T>::new(t),
-            Err(err) => {
-                result = Err(err);
-                MaybeUninit::<T>::uninit()
-            }
-        }
-    });
-    result?;
-    let raw = Rc::into_raw(maybe_uninit_rc);
-    unsafe { Ok(Rc::from_raw(raw as *const T)) }
 }
 
 impl ExperimentalInstance {
