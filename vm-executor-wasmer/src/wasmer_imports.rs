@@ -346,8 +346,8 @@ fn wasmer_import_get_prev_block_random_seed(env: &VMHooksWrapper, pointer: i32) 
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_round_time(env: &VMHooksWrapper) -> i64 {
-    env.vm_hooks.get_round_time()
+fn wasmer_import_get_block_round_time_in_miliseconds(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.get_block_round_time_in_miliseconds()
 }
 
 #[rustfmt::skip]
@@ -1455,7 +1455,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "getPrevBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_round),
             "getPrevBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_epoch),
             "getPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_random_seed),
-            "getRoundTime" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_round_time),
+            "getBlockRoundTimeInMiliseconds" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_round_time_in_miliseconds),
             "epochStartBlockTimeStamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_time_stamp),
             "epochStartBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_nonce),
             "epochStartBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_round),
