@@ -80,7 +80,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn get_prev_block_round(&self) -> i64;
     fn get_prev_block_epoch(&self) -> i64;
     fn get_prev_block_random_seed(&self, pointer: MemPtr);
-    fn get_block_round_time_in_miliseconds(&self) -> i64;
+    fn get_block_round_time_in_milliseconds(&self) -> i64;
     fn epoch_start_block_time_stamp(&self) -> i64;
     fn epoch_start_block_nonce(&self) -> i64;
     fn epoch_start_block_round(&self) -> i64;
@@ -620,8 +620,8 @@ impl VMHooks for VMHooksDefault {
         println!("Called: get_prev_block_random_seed");
     }
 
-    fn get_block_round_time_in_miliseconds(&self) -> i64 {
-        println!("Called: get_block_round_time_in_miliseconds");
+    fn get_block_round_time_in_milliseconds(&self) -> i64 {
+        println!("Called: get_block_round_time_in_milliseconds");
         0
     }
 
