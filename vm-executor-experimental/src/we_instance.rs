@@ -4,7 +4,7 @@ use crate::middlewares::{
     get_breakpoint_value, get_points_used, set_points_limit, Breakpoints, Metering, OpcodeControl,
     OpcodeTracer, ProtectedGlobals,
 };
-use crate::new_cyclic_fallible::new_cyclic_fallible;
+use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use crate::we_instance_state::ExperimentalInstanceState;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
@@ -48,13 +48,13 @@ fn prepare_wasmer_instance_inner(
     vm_hooks_builder: Rc<dyn VMHooksBuilder>,
     module: &Module,
     store: &mut Store,
-    weak: Weak<ExperimentalInstanceInner>,
+    weak: &Weak<ExperimentalInstanceInner>,
 ) -> Result<ExperimentalInstanceInner, ExecutorError> {
     // Create an empty import object.
     trace!("Generating imports ...");
     let vm_hooks_wrapper = VMHooksWrapper {
         vm_hooks_builder,
-        wasmer_inner: weak,
+        wasmer_inner: weak.clone(),
     };
     let import_object = generate_import_object(store, vm_hooks_wrapper);
 
@@ -99,7 +99,7 @@ impl ExperimentalInstance {
         trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
-        let inner = new_cyclic_fallible(|weak| {
+        let inner = rc_new_cyclic_fallible(|weak| {
             prepare_wasmer_instance_inner(vm_hooks_builder.clone(), &module, &mut store, weak)
         })?;
 
