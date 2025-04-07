@@ -1,17 +1,8 @@
 use wasmer::{
-    wasmparser::Operator, ExportIndex, GlobalInit, GlobalType, Instance, Mutability, Type,
+    wasmparser::Operator, AsStoreMut, ExportIndex, GlobalInit, GlobalType, Instance, Mutability,
+    Type,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
-
-pub trait MiddlewareWithProtectedGlobals {
-    fn protected_globals(&self) -> Vec<u32>;
-}
-
-impl std::fmt::Debug for dyn MiddlewareWithProtectedGlobals {
-    fn fmt(&self, _f: &mut core::fmt::Formatter) -> core::fmt::Result {
-        Ok(())
-    }
-}
 
 pub(crate) fn create_global_index(
     module_info: &mut ModuleInfo,
@@ -33,38 +24,6 @@ pub(crate) fn create_global_index(
     global_index
 }
 
-pub(crate) fn set_global_value_u64(
-    instance: &Instance,
-    global_name: &str,
-    points: u64,
-) -> Result<(), String> {
-    let result = instance.exports.get_global(global_name);
-    match result {
-        Ok(global) => {
-            let result = global.set(points.into());
-            match result {
-                Ok(_) => Ok(()),
-                Err(err) => Err(err.message()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
-}
-
-pub(crate) fn get_global_value_u64(instance: &Instance, global_name: &str) -> Result<u64, String> {
-    let result = instance.exports.get_global(global_name);
-    match result {
-        Ok(global) => {
-            let result = global.get().try_into();
-            match result {
-                Ok(points) => Ok(points),
-                Err(err) => Err(err.to_string()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
-}
-
 pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
     matches!(
         operator,
@@ -81,4 +40,41 @@ pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
             | Operator::CallIndirect { .. }
             | Operator::Return
     )
+}
+
+pub(crate) fn set_global_value_u64(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+    global_name: &str,
+    value: u64,
+) -> Result<(), String> {
+    let result = instance.exports.get_global(global_name);
+    match result {
+        Ok(global) => {
+            let result = global.set(store, value.into());
+            match result {
+                Ok(_) => Ok(()),
+                Err(err) => Err(err.message()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+pub(crate) fn get_global_value_u64(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+    global_name: &str,
+) -> Result<u64, String> {
+    let result = instance.exports.get_global(global_name);
+    match result {
+        Ok(global) => {
+            let result = global.get(store).try_into();
+            match result {
+                Ok(value) => Ok(value),
+                Err(err) => Err(err.to_string()),
+            }
+        }
+        Err(err) => Err(err.to_string()),
+    }
 }

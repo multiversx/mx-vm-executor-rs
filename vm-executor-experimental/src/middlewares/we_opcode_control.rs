@@ -1,9 +1,5 @@
-use std::{
-    mem,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
-use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
     wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
     MiddlewareReaderState, ModuleMiddleware,
@@ -11,21 +7,24 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
-    wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
+    // we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
+    we_helpers::create_global_index,
+    // MiddlewareWithProtectedGlobals,
 };
+
+use super::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";
 
-#[derive(Clone, Debug, MemoryUsage)]
+#[derive(Clone, Debug)]
 struct OpcodeControlGlobalIndexes {
     memory_grow_count_global_index: GlobalIndex,
     operand_backup_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
-pub(crate) struct OpcodeControl {
+pub struct OpcodeControl {
     total_memory_grow_count: Arc<Mutex<usize>>,
     max_memory_grow_count: usize,
     max_memory_grow: usize,
@@ -51,7 +50,7 @@ impl OpcodeControl {
         }
     }
 
-    fn get_memory_grow_count_global_index(&self) -> GlobalIndex {
+    pub fn get_memory_grow_count_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -60,7 +59,7 @@ impl OpcodeControl {
             .memory_grow_count_global_index
     }
 
-    fn get_operand_backup_global_index(&self) -> GlobalIndex {
+    pub fn get_operand_backup_global_index(&self) -> GlobalIndex {
         self.global_indexes
             .lock()
             .unwrap()
@@ -72,13 +71,6 @@ impl OpcodeControl {
 
 unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
-
-impl MemoryUsage for OpcodeControl {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_indexes.size_of_val(tracker)
-            - mem::size_of_val(&self.global_indexes)
-    }
-}
 
 impl ModuleMiddleware for OpcodeControl {
     fn generate_function_middleware(
@@ -95,7 +87,7 @@ impl ModuleMiddleware for OpcodeControl {
         })
     }
 
-    fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
@@ -110,15 +102,8 @@ impl ModuleMiddleware for OpcodeControl {
                 0,
             ),
         });
-    }
-}
 
-impl MiddlewareWithProtectedGlobals for OpcodeControl {
-    fn protected_globals(&self) -> Vec<u32> {
-        vec![
-            self.get_memory_grow_count_global_index().as_u32(),
-            self.get_operand_backup_global_index().as_u32(),
-        ]
+        Ok(())
     }
 }
 

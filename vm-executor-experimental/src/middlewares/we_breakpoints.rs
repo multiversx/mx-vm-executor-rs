@@ -1,17 +1,14 @@
-use std::mem;
 use std::sync::Mutex;
 
-use loupe::{MemoryUsage, MemoryUsageTracker};
-use wasmer::wasmparser::{Operator, Type as WpType, TypeOrFuncType as WpTypeOrFuncType};
+use wasmer::wasmparser::Operator;
 use wasmer::{
-    FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
+    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError,
+    MiddlewareReaderState, ModuleMiddleware,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
-use crate::wasmer_helpers::{
+use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
-    MiddlewareWithProtectedGlobals,
 };
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
@@ -20,7 +17,7 @@ pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
 pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
-#[derive(Clone, Debug, MemoryUsage)]
+#[derive(Clone, Debug)]
 struct BreakpointsGlobalIndex {
     breakpoint_value_global_index: GlobalIndex,
 }
@@ -44,7 +41,7 @@ impl Breakpoints {
     ) {
         state.extend(&[
             Operator::If {
-                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+                blockty: wasmer::wasmparser::BlockType::Empty,
             },
             Operator::I64Const {
                 value: breakpoint_value as i64,
@@ -56,7 +53,7 @@ impl Breakpoints {
         ]);
     }
 
-    fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
+    pub fn get_breakpoint_value_global_index(&self) -> GlobalIndex {
         self.global_index
             .lock()
             .unwrap()
@@ -69,13 +66,6 @@ impl Breakpoints {
 unsafe impl Send for Breakpoints {}
 unsafe impl Sync for Breakpoints {}
 
-impl MemoryUsage for Breakpoints {
-    fn size_of_val(&self, tracker: &mut dyn MemoryUsageTracker) -> usize {
-        mem::size_of_val(self) + self.global_index.size_of_val(tracker)
-            - mem::size_of_val(&self.global_index)
-    }
-}
-
 impl ModuleMiddleware for Breakpoints {
     fn generate_function_middleware(
         &self,
@@ -86,7 +76,7 @@ impl ModuleMiddleware for Breakpoints {
         })
     }
 
-    fn transform_module_info(&self, module_info: &mut ModuleInfo) {
+    fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_index = self.global_index.lock().unwrap();
 
         *global_index = Some(BreakpointsGlobalIndex {
@@ -96,12 +86,8 @@ impl ModuleMiddleware for Breakpoints {
                 BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
             ),
         });
-    }
-}
 
-impl MiddlewareWithProtectedGlobals for Breakpoints {
-    fn protected_globals(&self) -> Vec<u32> {
-        vec![self.get_breakpoint_value_global_index().as_u32()]
+        Ok(())
     }
 }
 
@@ -121,7 +107,7 @@ impl FunctionBreakpoints {
             },
             Operator::I64Ne,
             Operator::If {
-                ty: WpTypeOrFuncType::Type(WpType::EmptyBlockType),
+                blockty: wasmer::wasmparser::BlockType::Empty,
             },
             Operator::Unreachable,
             Operator::End,
@@ -147,10 +133,17 @@ impl FunctionMiddleware for FunctionBreakpoints {
     }
 }
 
-pub(crate) fn set_breakpoint_value(instance: &Instance, value: u64) -> Result<(), String> {
-    set_global_value_u64(instance, BREAKPOINT_VALUE, value)
+pub(crate) fn set_breakpoint_value(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+    value: u64,
+) -> Result<(), String> {
+    set_global_value_u64(instance, store, BREAKPOINT_VALUE, value)
 }
 
-pub(crate) fn get_breakpoint_value(instance: &Instance) -> Result<u64, String> {
-    get_global_value_u64(instance, BREAKPOINT_VALUE)
+pub(crate) fn get_breakpoint_value(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+) -> Result<u64, String> {
+    get_global_value_u64(instance, store, BREAKPOINT_VALUE)
 }

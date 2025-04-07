@@ -1,12 +1,13 @@
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
+use crate::WasmerInstanceState;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -24,11 +25,11 @@ pub struct WasmerInstance {
 }
 
 impl WasmerInstance {
-    pub(crate) fn try_new_instance(
+    pub fn try_new_instance(
         executor_data: Rc<RefCell<WasmerExecutorData>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
+    ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
@@ -64,17 +65,17 @@ impl WasmerInstance {
         trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
-        Ok(Box::new(WasmerInstance {
+        Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
-        }))
+        })
     }
 
-    pub(crate) fn try_new_instance_from_cache(
+    pub fn try_new_instance_from_cache(
         executor_data: Rc<RefCell<WasmerExecutorData>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
+    ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
@@ -113,10 +114,10 @@ impl WasmerInstance {
         trace!("WasmerMemory size: {:#?}", memory.size());
         let memory_name = memories[0].0.clone();
 
-        Ok(Box::new(WasmerInstance {
+        Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
-        }))
+        })
     }
 
     fn get_memory_ref(&self) -> Result<&wasmer::Memory, String> {
@@ -217,7 +218,7 @@ fn push_middlewares(
     }
 }
 
-impl Instance for WasmerInstance {
+impl InstanceFull for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
@@ -270,6 +271,13 @@ impl Instance for WasmerInstance {
             .collect()
     }
 
+    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
+        Box::new(WasmerInstanceState {
+            wasmer_instance: &self.wasmer_instance,
+            memory_name: &self.memory_name,
+        })
+    }
+
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {
         set_points_limit(&self.wasmer_instance, limit)
     }
@@ -303,7 +311,9 @@ impl Instance for WasmerInstance {
         match result {
             Ok(memory) => unsafe {
                 let mem_data = memory.data_unchecked();
-                Ok(&mem_data[mem_ptr as usize..=(mem_ptr + mem_length) as usize])
+                let start = mem_ptr as usize;
+                let end = (mem_ptr + mem_length) as usize;
+                Ok(&mem_data[start..end])
             },
             Err(err) => Err(err.into()),
         }
