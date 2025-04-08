@@ -1,7 +1,19 @@
+use std::sync::Once;
+
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor_wasmer::{set_log_level, u64_to_log_level};
 
 use crate::{basic_types::vm_exec_result_t, service_singleton::with_service};
+
+
+static PANIC_HANDLER: Once = Once::new();
+
+pub fn set_panic_handler() {
+    // Initialize the panic handler only once
+    PANIC_HANDLER.call_once(|| {
+        std::panic::set_hook(Box::new(|_| { }));
+    });
+}
 
 /// Sets the log level.
 #[no_mangle]

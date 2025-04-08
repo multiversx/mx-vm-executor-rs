@@ -80,6 +80,10 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn get_prev_block_round(&self) -> i64;
     fn get_prev_block_epoch(&self) -> i64;
     fn get_prev_block_random_seed(&self, pointer: MemPtr);
+    fn get_block_round_time_in_milliseconds(&self) -> i64;
+    fn epoch_start_block_time_stamp(&self) -> i64;
+    fn epoch_start_block_nonce(&self) -> i64;
+    fn epoch_start_block_round(&self) -> i64;
     fn finish(&self, pointer: MemPtr, length: MemLength);
     fn execute_on_same_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
     fn execute_on_dest_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
@@ -107,9 +111,11 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_get_prev_block_random_seed(&self, result_handle: i32);
     fn managed_get_return_data(&self, result_id: i32, result_handle: i32);
     fn managed_get_multi_esdt_call_value(&self, multi_call_value_handle: i32);
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32);
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32);
     fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32);
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32);
     fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32;
     fn managed_get_callback_closure(&self, callback_closure_handle: i32);
@@ -121,7 +127,9 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_execute_read_only(&self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_execute_on_same_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_execute_on_dest_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_transfer_value_execute(&self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
     fn managed_is_esdt_frozen(&self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32;
@@ -129,6 +137,7 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn managed_is_esdt_paused(&self, token_id_handle: i32) -> i32;
     fn managed_buffer_to_hex(&self, source_handle: i32, dest_handle: i32);
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32);
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32);
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32;
     fn big_float_new_from_parts(&self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32;
     fn big_float_new_from_frac(&self, numerator: i64, denominator: i64) -> i32;
@@ -209,6 +218,10 @@ pub trait VMHooks: core::fmt::Debug + 'static {
     fn mbuffer_to_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_from_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64;
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64;
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64);
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64);
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
     fn mbuffer_from_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
     fn mbuffer_storage_store(&self, key_handle: i32, source_handle: i32) -> i32;
@@ -607,6 +620,26 @@ impl VMHooks for VMHooksDefault {
         println!("Called: get_prev_block_random_seed");
     }
 
+    fn get_block_round_time_in_milliseconds(&self) -> i64 {
+        println!("Called: get_block_round_time_in_milliseconds");
+        0
+    }
+
+    fn epoch_start_block_time_stamp(&self) -> i64 {
+        println!("Called: epoch_start_block_time_stamp");
+        0
+    }
+
+    fn epoch_start_block_nonce(&self) -> i64 {
+        println!("Called: epoch_start_block_nonce");
+        0
+    }
+
+    fn epoch_start_block_round(&self) -> i64 {
+        println!("Called: epoch_start_block_round");
+        0
+    }
+
     fn finish(&self, pointer: MemPtr, length: MemLength) {
         println!("Called: finish");
     }
@@ -723,6 +756,10 @@ impl VMHooks for VMHooksDefault {
         println!("Called: managed_get_multi_esdt_call_value");
     }
 
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32) {
+        println!("Called: managed_get_all_transfers_call_value");
+    }
+
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
         println!("Called: managed_get_back_transfers");
     }
@@ -733,6 +770,10 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
         println!("Called: managed_get_esdt_token_data");
+    }
+
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+        println!("Called: managed_get_esdt_token_type");
     }
 
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
@@ -785,8 +826,18 @@ impl VMHooks for VMHooksDefault {
         0
     }
 
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_execute_on_dest_context_with_error_return");
+        0
+    }
+
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         println!("Called: managed_multi_transfer_esdt_nft_execute");
+        0
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        println!("Called: managed_multi_transfer_esdt_nft_execute_with_return");
         0
     }
 
@@ -821,6 +872,10 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32) {
         println!("Called: managed_get_code_metadata");
+    }
+
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32) {
+        println!("Called: managed_get_code_hash");
     }
 
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32 {
@@ -1175,6 +1230,24 @@ impl VMHooks for VMHooksDefault {
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         println!("Called: mbuffer_from_big_int_signed");
         0
+    }
+
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64 {
+        println!("Called: mbuffer_to_small_int_unsigned");
+        0
+    }
+
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64 {
+        println!("Called: mbuffer_to_small_int_signed");
+        0
+    }
+
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64) {
+        println!("Called: mbuffer_from_small_int_unsigned");
+    }
+
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64) {
+        println!("Called: mbuffer_from_small_int_signed");
     }
 
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
