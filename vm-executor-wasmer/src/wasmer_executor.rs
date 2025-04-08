@@ -1,7 +1,8 @@
 use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, ServiceError, VMHooks,
+    CompilationOptions, ExecutorError, ExecutorFull, InstanceFull, OpcodeCost, ServiceError,
+    VMHooks,
 };
 use std::cell::RefCell;
 use std::ffi::c_void;
@@ -16,13 +17,13 @@ pub fn force_sighandler_reinstall() {
     }
 }
 
-pub(crate) struct WasmerExecutorData {
+pub struct WasmerExecutorData {
     vm_hooks: Rc<Box<dyn VMHooks>>,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
 }
 
 impl WasmerExecutorData {
-    fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
         Self {
             vm_hooks: Rc::new(vm_hooks),
             opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
@@ -59,14 +60,14 @@ pub struct WasmerExecutor {
 }
 
 impl WasmerExecutor {
-    pub(crate) fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
         Self {
             data: Rc::new(RefCell::new(WasmerExecutorData::new(vm_hooks))),
         }
     }
 }
 
-impl Executor for WasmerExecutor {
+impl ExecutorFull for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         trace!("Setting vmhooks ...");
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
@@ -81,19 +82,22 @@ impl Executor for WasmerExecutor {
         &self,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)
+    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
+        let instance =
+            WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)?;
+        Ok(Box::new(instance))
     }
 
     fn new_instance_from_cache(
         &self,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn Instance>, ExecutorError> {
-        WasmerInstance::try_new_instance_from_cache(
+    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
+        let instance = WasmerInstance::try_new_instance_from_cache(
             self.data.clone(),
             cache_bytes,
             compilation_options,
-        )
+        )?;
+        Ok(Box::new(instance))
     }
 }

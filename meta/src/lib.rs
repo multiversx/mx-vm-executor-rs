@@ -20,5 +20,6 @@ pub fn capi_safe_unwind(attr: TokenStream, item: TokenStream) -> TokenStream {
                 Err(_) => #fail_return,
             }
         }
-    }.into()
+    }
+    .into()
 }
