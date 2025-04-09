@@ -10,7 +10,7 @@ use std::path::Path;
 
 use crate::GasSchedule;
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
 #[serde(default)]
 pub struct OpcodeCost {
     #[serde(rename = "Block", default)]
