@@ -30,6 +30,13 @@ impl WasmerExecutorData {
         }
     }
 
+    pub fn new_with_gas(vm_hooks: Box<dyn VMHooks>, opcode_cost: OpcodeCost) -> Self {
+        Self {
+            vm_hooks: Rc::new(vm_hooks),
+            opcode_cost: Arc::new(Mutex::new(opcode_cost)),
+        }
+    }
+
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         if let Some(vm_hooks) = Rc::get_mut(&mut self.vm_hooks) {
             vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
@@ -41,7 +48,7 @@ impl WasmerExecutorData {
         }
     }
 
-    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
+    pub fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
         self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
         Ok(())
     }
