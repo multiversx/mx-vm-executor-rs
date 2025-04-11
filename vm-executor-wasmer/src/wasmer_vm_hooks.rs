@@ -1,11 +1,11 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks};
 use wasmer::WasmerEnv;
 
 #[derive(Clone, Debug)]
 pub struct VMHooksWrapper {
-    pub vm_hooks: Rc<Box<dyn VMHooks>>,
+    pub vm_hooks: Rc<RefCell<Box<dyn VMHooks>>>,
 }
 
 unsafe impl Send for VMHooksWrapper {}

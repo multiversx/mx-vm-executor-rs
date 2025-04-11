@@ -29,7 +29,7 @@ pub fn convert_mem_length(raw: i32) -> MemLength {
 
 pub fn with_vm_hooks<F, R>(mut env: FunctionEnvMut<VMHooksWrapper>, f: F) -> R
 where
-    F: FnOnce(&dyn VMHooks) -> R,
+    F: FnOnce(&mut dyn VMHooks) -> R,
     R: Default + 'static,
 {
     let (data, mut store_mut) = env.data_and_store_mut();
@@ -49,10 +49,10 @@ where
         points_used: RefCell::new(points_used),
     });
 
-    let vm_hooks = data
+    let mut vm_hooks = data
         .vm_hooks_builder
         .create_vm_hooks(instance_state.clone());
-    let result = f(&*vm_hooks);
+    let result = f(&mut *vm_hooks);
 
     set_points_used(
         &wasmer_inner.wasmer_instance,
