@@ -41,7 +41,7 @@ impl WasmerExecutorData {
         }
     }
 
-    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
+    pub fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
         self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
         Ok(())
     }
