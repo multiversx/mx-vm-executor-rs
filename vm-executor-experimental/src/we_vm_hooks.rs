@@ -40,14 +40,14 @@ where
     let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
     let memory_view = wasmer_inner.get_memory_ref().unwrap().view(&store_mut);
 
-    let instance_state = Rc::new(ExperimentalInstanceState {
+    let instance_state = Rc::new(RefCell::new(ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
-        breakpoint: RefCell::new(BreakpointValue::None),
+        breakpoint: BreakpointValue::None,
         memory_ptr: memory_view.data_ptr(),
         memory_size: memory_view.data_size(),
         points_limit,
-        points_used: RefCell::new(points_used),
-    });
+        points_used,
+    }));
 
     let mut vm_hooks = data
         .vm_hooks_builder
@@ -57,11 +57,11 @@ where
     set_points_used(
         &wasmer_inner.wasmer_instance,
         &mut store_mut,
-        *instance_state.points_used.borrow(),
+        instance_state.borrow().points_used,
     )
     .unwrap();
 
-    let breakpoint = *instance_state.breakpoint.borrow();
+    let breakpoint = instance_state.borrow().breakpoint;
     if breakpoint != BreakpointValue::None {
         set_breakpoint_value(
             &wasmer_inner.wasmer_instance,

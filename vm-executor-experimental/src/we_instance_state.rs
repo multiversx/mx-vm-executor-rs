@@ -20,11 +20,11 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct ExperimentalInstanceState {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
-    pub breakpoint: RefCell<BreakpointValue>,
+    pub breakpoint: BreakpointValue,
     pub memory_ptr: *mut u8,
     pub memory_size: u64,
     pub points_limit: u64,
-    pub points_used: RefCell<u64>,
+    pub points_used: u64,
 }
 
 impl InstanceState for ExperimentalInstanceState {
@@ -33,12 +33,12 @@ impl InstanceState for ExperimentalInstanceState {
     }
 
     fn set_points_used(&mut self, points: u64) -> Result<(), String> {
-        *self.points_used.borrow_mut() = points;
+        self.points_used = points;
         Ok(())
     }
 
     fn get_points_used(&self) -> Result<u64, String> {
-        Ok(*self.points_used.borrow())
+        Ok(self.points_used)
     }
 
     fn memory_length(&self) -> Result<u64, String> {
@@ -71,7 +71,7 @@ impl InstanceState for ExperimentalInstanceState {
     }
 
     fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
-        *self.breakpoint.borrow_mut() = value;
+        self.breakpoint = value;
         Ok(())
     }
 }
