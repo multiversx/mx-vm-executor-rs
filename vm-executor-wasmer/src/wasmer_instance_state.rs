@@ -22,7 +22,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         get_points_limit(self.wasmer_instance)
     }
 
-    fn set_points_used(&self, points: u64) -> Result<(), String> {
+    fn set_points_used(&mut self, points: u64) -> Result<(), String> {
         set_points_used(self.wasmer_instance, points)
     }
 
@@ -82,7 +82,7 @@ impl InstanceState for WasmerInstanceState<'_> {
         }
     }
 
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
         set_breakpoint_value(self.wasmer_instance, value.as_u64())
     }
 }

@@ -32,7 +32,7 @@ impl InstanceState for ExperimentalInstanceState {
         Ok(self.points_limit)
     }
 
-    fn set_points_used(&self, points: u64) -> Result<(), String> {
+    fn set_points_used(&mut self, points: u64) -> Result<(), String> {
         *self.points_used.borrow_mut() = points;
         Ok(())
     }
@@ -70,7 +70,7 @@ impl InstanceState for ExperimentalInstanceState {
         todo!()
     }
 
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
         *self.breakpoint.borrow_mut() = value;
         Ok(())
     }
