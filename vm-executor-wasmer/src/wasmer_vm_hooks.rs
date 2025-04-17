@@ -21,4 +21,12 @@ impl VMHooksWrapper {
     pub(crate) fn convert_mem_length(&self, raw: i32) -> MemLength {
         raw as MemLength
     }
+
+    pub fn with_vm_hooks<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut dyn VMHooks) -> R,
+    {
+        let mut vm_hooks = self.vm_hooks.borrow_mut();
+        f(&mut **vm_hooks)
+    }
 }

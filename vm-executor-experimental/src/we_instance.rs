@@ -4,7 +4,6 @@ use crate::middlewares::{
     get_breakpoint_value, get_points_used, set_points_limit, Breakpoints, Metering, OpcodeControl,
     OpcodeTracer, ProtectedGlobals,
 };
-use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use crate::we_instance_state::ExperimentalInstanceState;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
@@ -13,6 +12,7 @@ use multiversx_chain_vm_executor::{
     OpcodeCost, ServiceError, VMHooksBuilder,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
+use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 
 use std::cell::RefCell;
 use std::mem::MaybeUninit;
