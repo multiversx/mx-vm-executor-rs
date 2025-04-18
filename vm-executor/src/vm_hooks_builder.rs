@@ -1,22 +1,29 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{InstanceState, VMHooks, VMHooksDefault};
 
 pub trait VMHooksBuilder {
-    fn create_vm_hooks(
-        &self,
-        instance_state_ref: Rc<RefCell<dyn InstanceState>>,
-    ) -> Box<dyn VMHooks>;
+    fn create_vm_hooks<'b, 'h>(
+        &'b self,
+        instance_state_ref: &'h mut dyn InstanceState,
+    ) -> Box<dyn VMHooks + 'h>;
 }
 
 #[derive(Debug)]
 pub struct VMHooksBuilderDefault;
 
 impl VMHooksBuilder for VMHooksBuilderDefault {
-    fn create_vm_hooks(
+    fn create_vm_hooks<'b, 'h>(
+        &'b self,
+        _instance_state_ref: &'h mut dyn InstanceState,
+    ) -> Box<dyn VMHooks + 'h> {
+        Box::new(VMHooksDefault)
+    }
+}
+
+impl VMHooksBuilderDefault {
+    pub fn wrap<'h>(
         &self,
-        _instance_state_ref: Rc<RefCell<dyn InstanceState>>,
-    ) -> Box<dyn VMHooks> {
+        _instance_state_ref: &'h mut dyn InstanceState,
+    ) -> Box<dyn VMHooks + 'h> {
         Box::new(VMHooksDefault)
     }
 }

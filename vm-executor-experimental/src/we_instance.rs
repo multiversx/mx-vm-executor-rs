@@ -45,7 +45,7 @@ impl ExperimentalInstanceInner {
 }
 
 fn prepare_wasmer_instance_inner(
-    vm_hooks_builder: Rc<dyn VMHooksBuilder>,
+    vm_hooks_builder: Box<dyn VMHooksBuilder>,
     module: &Module,
     store: &mut Store,
     weak: &Weak<ExperimentalInstanceInner>,
@@ -82,7 +82,7 @@ fn prepare_wasmer_instance_inner(
 
 impl ExperimentalInstance {
     pub fn try_new_instance(
-        vm_hooks_builder: Rc<dyn VMHooksBuilder>,
+        vm_hooks_builder: Box<dyn VMHooksBuilder>,
         opcode_cost: Arc<OpcodeCost>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
@@ -100,7 +100,7 @@ impl ExperimentalInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(vm_hooks_builder.clone(), &module, &mut store, weak)
+            prepare_wasmer_instance_inner(vm_hooks_builder, &module, &mut store, weak)
         })?;
 
         Ok(ExperimentalInstance {
