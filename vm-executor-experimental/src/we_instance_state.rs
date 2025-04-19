@@ -27,7 +27,7 @@ pub struct ExperimentalInstanceState {
     pub points_used: u64,
 }
 
-impl InstanceState for ExperimentalInstanceState {
+impl InstanceState for &'_ mut ExperimentalInstanceState {
     fn get_points_limit(&self) -> Result<u64, String> {
         Ok(self.points_limit)
     }

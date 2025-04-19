@@ -2,6 +2,7 @@ use crate::{wasmer_breakpoints::*, wasmer_metering::*};
 use multiversx_chain_vm_executor::{BreakpointValue, ExecutorError, InstanceState};
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
+// TODO: delete
 pub struct WasmerInstanceState<'a> {
     pub(crate) wasmer_instance: &'a wasmer::Instance,
     pub(crate) memory_name: &'a str,

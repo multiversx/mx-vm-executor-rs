@@ -5,11 +5,12 @@ use crate::middlewares::{
     OpcodeTracer, ProtectedGlobals,
 };
 use crate::we_instance_state::ExperimentalInstanceState;
+use crate::ExperimentalVMHooksBuilder;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceFull, InstanceState,
-    OpcodeCost, ServiceError, VMHooksBuilder,
+    OpcodeCost, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
@@ -45,7 +46,7 @@ impl ExperimentalInstanceInner {
 }
 
 fn prepare_wasmer_instance_inner(
-    vm_hooks_builder: Box<dyn VMHooksBuilder>,
+    vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
     module: &Module,
     store: &mut Store,
     weak: &Weak<ExperimentalInstanceInner>,
@@ -82,7 +83,7 @@ fn prepare_wasmer_instance_inner(
 
 impl ExperimentalInstance {
     pub fn try_new_instance(
-        vm_hooks_builder: Box<dyn VMHooksBuilder>,
+        vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
         opcode_cost: Arc<OpcodeCost>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
