@@ -137,13 +137,13 @@ pub(crate) fn set_breakpoint_value(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     value: u64,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     set_global_value_u64(instance, store, BREAKPOINT_VALUE, value)
 }
 
 pub(crate) fn get_breakpoint_value(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-) -> Result<u64, String> {
+) -> anyhow::Result<u64> {
     get_global_value_u64(instance, store, BREAKPOINT_VALUE)
 }

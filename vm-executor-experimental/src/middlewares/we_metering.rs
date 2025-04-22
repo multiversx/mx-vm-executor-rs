@@ -198,7 +198,7 @@ impl FunctionMiddleware for FunctionMetering {
 pub(crate) fn get_points_limit(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-) -> Result<u64, String> {
+) -> anyhow::Result<u64> {
     get_global_value_u64(instance, store, METERING_POINTS_LIMIT)
 }
 
@@ -206,7 +206,7 @@ pub(crate) fn set_points_limit(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     limit: u64,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     set_global_value_u64(instance, store, METERING_POINTS_LIMIT, limit)
 }
 
@@ -214,14 +214,14 @@ pub(crate) fn set_points_used(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     points: u64,
-) -> Result<(), String> {
+) -> anyhow::Result<()> {
     set_global_value_u64(instance, store, METERING_POINTS_USED, points)
 }
 
 pub(crate) fn get_points_used(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-) -> Result<u64, String> {
+) -> anyhow::Result<u64> {
     get_global_value_u64(instance, store, METERING_POINTS_USED)
 }
 

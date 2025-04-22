@@ -74,7 +74,7 @@ pub trait InstanceFull {
 /// The new instance trait, only used for configuring & calling the wasmer instance.
 pub trait Instance {
     /// Calls an exported function of a WebAssembly instance by `name`.
-    fn call(&self, func_name: &str) -> Result<(), String>;
+    fn call(&self, func_name: &str) -> Result<(), ExecutorError>;
 
     /// Checks that all public module functions (SC endpoints) have no arguments or results.
     fn check_signatures(&self) -> bool;
@@ -86,31 +86,31 @@ pub trait Instance {
     fn get_exported_function_names(&self) -> Vec<String>;
 
     /// Sets the number of points(gas) limit for the given instance.
-    fn set_points_limit(&self, limit: u64) -> Result<(), String>;
+    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError>;
 
     /// Returns the number of points(gas) used by the given instance.
-    fn get_points_used(&self) -> Result<u64, String>;
+    fn get_points_used(&self) -> Result<u64, ExecutorError>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError>;
 
     /// Resets an instance, cleaning memories and globals.
-    fn reset(&self) -> Result<(), String>;
+    fn reset(&self) -> Result<(), ExecutorError>;
 
     /// Caches an instance.
-    fn cache(&self) -> Result<Vec<u8>, String>;
+    fn cache(&self) -> Result<Vec<u8>, ExecutorError>;
 }
 
 /// The interface through which VM hooks update the instance state.
 pub trait InstanceState {
     /// Gets the number of points(gas) limit for the given instance.
-    fn get_points_limit(&self) -> Result<u64, String>;
+    fn get_points_limit(&self) -> Result<u64, ExecutorError>;
 
     /// Sets the number of points(gas) for the given instance.
-    fn set_points_used(&mut self, points: u64) -> Result<(), String>;
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError>;
 
     /// Returns the number of points(gas) used by the given instance.
-    fn get_points_used(&self) -> Result<u64, String>;
+    fn get_points_used(&self) -> Result<u64, ExecutorError>;
 
     /// Copies data to new owned buffer.
     fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError>;
@@ -126,5 +126,5 @@ pub trait InstanceState {
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String>;
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError>;
 }

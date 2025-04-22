@@ -44,7 +44,6 @@ where
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
         store_mut: &mut store_mut,
-        breakpoint: BreakpointValue::None,
         points_limit,
         points_used,
     };
@@ -61,16 +60,6 @@ where
         instance_state.points_used,
     )
     .unwrap();
-
-    let breakpoint = instance_state.breakpoint;
-    if breakpoint != BreakpointValue::None {
-        set_breakpoint_value(
-            &wasmer_inner.wasmer_instance,
-            &mut instance_state.store_mut,
-            breakpoint.as_u64(),
-        )
-        .unwrap();
-    }
 
     result
 }

@@ -7,6 +7,7 @@ use crate::middlewares::{
 use crate::we_instance_state::ExperimentalInstanceState;
 use crate::ExperimentalVMHooksBuilder;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
+use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceFull, InstanceState,
@@ -61,7 +62,7 @@ fn prepare_wasmer_instance_inner(
 
     trace!("Instantiating WasmerInstance ...");
     let wasmer_instance = wasmer::Instance::new(store, module, &import_object)?;
-    // set_points_limit(&wasmer_instance, compilation_options.gas_limit)?;
+    // set_points_limit(&wasmer_instance, &mut store, compilation_options.gas_limit)?;
 
     // Check that there is exactly one memory in the smart contract, no more, no less
     let memories = get_memories(&wasmer_instance);
@@ -212,7 +213,7 @@ fn push_middlewares(
 }
 
 impl Instance for ExperimentalInstance {
-    fn call(&self, func_name: &str) -> Result<(), String> {
+    fn call(&self, func_name: &str) -> Result<(), ExecutorError> {
         trace!("Rust instance call: {func_name}");
 
         let func = self
@@ -229,7 +230,7 @@ impl Instance for ExperimentalInstance {
             }
             Err(err) => {
                 trace!("Call failed: {func_name} - {err}");
-                Err(err.to_string())
+                Err(anyhow!("runtime error {err}").into())
             }
         }
     }
@@ -270,38 +271,39 @@ impl Instance for ExperimentalInstance {
             .collect()
     }
 
-    fn set_points_limit(&self, limit: u64) -> Result<(), String> {
+    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError> {
         set_points_limit(
             &self.inner.wasmer_instance,
             &mut self.wasmer_store.borrow_mut(),
             limit,
         )
+        .map_err(|err| err.into())
     }
 
-    fn get_points_used(&self) -> Result<u64, String> {
+    fn get_points_used(&self) -> Result<u64, ExecutorError> {
         get_points_used(
             &self.inner.wasmer_instance,
             &mut self.wasmer_store.borrow_mut(),
         )
+        .map_err(|err| err.into())
     }
 
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
-        get_breakpoint_value(
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
+        let value = get_breakpoint_value(
             &self.inner.wasmer_instance,
             &mut self.wasmer_store.borrow_mut(),
-        )?
-        .try_into()
+        )?;
+        value
+            .try_into()
+            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
     }
 
-    fn reset(&self) -> Result<(), String> {
+    fn reset(&self) -> Result<(), ExecutorError> {
         panic!("ExperimentalInstance reset not supported")
     }
 
-    fn cache(&self) -> Result<Vec<u8>, String> {
+    fn cache(&self) -> Result<Vec<u8>, ExecutorError> {
         let module = self.inner.wasmer_instance.module();
-        match module.serialize() {
-            Ok(bytes) => Ok(bytes.to_vec()),
-            Err(err) => Err(err.to_string()),
-        }
+        Ok(module.serialize()?.to_vec())
     }
 }

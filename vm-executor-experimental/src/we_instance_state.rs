@@ -1,7 +1,9 @@
 #![allow(unused)]
 
+use crate::middlewares::{get_points_limit, set_breakpoint_value, set_points_used};
 use crate::ExperimentalInstanceInner;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
+use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
@@ -22,7 +24,7 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
     pub store_mut: &'s mut StoreMut<'s>,
-    pub breakpoint: BreakpointValue,
+    // pub breakpoint: BreakpointValue,
     pub points_limit: u64,
     pub points_used: u64,
 }
@@ -32,19 +34,25 @@ impl ExperimentalInstanceState<'_> {
         let wasmer_inner = self.wasmer_inner.upgrade().unwrap();
         wasmer_inner.get_memory_ref().unwrap().view(&self.store_mut)
     }
+
+    fn get_wasmer_inner(&self) -> Result<Rc<ExperimentalInstanceInner>, anyhow::Error> {
+        self.wasmer_inner
+            .upgrade()
+            .ok_or_else(|| anyhow!("uninitialized wasmer_inner weak pointer"))
+    }
 }
 
 impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
-    fn get_points_limit(&self) -> Result<u64, String> {
+    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
         Ok(self.points_limit)
     }
 
-    fn set_points_used(&mut self, points: u64) -> Result<(), String> {
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
         self.points_used = points;
         Ok(())
     }
 
-    fn get_points_used(&self) -> Result<u64, String> {
+    fn get_points_used(&self) -> Result<u64, ExecutorError> {
         Ok(self.points_used)
     }
 
@@ -76,8 +84,13 @@ impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
         Ok(())
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
-        self.breakpoint = value;
-        Ok(())
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
+        let wasmer_inner = self.get_wasmer_inner()?;
+        set_breakpoint_value(
+            &wasmer_inner.wasmer_instance,
+            self.store_mut,
+            value.as_u64(),
+        )
+        .map_err(|err| err.into())
     }
 }

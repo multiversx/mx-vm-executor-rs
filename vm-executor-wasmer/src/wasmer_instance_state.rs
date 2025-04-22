@@ -1,4 +1,5 @@
 use crate::{wasmer_breakpoints::*, wasmer_metering::*};
+use anyhow::anyhow;
 use multiversx_chain_vm_executor::{BreakpointValue, ExecutorError, InstanceState};
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -32,16 +33,17 @@ impl WasmerInstanceState<'_> {
 }
 
 impl InstanceState for WasmerInstanceState<'_> {
-    fn get_points_limit(&self) -> Result<u64, String> {
-        get_points_limit(self.wasmer_instance)
+    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
+        get_points_limit(self.wasmer_instance).map_err(|err| anyhow!("globals error: {err}").into())
     }
 
-    fn set_points_used(&mut self, points: u64) -> Result<(), String> {
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
         set_points_used(self.wasmer_instance, points)
+            .map_err(|err| anyhow!("globals error: {err}").into())
     }
 
-    fn get_points_used(&self) -> Result<u64, String> {
-        get_points_used(self.wasmer_instance)
+    fn get_points_used(&self) -> Result<u64, ExecutorError> {
+        get_points_used(self.wasmer_instance).map_err(|err| anyhow!("globals error: {err}").into())
     }
 
     fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
@@ -71,7 +73,8 @@ impl InstanceState for WasmerInstanceState<'_> {
         }
     }
 
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
         set_breakpoint_value(self.wasmer_instance, value.as_u64())
+            .map_err(|err| anyhow!("globals error: {err}").into())
     }
 }
