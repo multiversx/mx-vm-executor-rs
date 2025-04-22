@@ -38,13 +38,12 @@ where
 
     let wasmer_inner = data.wasmer_inner.upgrade().unwrap();
 
-    let points_limit = get_points_limit(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
     let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
 
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
         store_mut: &mut store_mut,
-        points_limit,
+        points_limit: wasmer_inner.gas_limit,
         points_used,
     };
 

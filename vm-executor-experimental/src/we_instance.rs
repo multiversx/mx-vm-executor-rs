@@ -34,6 +34,7 @@ pub struct ExperimentalInstance {
 pub struct ExperimentalInstanceInner {
     pub wasmer_instance: wasmer::Instance,
     pub memory_name: String,
+    pub gas_limit: u64,
 }
 
 impl ExperimentalInstanceInner {
@@ -51,6 +52,7 @@ fn prepare_wasmer_instance_inner(
     module: &Module,
     store: &mut Store,
     weak: &Weak<ExperimentalInstanceInner>,
+    gas_limit: u64,
 ) -> Result<ExperimentalInstanceInner, ExecutorError> {
     // Create an empty import object.
     trace!("Generating imports ...");
@@ -62,7 +64,6 @@ fn prepare_wasmer_instance_inner(
 
     trace!("Instantiating WasmerInstance ...");
     let wasmer_instance = wasmer::Instance::new(store, module, &import_object)?;
-    // set_points_limit(&wasmer_instance, &mut store, compilation_options.gas_limit)?;
 
     // Check that there is exactly one memory in the smart contract, no more, no less
     let memories = get_memories(&wasmer_instance);
@@ -79,6 +80,7 @@ fn prepare_wasmer_instance_inner(
     Ok(ExperimentalInstanceInner {
         wasmer_instance,
         memory_name,
+        gas_limit,
     })
 }
 
@@ -102,7 +104,13 @@ impl ExperimentalInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(vm_hooks_builder, &module, &mut store, weak)
+            prepare_wasmer_instance_inner(
+                vm_hooks_builder,
+                &module,
+                &mut store,
+                weak,
+                compilation_options.gas_limit,
+            )
         })?;
 
         Ok(ExperimentalInstance {
