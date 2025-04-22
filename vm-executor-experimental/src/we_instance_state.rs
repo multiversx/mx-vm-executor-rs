@@ -13,21 +13,28 @@ use std::ops::{Add, Deref};
 use std::rc::Weak;
 use std::{rc::Rc, sync::Arc};
 use wasmer::{
-    imports, AsStoreMut, CompilerConfig, Extern, Module, Pages, Singlepass, Store, StoreMut,
+    imports, AsStoreMut, CompilerConfig, Extern, MemoryView, Module, Pages, Singlepass, Store,
+    StoreMut,
 };
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
-pub struct ExperimentalInstanceState {
+pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
+    pub store_mut: &'s mut StoreMut<'s>,
     pub breakpoint: BreakpointValue,
-    pub memory_ptr: *mut u8,
-    pub memory_size: u64,
     pub points_limit: u64,
     pub points_used: u64,
 }
 
-impl InstanceState for &'_ mut ExperimentalInstanceState {
+impl ExperimentalInstanceState<'_> {
+    fn get_memory_view(&self) -> MemoryView<'_> {
+        let wasmer_inner = self.wasmer_inner.upgrade().unwrap();
+        wasmer_inner.get_memory_ref().unwrap().view(&self.store_mut)
+    }
+}
+
+impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
     fn get_points_limit(&self) -> Result<u64, String> {
         Ok(self.points_limit)
     }
@@ -41,33 +48,32 @@ impl InstanceState for &'_ mut ExperimentalInstanceState {
         Ok(self.points_used)
     }
 
-    fn memory_length(&self) -> Result<u64, String> {
-        Ok(self.memory_size)
-    }
-
-    fn memory_ptr(&self) -> Result<*mut u8, String> {
-        Ok(self.memory_ptr)
-    }
-
-    fn memory_load(&self, offset: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
-        let memory_ptr = self.memory_ptr()?;
-        let ptr = unsafe { memory_ptr.offset(offset) };
-        let slice = std::ptr::slice_from_raw_parts(ptr, mem_length as usize);
-        unsafe { Ok(&*slice) }
-    }
-
-    fn memory_store(&self, offset: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
-        let memory_ptr = self.memory_ptr()?;
-        let ptr = unsafe { memory_ptr.offset(offset) };
-        let slice = std::ptr::slice_from_raw_parts(ptr, data.len());
-        unsafe {
-            std::ptr::copy(data.as_ptr(), ptr, data.len());
-        }
+    fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
+        let memory_view = self.get_memory_view();
+        memory_view.read(mem_ptr as u64, dest)?;
         Ok(())
     }
 
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        todo!()
+    /// Copies data to new owned buffer.
+    fn memory_load_owned(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError> {
+        let memory_view = self.get_memory_view();
+        let len = mem_length as usize;
+        let mut result = Vec::with_capacity(len);
+        memory_view.read_uninit(mem_ptr as u64, result.spare_capacity_mut());
+        unsafe {
+            result.set_len(len);
+        }
+        Ok(result)
+    }
+
+    fn memory_store(&self, offset: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
+        let memory_view = self.get_memory_view();
+        memory_view.write(offset as u64, data)?;
+        Ok(())
     }
 
     fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {

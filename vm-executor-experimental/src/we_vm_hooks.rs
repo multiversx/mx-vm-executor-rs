@@ -40,13 +40,11 @@ where
 
     let points_limit = get_points_limit(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
     let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
-    let memory_view = wasmer_inner.get_memory_ref().unwrap().view(&store_mut);
 
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
+        store_mut: &mut store_mut,
         breakpoint: BreakpointValue::None,
-        memory_ptr: memory_view.data_ptr(),
-        memory_size: memory_view.data_size(),
         points_limit,
         points_used,
     };
@@ -59,7 +57,7 @@ where
 
     set_points_used(
         &wasmer_inner.wasmer_instance,
-        &mut store_mut,
+        &mut instance_state.store_mut,
         instance_state.points_used,
     )
     .unwrap();
@@ -68,7 +66,7 @@ where
     if breakpoint != BreakpointValue::None {
         set_breakpoint_value(
             &wasmer_inner.wasmer_instance,
-            &mut store_mut,
+            &mut instance_state.store_mut,
             breakpoint.as_u64(),
         )
         .unwrap();

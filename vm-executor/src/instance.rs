@@ -112,20 +112,18 @@ pub trait InstanceState {
     /// Returns the number of points(gas) used by the given instance.
     fn get_points_used(&self) -> Result<u64, String>;
 
-    /// Gets the size in bytes of the memory data.
-    fn memory_length(&self) -> Result<u64, String>;
+    /// Copies data to new owned buffer.
+    fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError>;
 
-    /// Gets a pointer to the beginning of the contiguous memory data bytes.
-    fn memory_ptr(&self) -> Result<*mut u8, String>;
+    /// Copies data to new owned buffer.
+    fn memory_load_owned(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError>;
 
-    /// Loads data from executor memory.
-    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError>;
-
-    /// Loads data from executor memory.
+    /// Loads data to given slice. In certain cases
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError>;
-
-    /// Grows a memory by the given number of pages (of 65Kb each).
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
     fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String>;

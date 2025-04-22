@@ -16,6 +16,19 @@ impl WasmerInstanceState<'_> {
             Err(err) => Err(err.to_string()),
         }
     }
+
+    fn memory_slice(&self, mem_ptr: MemPtr, mem_length: usize) -> Result<&[u8], ExecutorError> {
+        let result = self.get_memory_ref();
+        match result {
+            Ok(memory) => unsafe {
+                let mem_data = memory.data_unchecked();
+                let start = mem_ptr as usize;
+                let end = mem_ptr as usize + mem_length;
+                Ok(&mem_data[start..end])
+            },
+            Err(err) => Err(err.into()),
+        }
+    }
 }
 
 impl InstanceState for WasmerInstanceState<'_> {
@@ -31,33 +44,19 @@ impl InstanceState for WasmerInstanceState<'_> {
         get_points_used(self.wasmer_instance)
     }
 
-    fn memory_length(&self) -> Result<u64, String> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => Ok(memory.data_size()),
-            Err(err) => Err(err),
-        }
+    fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
+        let slice = self.memory_slice(mem_ptr, dest.len())?;
+        dest.copy_from_slice(slice);
+        Ok(())
     }
 
-    fn memory_ptr(&self) -> Result<*mut u8, String> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => Ok(memory.data_ptr()),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => unsafe {
-                let mem_data = memory.data_unchecked();
-                let start = mem_ptr as usize;
-                let end = (mem_ptr + mem_length) as usize;
-                Ok(&mem_data[start..end])
-            },
-            Err(err) => Err(err.into()),
-        }
+    fn memory_load_owned(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError> {
+        let slice = self.memory_slice(mem_ptr, mem_length as usize)?;
+        Ok(slice.to_vec())
     }
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
@@ -68,17 +67,6 @@ impl InstanceState for WasmerInstanceState<'_> {
                 mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
                 Ok(())
             },
-            Err(err) => Err(err.into()),
-        }
-    }
-
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => {
-                let pages = memory.grow(wasmer::Pages(by_num_pages))?;
-                Ok(pages.0)
-            }
             Err(err) => Err(err.into()),
         }
     }
