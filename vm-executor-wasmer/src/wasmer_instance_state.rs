@@ -1,7 +1,9 @@
 use crate::{wasmer_breakpoints::*, wasmer_metering::*};
+use anyhow::anyhow;
 use multiversx_chain_vm_executor::{BreakpointValue, ExecutorError, InstanceState};
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
+// TODO: delete
 pub struct WasmerInstanceState<'a> {
     pub(crate) wasmer_instance: &'a wasmer::Instance,
     pub(crate) memory_name: &'a str,
@@ -15,48 +17,48 @@ impl WasmerInstanceState<'_> {
             Err(err) => Err(err.to_string()),
         }
     }
-}
 
-impl InstanceState for WasmerInstanceState<'_> {
-    fn get_points_limit(&self) -> Result<u64, String> {
-        get_points_limit(self.wasmer_instance)
-    }
-
-    fn set_points_used(&mut self, points: u64) -> Result<(), String> {
-        set_points_used(self.wasmer_instance, points)
-    }
-
-    fn get_points_used(&self) -> Result<u64, String> {
-        get_points_used(self.wasmer_instance)
-    }
-
-    fn memory_length(&self) -> Result<u64, String> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => Ok(memory.data_size()),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn memory_ptr(&self) -> Result<*mut u8, String> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => Ok(memory.data_ptr()),
-            Err(err) => Err(err),
-        }
-    }
-
-    fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
+    fn memory_slice(&self, mem_ptr: MemPtr, mem_length: usize) -> Result<&[u8], ExecutorError> {
         let result = self.get_memory_ref();
         match result {
             Ok(memory) => unsafe {
                 let mem_data = memory.data_unchecked();
                 let start = mem_ptr as usize;
-                let end = (mem_ptr + mem_length) as usize;
+                let end = mem_ptr as usize + mem_length;
                 Ok(&mem_data[start..end])
             },
             Err(err) => Err(err.into()),
         }
+    }
+}
+
+impl InstanceState for WasmerInstanceState<'_> {
+    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
+        get_points_limit(self.wasmer_instance).map_err(|err| anyhow!("globals error: {err}").into())
+    }
+
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
+        set_points_used(self.wasmer_instance, points)
+            .map_err(|err| anyhow!("globals error: {err}").into())
+    }
+
+    fn get_points_used(&self) -> Result<u64, ExecutorError> {
+        get_points_used(self.wasmer_instance).map_err(|err| anyhow!("globals error: {err}").into())
+    }
+
+    fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
+        let slice = self.memory_slice(mem_ptr, dest.len())?;
+        dest.copy_from_slice(slice);
+        Ok(())
+    }
+
+    fn memory_load_owned(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError> {
+        let slice = self.memory_slice(mem_ptr, mem_length as usize)?;
+        Ok(slice.to_vec())
     }
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
@@ -71,18 +73,8 @@ impl InstanceState for WasmerInstanceState<'_> {
         }
     }
 
-    fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => {
-                let pages = memory.grow(wasmer::Pages(by_num_pages))?;
-                Ok(pages.0)
-            }
-            Err(err) => Err(err.into()),
-        }
-    }
-
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
         set_breakpoint_value(self.wasmer_instance, value.as_u64())
+            .map_err(|err| anyhow!("globals error: {err}").into())
     }
 }

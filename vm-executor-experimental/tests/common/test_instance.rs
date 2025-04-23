@@ -1,9 +1,9 @@
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
-use multiversx_chain_vm_executor::{
-    CompilationOptions, Instance, OpcodeCost, VMHooksBuilderDefault,
+use multiversx_chain_vm_executor::{CompilationOptions, Instance, OpcodeCost};
+use multiversx_chain_vm_executor_wasmer_experimental::{
+    ExperimentalInstance, ExperimentalVMHooksBuilderDefault,
 };
-use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalInstance;
 use wasmer::wat2wasm;
 
 const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
@@ -21,7 +21,7 @@ pub fn test_instance(wat: &str) -> Box<dyn Instance> {
 
     Box::new(
         ExperimentalInstance::try_new_instance(
-            Rc::new(VMHooksBuilderDefault),
+            Box::new(ExperimentalVMHooksBuilderDefault),
             Arc::new(OpcodeCost::default()),
             &wasm_bytes,
             &DUMMY_COMPILATION_OPTIONS,

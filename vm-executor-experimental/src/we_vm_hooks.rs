@@ -3,16 +3,18 @@ use std::{
     rc::{Rc, Weak},
 };
 
-use multiversx_chain_vm_executor::{BreakpointValue, MemLength, MemPtr, VMHooks, VMHooksBuilder};
+use multiversx_chain_vm_executor::{
+    BreakpointValue, InstanceState, MemLength, MemPtr, VMHooks, VMHooksDefault,
+};
 use wasmer::FunctionEnvMut;
 
 use crate::{
     middlewares::{get_points_limit, get_points_used, set_breakpoint_value, set_points_used},
-    ExperimentalInstanceInner, ExperimentalInstanceState,
+    ExperimentalInstanceInner, ExperimentalInstanceState, ExperimentalVMHooksBuilder,
 };
 
 pub struct VMHooksWrapper {
-    pub vm_hooks_builder: Rc<dyn VMHooksBuilder>,
+    pub vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
 }
 
@@ -36,40 +38,27 @@ where
 
     let wasmer_inner = data.wasmer_inner.upgrade().unwrap();
 
-    let points_limit = get_points_limit(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
     let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
-    let memory_view = wasmer_inner.get_memory_ref().unwrap().view(&store_mut);
 
-    let instance_state = Rc::new(RefCell::new(ExperimentalInstanceState {
+    let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
-        breakpoint: BreakpointValue::None,
-        memory_ptr: memory_view.data_ptr(),
-        memory_size: memory_view.data_size(),
-        points_limit,
+        store_mut: &mut store_mut,
+        points_limit: wasmer_inner.gas_limit,
         points_used,
-    }));
+    };
 
-    let mut vm_hooks = data
-        .vm_hooks_builder
-        .create_vm_hooks(instance_state.clone());
+    let mut vm_hooks = data.vm_hooks_builder.create_vm_hooks(&mut instance_state);
+
     let result = f(&mut *vm_hooks);
+
+    std::mem::drop(vm_hooks);
 
     set_points_used(
         &wasmer_inner.wasmer_instance,
-        &mut store_mut,
-        instance_state.borrow().points_used,
+        &mut instance_state.store_mut,
+        instance_state.points_used,
     )
     .unwrap();
-
-    let breakpoint = instance_state.borrow().breakpoint;
-    if breakpoint != BreakpointValue::None {
-        set_breakpoint_value(
-            &wasmer_inner.wasmer_instance,
-            &mut store_mut,
-            breakpoint.as_u64(),
-        )
-        .unwrap();
-    }
 
     result
 }
