@@ -1,11 +1,11 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks};
 use wasmer::WasmerEnv;
 
 #[derive(Clone, Debug)]
 pub struct VMHooksWrapper {
-    pub vm_hooks: Rc<Box<dyn VMHooks>>,
+    pub vm_hooks: Rc<RefCell<Box<dyn VMHooks>>>,
 }
 
 unsafe impl Send for VMHooksWrapper {}
@@ -20,5 +20,13 @@ impl VMHooksWrapper {
 
     pub(crate) fn convert_mem_length(&self, raw: i32) -> MemLength {
         raw as MemLength
+    }
+
+    pub fn with_vm_hooks<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(&mut dyn VMHooks) -> R,
+    {
+        let mut vm_hooks = self.vm_hooks.borrow_mut();
+        f(&mut **vm_hooks)
     }
 }

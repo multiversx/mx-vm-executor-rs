@@ -1,3 +1,4 @@
+use multiversx_chain_vm_executor::ExecutorError;
 use wasmer::{
     wasmparser::Operator, AsStoreMut, ExportIndex, GlobalInit, GlobalType, Instance, Mutability,
     Type,
@@ -47,34 +48,19 @@ pub(crate) fn set_global_value_u64(
     store: &mut impl AsStoreMut,
     global_name: &str,
     value: u64,
-) -> Result<(), String> {
-    let result = instance.exports.get_global(global_name);
-    match result {
-        Ok(global) => {
-            let result = global.set(store, value.into());
-            match result {
-                Ok(_) => Ok(()),
-                Err(err) => Err(err.message()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+) -> anyhow::Result<()> {
+    let global = instance.exports.get_global(global_name)?;
+    Ok(global.set(store, value.into())?)
 }
 
 pub(crate) fn get_global_value_u64(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     global_name: &str,
-) -> Result<u64, String> {
-    let result = instance.exports.get_global(global_name);
-    match result {
-        Ok(global) => {
-            let result = global.get(store).try_into();
-            match result {
-                Ok(value) => Ok(value),
-                Err(err) => Err(err.to_string()),
-            }
-        }
-        Err(err) => Err(err.to_string()),
-    }
+) -> anyhow::Result<u64> {
+    let global = instance.exports.get_global(global_name)?;
+    let value = global.get(store);
+    value
+        .try_into()
+        .map_err(|err| anyhow::anyhow!("error parsing global value: {err}"))
 }
