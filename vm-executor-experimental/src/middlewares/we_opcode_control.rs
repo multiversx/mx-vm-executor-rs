@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
+    sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware},
+    wasmparser::Operator,
+    LocalFunctionIndex,
 };
-use wasmer_types::{GlobalIndex, ModuleInfo};
+use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 use crate::{
     // we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},

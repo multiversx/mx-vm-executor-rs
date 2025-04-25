@@ -15,14 +15,12 @@ use multiversx_chain_vm_executor::{
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
-
 use std::cell::RefCell;
 use std::mem::MaybeUninit;
 use std::ops::Deref;
 use std::{rc::Rc, rc::Weak, sync::Arc};
-use wasmer::{
-    imports, AsStoreMut, CompilerConfig, Extern, Memory, Module, Pages, Singlepass, Store, StoreMut,
-};
+use wasmer::sys::{CompilerConfig, Singlepass};
+use wasmer::{imports, AsStoreMut, Extern, Memory, Module, Pages, Store, StoreMut};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
