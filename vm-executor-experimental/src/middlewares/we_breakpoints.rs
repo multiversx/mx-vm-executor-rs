@@ -1,11 +1,9 @@
 use std::sync::Mutex;
 
+use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
-use wasmer::{
-    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
-};
-use wasmer_types::{GlobalIndex, ModuleInfo};
+use wasmer::{AsStoreMut, Instance, LocalFunctionIndex};
+use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,

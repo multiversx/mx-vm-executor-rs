@@ -9,12 +9,10 @@ use crate::we_helpers::{
 use multiversx_chain_vm_executor::OpcodeCost;
 use std::mem;
 use std::sync::{Arc, Mutex};
+use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
-use wasmer::{
-    AsStoreMut, FunctionMiddleware, Instance, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
-};
-use wasmer_types::{GlobalIndex, ModuleInfo};
+use wasmer::{AsStoreMut, Instance, LocalFunctionIndex};
+use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";

@@ -2,12 +2,10 @@ use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::fs::{self, File};
 use std::io::Write;
 use std::mem;
+use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
-use wasmer::{
-    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
-    ModuleMiddleware,
-};
-use wasmer_types::ModuleInfo;
+use wasmer::LocalFunctionIndex;
+use wasmer_types::{MiddlewareError, ModuleInfo};
 
 const OPCODE_TRACE_PATH: &str = "opcode.trace2";
 

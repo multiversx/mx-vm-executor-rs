@@ -14,10 +14,7 @@ use std::cell::RefCell;
 use std::ops::{Add, Deref};
 use std::rc::Weak;
 use std::{rc::Rc, sync::Arc};
-use wasmer::{
-    imports, AsStoreMut, CompilerConfig, Extern, MemoryView, Module, Pages, Singlepass, Store,
-    StoreMut,
-};
+use wasmer::{imports, AsStoreMut, Extern, MemoryView, Module, Pages, Store, StoreMut};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
