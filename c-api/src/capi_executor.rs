@@ -6,7 +6,7 @@ use crate::{
 };
 use libc::c_void;
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::ExecutorFull;
+use multiversx_chain_vm_executor::ExecutorLegacy;
 use multiversx_chain_vm_executor_wasmer::force_sighandler_reinstall;
 
 #[allow(non_camel_case_types)]
@@ -14,7 +14,7 @@ use multiversx_chain_vm_executor_wasmer::force_sighandler_reinstall;
 pub struct vm_exec_executor_t;
 
 pub struct CapiExecutor {
-    pub content: Box<dyn ExecutorFull>,
+    pub content: Box<dyn ExecutorLegacy>,
 }
 
 /// Creates a new VM executor.

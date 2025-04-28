@@ -7,7 +7,7 @@ use crate::{
 };
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{CompilationOptions, InstanceFull};
+use multiversx_chain_vm_executor::{CompilationOptions, InstanceLegacy};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
@@ -24,7 +24,7 @@ pub struct vm_exec_instance_t;
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    pub(crate) content: Box<dyn InstanceFull>,
+    pub(crate) content: Box<dyn InstanceLegacy>,
 }
 
 /// Creates a new VM executor instance.

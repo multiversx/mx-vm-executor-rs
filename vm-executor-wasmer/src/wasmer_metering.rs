@@ -209,10 +209,6 @@ pub(crate) fn set_points_limit(instance: &Instance, limit: u64) -> Result<(), St
     set_global_value_u64(instance, METERING_POINTS_LIMIT, limit)
 }
 
-pub(crate) fn get_points_limit(instance: &Instance) -> Result<u64, String> {
-    get_global_value_u64(instance, METERING_POINTS_LIMIT)
-}
-
 pub(crate) fn set_points_used(instance: &Instance, points: u64) -> Result<(), String> {
     set_global_value_u64(instance, METERING_POINTS_USED, points)
 }

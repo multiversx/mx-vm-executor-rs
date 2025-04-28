@@ -6,7 +6,7 @@ use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, InstanceState, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 

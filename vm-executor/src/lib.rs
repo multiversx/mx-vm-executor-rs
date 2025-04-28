@@ -1,6 +1,9 @@
 mod breakpoint_value;
 mod executor;
+mod executor_new;
 mod instance;
+mod instance_new;
+mod instance_state;
 mod opcode_cost;
 mod schedule;
 mod service_error;
@@ -8,8 +11,11 @@ mod service_trait;
 mod vm_hooks;
 
 pub use breakpoint_value::*;
-pub use executor::*;
+pub use executor::ExecutorLegacy;
+pub use executor_new::Executor;
 pub use instance::*;
+pub use instance_new::Instance;
+pub use instance_state::InstanceState;
 pub use opcode_cost::OpcodeCost;
 pub use schedule::*;
 pub use service_error::ServiceError;

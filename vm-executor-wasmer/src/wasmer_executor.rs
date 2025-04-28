@@ -1,7 +1,7 @@
 use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorError, ExecutorFull, InstanceFull, OpcodeCost, ServiceError,
+    CompilationOptions, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost, ServiceError,
     VMHooks,
 };
 use std::cell::RefCell;
@@ -67,7 +67,7 @@ impl WasmerExecutor {
     }
 }
 
-impl ExecutorFull for WasmerExecutor {
+impl ExecutorLegacy for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         trace!("Setting vmhooks ...");
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
@@ -82,7 +82,7 @@ impl ExecutorFull for WasmerExecutor {
         &self,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
+    ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
         let instance =
             WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)?;
         Ok(Box::new(instance))
@@ -92,7 +92,7 @@ impl ExecutorFull for WasmerExecutor {
         &self,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
+    ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
         let instance = WasmerInstance::try_new_instance_from_cache(
             self.data.clone(),
             cache_bytes,

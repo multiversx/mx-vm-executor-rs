@@ -1,13 +1,12 @@
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
-use crate::WasmerInstanceState;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -218,7 +217,7 @@ fn push_middlewares(
     }
 }
 
-impl InstanceFull for WasmerInstance {
+impl InstanceLegacy for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
@@ -269,13 +268,6 @@ impl InstanceFull for WasmerInstance {
             })
             .cloned()
             .collect()
-    }
-
-    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
-        Box::new(WasmerInstanceState {
-            wasmer_instance: &self.wasmer_instance,
-            memory_name: &self.memory_name,
-        })
     }
 
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {

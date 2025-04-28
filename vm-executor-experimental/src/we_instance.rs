@@ -10,7 +10,7 @@ use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceFull, InstanceState,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceLegacy, InstanceState,
     OpcodeCost, ServiceError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
