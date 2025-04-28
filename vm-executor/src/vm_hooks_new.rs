@@ -4,15 +4,11 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-use std::ffi::c_void;
-
 use crate::{MemLength, MemPtr};
 
 #[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
-pub trait VMHooksLegacy: core::fmt::Debug {
-    fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void);
-
+pub trait VMHooks: core::fmt::Debug {
     fn get_gas_left(&mut self) -> i64;
     fn get_sc_address(&mut self, result_offset: MemPtr);
     fn get_owner_address(&mut self, result_offset: MemPtr);
@@ -279,14 +275,11 @@ pub trait VMHooksLegacy: core::fmt::Debug {
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
 #[derive(Debug)]
-pub struct VMHooksLegacyDefault;
+pub struct VMHooksDefault;
 
 #[allow(unused)]
 #[rustfmt::skip]
-impl VMHooksLegacy for VMHooksLegacyDefault {
-    fn set_vm_hooks_ptr(&mut self, _vm_hooks_ptr: *mut c_void) {
-    }
-
+impl VMHooks for VMHooksDefault {
     fn get_gas_left(&mut self) -> i64 {
         println!("Called: get_gas_left");
         0

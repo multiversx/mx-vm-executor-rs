@@ -2,7 +2,7 @@ use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
     CompilationOptions, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost, ServiceError,
-    VMHooks,
+    VMHooksLegacy,
 };
 use std::cell::RefCell;
 use std::ffi::c_void;
@@ -18,12 +18,12 @@ pub fn force_sighandler_reinstall() {
 }
 
 pub struct WasmerExecutorData {
-    vm_hooks: Rc<RefCell<Box<dyn VMHooks>>>,
+    vm_hooks: Rc<RefCell<Box<dyn VMHooksLegacy>>>,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
 }
 
 impl WasmerExecutorData {
-    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
             vm_hooks: Rc::new(RefCell::new(vm_hooks)),
             opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
@@ -46,7 +46,7 @@ impl WasmerExecutorData {
         Ok(())
     }
 
-    pub(crate) fn get_vm_hooks(&self) -> Rc<RefCell<Box<dyn VMHooks>>> {
+    pub(crate) fn get_vm_hooks(&self) -> Rc<RefCell<Box<dyn VMHooksLegacy>>> {
         self.vm_hooks.clone()
     }
 
@@ -60,7 +60,7 @@ pub struct WasmerExecutor {
 }
 
 impl WasmerExecutor {
-    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
             data: Rc::new(RefCell::new(WasmerExecutorData::new(vm_hooks))),
         }
