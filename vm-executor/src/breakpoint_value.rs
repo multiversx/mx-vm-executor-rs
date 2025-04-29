@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BreakpointValue {
     /// Lack of a breakpoint
@@ -18,6 +20,21 @@ pub enum BreakpointValue {
     /// Stopping due to over-allocation of WASM memory.
     MemoryLimit = 5,
 }
+
+impl fmt::Display for BreakpointValue {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            BreakpointValue::None => "BreakpointValue: None".fmt(f),
+            BreakpointValue::ExecutionFailed => "BreakpointValue: ExecutionFailed".fmt(f),
+            BreakpointValue::AsyncCall => "BreakpointValue: AsyncCall".fmt(f),
+            BreakpointValue::SignalError => "BreakpointValue: SignalError".fmt(f),
+            BreakpointValue::OutOfGas => "BreakpointValue: OutOfGas".fmt(f),
+            BreakpointValue::MemoryLimit => "BreakpointValue: MemoryLimit".fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for BreakpointValue {}
 
 impl BreakpointValue {
     pub fn as_u64(self) -> u64 {

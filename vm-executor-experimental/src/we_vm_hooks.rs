@@ -4,7 +4,7 @@ use std::{
 };
 
 use multiversx_chain_vm_executor::{
-    BreakpointValue, InstanceState, MemLength, MemPtr, VMHooks, VMHooksDefault,
+    BreakpointValue, InstanceState, MemLength, MemPtr, VMHooks, VMHooksDefault, VMHooksError,
 };
 use wasmer::FunctionEnvMut;
 
@@ -29,9 +29,9 @@ pub fn convert_mem_length(raw: i32) -> MemLength {
     raw as MemLength
 }
 
-pub fn with_vm_hooks<F, R>(mut env: FunctionEnvMut<VMHooksWrapper>, f: F) -> R
+pub fn with_vm_hooks<F, R>(mut env: FunctionEnvMut<VMHooksWrapper>, f: F) -> Result<R, VMHooksError>
 where
-    F: FnOnce(&mut dyn VMHooks) -> R,
+    F: FnOnce(&mut dyn VMHooks) -> Result<R, VMHooksError>,
     R: Default + 'static,
 {
     let (data, mut store_mut) = env.data_and_store_mut();

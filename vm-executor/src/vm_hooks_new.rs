@@ -4,273 +4,275 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-use crate::{MemLength, MemPtr};
+use crate::{BreakpointValue, MemLength, MemPtr};
+
+pub type VMHooksError = BreakpointValue;
 
 #[rustfmt::skip]
 #[allow(clippy::too_many_arguments)]
 pub trait VMHooks: core::fmt::Debug {
-    fn get_gas_left(&mut self) -> i64;
-    fn get_sc_address(&mut self, result_offset: MemPtr);
-    fn get_owner_address(&mut self, result_offset: MemPtr);
-    fn get_shard_of_address(&mut self, address_offset: MemPtr) -> i32;
-    fn is_smart_contract(&mut self, address_offset: MemPtr) -> i32;
-    fn signal_error(&mut self, message_offset: MemPtr, message_length: MemLength);
-    fn get_external_balance(&mut self, address_offset: MemPtr, result_offset: MemPtr);
-    fn get_block_hash(&mut self, nonce: i64, result_offset: MemPtr) -> i32;
-    fn get_esdt_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32;
-    fn get_esdt_nft_name_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
-    fn get_esdt_nft_attribute_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
-    fn get_esdt_nft_uri_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32;
-    fn get_esdt_token_data(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32;
-    fn get_esdt_local_roles(&mut self, token_id_handle: i32) -> i64;
-    fn validate_token_identifier(&mut self, token_id_handle: i32) -> i32;
-    fn transfer_value(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32;
-    fn transfer_value_execute(&mut self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn transfer_esdt_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32;
-    fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32;
-    fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
-    fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
-    fn delete_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr);
-    fn async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength);
-    fn get_argument_length(&mut self, id: i32) -> i32;
-    fn get_argument(&mut self, id: i32, arg_offset: MemPtr) -> i32;
-    fn get_function(&mut self, function_offset: MemPtr) -> i32;
-    fn get_num_arguments(&mut self) -> i32;
-    fn storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32;
-    fn storage_load_length(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32;
-    fn storage_load_from_address(&mut self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32;
-    fn storage_load(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32;
-    fn set_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32;
-    fn get_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64;
-    fn is_storage_locked(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32;
-    fn clear_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32;
-    fn get_caller(&mut self, result_offset: MemPtr);
-    fn check_no_payment(&mut self);
-    fn get_call_value(&mut self, result_offset: MemPtr) -> i32;
-    fn get_esdt_value(&mut self, result_offset: MemPtr) -> i32;
-    fn get_esdt_value_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32;
-    fn get_esdt_token_name(&mut self, result_offset: MemPtr) -> i32;
-    fn get_esdt_token_name_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32;
-    fn get_esdt_token_nonce(&mut self) -> i64;
-    fn get_esdt_token_nonce_by_index(&mut self, index: i32) -> i64;
-    fn get_current_esdt_nft_nonce(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64;
-    fn get_esdt_token_type(&mut self) -> i32;
-    fn get_esdt_token_type_by_index(&mut self, index: i32) -> i32;
-    fn get_num_esdt_transfers(&mut self) -> i32;
-    fn get_call_value_token_name(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32;
-    fn get_call_value_token_name_by_index(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32;
-    fn is_reserved_function_name(&mut self, name_handle: i32) -> i32;
-    fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32);
-    fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength);
-    fn get_block_timestamp(&mut self) -> i64;
-    fn get_block_nonce(&mut self) -> i64;
-    fn get_block_round(&mut self) -> i64;
-    fn get_block_epoch(&mut self) -> i64;
-    fn get_block_random_seed(&mut self, pointer: MemPtr);
-    fn get_state_root_hash(&mut self, pointer: MemPtr);
-    fn get_prev_block_timestamp(&mut self) -> i64;
-    fn get_prev_block_nonce(&mut self) -> i64;
-    fn get_prev_block_round(&mut self) -> i64;
-    fn get_prev_block_epoch(&mut self) -> i64;
-    fn get_prev_block_random_seed(&mut self, pointer: MemPtr);
-    fn finish(&mut self, pointer: MemPtr, length: MemLength);
-    fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn execute_read_only(&mut self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn create_contract(&mut self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn deploy_from_source_contract(&mut self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32;
-    fn get_num_return_data(&mut self) -> i32;
-    fn get_return_data_size(&mut self, result_id: i32) -> i32;
-    fn get_return_data(&mut self, result_id: i32, data_offset: MemPtr) -> i32;
-    fn clean_return_data(&mut self);
-    fn delete_from_return_data(&mut self, result_id: i32);
-    fn get_original_tx_hash(&mut self, data_offset: MemPtr);
-    fn get_current_tx_hash(&mut self, data_offset: MemPtr);
-    fn get_prev_tx_hash(&mut self, data_offset: MemPtr);
-    fn managed_sc_address(&mut self, destination_handle: i32);
-    fn managed_owner_address(&mut self, destination_handle: i32);
-    fn managed_caller(&mut self, destination_handle: i32);
-    fn managed_get_original_caller_addr(&mut self, destination_handle: i32);
-    fn managed_get_relayer_addr(&mut self, destination_handle: i32);
-    fn managed_signal_error(&mut self, err_handle: i32);
-    fn managed_write_log(&mut self, topics_handle: i32, data_handle: i32);
-    fn managed_get_original_tx_hash(&mut self, result_handle: i32);
-    fn managed_get_state_root_hash(&mut self, result_handle: i32);
-    fn managed_get_block_random_seed(&mut self, result_handle: i32);
-    fn managed_get_prev_block_random_seed(&mut self, result_handle: i32);
-    fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32);
-    fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32);
-    fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32);
-    fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32);
-    fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32);
-    fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32);
-    fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32;
-    fn managed_get_callback_closure(&mut self, callback_closure_handle: i32);
-    fn managed_upgrade_from_source_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32);
-    fn managed_upgrade_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32);
-    fn managed_delete_contract(&mut self, dest_handle: i32, gas_limit: i64, arguments_handle: i32);
-    fn managed_deploy_from_source_contract(&mut self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32;
-    fn managed_create_contract(&mut self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32;
-    fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
-    fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
-    fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32;
-    fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
-    fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
-    fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32;
-    fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32;
-    fn managed_is_esdt_limited_transfer(&mut self, token_id_handle: i32) -> i32;
-    fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> i32;
-    fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32);
-    fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32);
-    fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> i32;
-    fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32;
-    fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> i32;
-    fn big_float_new_from_sci(&mut self, significand: i64, exponent: i64) -> i32;
-    fn big_float_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_float_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_float_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_float_div(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_float_neg(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_float_clone(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_float_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32;
-    fn big_float_abs(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_float_sign(&mut self, op_handle: i32) -> i32;
-    fn big_float_sqrt(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_float_pow(&mut self, destination_handle: i32, op_handle: i32, exponent: i32);
-    fn big_float_floor(&mut self, dest_big_int_handle: i32, op_handle: i32);
-    fn big_float_ceil(&mut self, dest_big_int_handle: i32, op_handle: i32);
-    fn big_float_truncate(&mut self, dest_big_int_handle: i32, op_handle: i32);
-    fn big_float_set_int64(&mut self, destination_handle: i32, value: i64);
-    fn big_float_is_int(&mut self, op_handle: i32) -> i32;
-    fn big_float_set_big_int(&mut self, destination_handle: i32, big_int_handle: i32);
-    fn big_float_get_const_pi(&mut self, destination_handle: i32);
-    fn big_float_get_const_e(&mut self, destination_handle: i32);
-    fn big_int_get_unsigned_argument(&mut self, id: i32, destination_handle: i32);
-    fn big_int_get_signed_argument(&mut self, id: i32, destination_handle: i32);
-    fn big_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32;
-    fn big_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32;
-    fn big_int_get_call_value(&mut self, destination_handle: i32);
-    fn big_int_get_esdt_call_value(&mut self, destination: i32);
-    fn big_int_get_esdt_call_value_by_index(&mut self, destination_handle: i32, index: i32);
-    fn big_int_get_external_balance(&mut self, address_offset: MemPtr, result: i32);
-    fn big_int_get_esdt_external_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32);
-    fn big_int_new(&mut self, small_value: i64) -> i32;
-    fn big_int_unsigned_byte_length(&mut self, reference_handle: i32) -> i32;
-    fn big_int_signed_byte_length(&mut self, reference_handle: i32) -> i32;
-    fn big_int_get_unsigned_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32;
-    fn big_int_get_signed_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32;
-    fn big_int_set_unsigned_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength);
-    fn big_int_set_signed_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength);
-    fn big_int_is_int64(&mut self, destination_handle: i32) -> i32;
-    fn big_int_get_int64(&mut self, destination_handle: i32) -> i64;
-    fn big_int_set_int64(&mut self, destination_handle: i32, value: i64);
-    fn big_int_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_tdiv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_tmod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_ediv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_emod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_sqrt(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_int_pow(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_log2(&mut self, op1_handle: i32) -> i32;
-    fn big_int_abs(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_int_neg(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_int_sign(&mut self, op_handle: i32) -> i32;
-    fn big_int_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32;
-    fn big_int_not(&mut self, destination_handle: i32, op_handle: i32);
-    fn big_int_and(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_or(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_xor(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32);
-    fn big_int_shr(&mut self, destination_handle: i32, op_handle: i32, bits: i32);
-    fn big_int_shl(&mut self, destination_handle: i32, op_handle: i32, bits: i32);
-    fn big_int_finish_unsigned(&mut self, reference_handle: i32);
-    fn big_int_finish_signed(&mut self, reference_handle: i32);
-    fn big_int_to_string(&mut self, big_int_handle: i32, destination_handle: i32);
-    fn mbuffer_new(&mut self) -> i32;
-    fn mbuffer_new_from_bytes(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32;
-    fn mbuffer_get_length(&mut self, m_buffer_handle: i32) -> i32;
-    fn mbuffer_get_bytes(&mut self, m_buffer_handle: i32, result_offset: MemPtr) -> i32;
-    fn mbuffer_get_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32;
-    fn mbuffer_copy_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32;
-    fn mbuffer_eq(&mut self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32;
-    fn mbuffer_set_bytes(&mut self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32;
-    fn mbuffer_set_byte_slice(&mut self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32;
-    fn mbuffer_append(&mut self, accumulator_handle: i32, data_handle: i32) -> i32;
-    fn mbuffer_append_bytes(&mut self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32;
-    fn mbuffer_to_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
-    fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
-    fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
-    fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32;
-    fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
-    fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32;
-    fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> i32;
-    fn mbuffer_storage_load(&mut self, key_handle: i32, destination_handle: i32) -> i32;
-    fn mbuffer_storage_load_from_address(&mut self, address_handle: i32, key_handle: i32, destination_handle: i32);
-    fn mbuffer_get_argument(&mut self, id: i32, destination_handle: i32) -> i32;
-    fn mbuffer_finish(&mut self, source_handle: i32) -> i32;
-    fn mbuffer_set_random(&mut self, destination_handle: i32, length: i32) -> i32;
-    fn managed_map_new(&mut self) -> i32;
-    fn managed_map_put(&mut self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32;
-    fn managed_map_get(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32;
-    fn managed_map_remove(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32;
-    fn managed_map_contains(&mut self, m_map_handle: i32, key_handle: i32) -> i32;
-    fn small_int_get_unsigned_argument(&mut self, id: i32) -> i64;
-    fn small_int_get_signed_argument(&mut self, id: i32) -> i64;
-    fn small_int_finish_unsigned(&mut self, value: i64);
-    fn small_int_finish_signed(&mut self, value: i64);
-    fn small_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
-    fn small_int_storage_store_signed(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
-    fn small_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64;
-    fn small_int_storage_load_signed(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64;
-    fn int64get_argument(&mut self, id: i32) -> i64;
-    fn int64finish(&mut self, value: i64);
-    fn int64storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32;
-    fn int64storage_load(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64;
-    fn sha256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
-    fn managed_sha256(&mut self, input_handle: i32, output_handle: i32) -> i32;
-    fn keccak256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
-    fn managed_keccak256(&mut self, input_handle: i32, output_handle: i32) -> i32;
-    fn ripemd160(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32;
-    fn managed_ripemd160(&mut self, input_handle: i32, output_handle: i32) -> i32;
-    fn verify_bls(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
-    fn managed_verify_bls(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn verify_ed25519(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
-    fn managed_verify_ed25519(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn verify_custom_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32;
-    fn managed_verify_custom_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32;
-    fn verify_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32;
-    fn managed_verify_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn encode_secp256k1_der_signature(&mut self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32;
-    fn managed_encode_secp256k1_der_signature(&mut self, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32;
-    fn add_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32);
-    fn double_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32);
-    fn is_on_curve_ec(&mut self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32;
-    fn scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
-    fn managed_scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32;
-    fn managed_scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32;
-    fn marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
-    fn managed_marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
-    fn managed_marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
-    fn managed_unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32;
-    fn managed_unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32;
-    fn generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32;
-    fn managed_generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32;
-    fn create_ec(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32;
-    fn managed_create_ec(&mut self, data_handle: i32) -> i32;
-    fn get_curve_length_ec(&mut self, ec_handle: i32) -> i32;
-    fn get_priv_key_byte_length_ec(&mut self, ec_handle: i32) -> i32;
-    fn elliptic_curve_get_values(&mut self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32;
-    fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
-    fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
+    fn get_gas_left(&mut self) -> Result<i64, VMHooksError>;
+    fn get_sc_address(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn get_owner_address(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn get_shard_of_address(&mut self, address_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn is_smart_contract(&mut self, address_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn signal_error(&mut self, message_offset: MemPtr, message_length: MemLength) -> Result<(), VMHooksError>;
+    fn get_external_balance(&mut self, address_offset: MemPtr, result_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn get_block_hash(&mut self, nonce: i64, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_nft_name_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError>;
+    fn get_esdt_nft_attribute_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError>;
+    fn get_esdt_nft_uri_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError>;
+    fn get_esdt_token_data(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_local_roles(&mut self, token_id_handle: i32) -> Result<i64, VMHooksError>;
+    fn validate_token_identifier(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError>;
+    fn transfer_value(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError>;
+    fn transfer_value_execute(&mut self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn transfer_esdt_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksError>;
+    fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> Result<i32, VMHooksError>;
+    fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn delete_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> Result<(), VMHooksError>;
+    fn get_argument_length(&mut self, id: i32) -> Result<i32, VMHooksError>;
+    fn get_argument(&mut self, id: i32, arg_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_function(&mut self, function_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_num_arguments(&mut self) -> Result<i32, VMHooksError>;
+    fn storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError>;
+    fn storage_load_length(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError>;
+    fn storage_load_from_address(&mut self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn storage_load(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn set_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> Result<i32, VMHooksError>;
+    fn get_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError>;
+    fn is_storage_locked(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError>;
+    fn clear_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError>;
+    fn get_caller(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn check_no_payment(&mut self) -> Result<(), VMHooksError>;
+    fn get_call_value(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_value(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_value_by_index(&mut self, result_offset: MemPtr, index: i32) -> Result<i32, VMHooksError>;
+    fn get_esdt_token_name(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_esdt_token_name_by_index(&mut self, result_offset: MemPtr, index: i32) -> Result<i32, VMHooksError>;
+    fn get_esdt_token_nonce(&mut self) -> Result<i64, VMHooksError>;
+    fn get_esdt_token_nonce_by_index(&mut self, index: i32) -> Result<i64, VMHooksError>;
+    fn get_current_esdt_nft_nonce(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> Result<i64, VMHooksError>;
+    fn get_esdt_token_type(&mut self) -> Result<i32, VMHooksError>;
+    fn get_esdt_token_type_by_index(&mut self, index: i32) -> Result<i32, VMHooksError>;
+    fn get_num_esdt_transfers(&mut self) -> Result<i32, VMHooksError>;
+    fn get_call_value_token_name(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_call_value_token_name_by_index(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> Result<i32, VMHooksError>;
+    fn is_reserved_function_name(&mut self, name_handle: i32) -> Result<i32, VMHooksError>;
+    fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) -> Result<(), VMHooksError>;
+    fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) -> Result<(), VMHooksError>;
+    fn get_block_timestamp(&mut self) -> Result<i64, VMHooksError>;
+    fn get_block_nonce(&mut self) -> Result<i64, VMHooksError>;
+    fn get_block_round(&mut self) -> Result<i64, VMHooksError>;
+    fn get_block_epoch(&mut self) -> Result<i64, VMHooksError>;
+    fn get_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksError>;
+    fn get_state_root_hash(&mut self, pointer: MemPtr) -> Result<(), VMHooksError>;
+    fn get_prev_block_timestamp(&mut self) -> Result<i64, VMHooksError>;
+    fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksError>;
+    fn get_prev_block_round(&mut self) -> Result<i64, VMHooksError>;
+    fn get_prev_block_epoch(&mut self) -> Result<i64, VMHooksError>;
+    fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksError>;
+    fn finish(&mut self, pointer: MemPtr, length: MemLength) -> Result<(), VMHooksError>;
+    fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn execute_read_only(&mut self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn create_contract(&mut self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn deploy_from_source_contract(&mut self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn get_num_return_data(&mut self) -> Result<i32, VMHooksError>;
+    fn get_return_data_size(&mut self, result_id: i32) -> Result<i32, VMHooksError>;
+    fn get_return_data(&mut self, result_id: i32, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn clean_return_data(&mut self) -> Result<(), VMHooksError>;
+    fn delete_from_return_data(&mut self, result_id: i32) -> Result<(), VMHooksError>;
+    fn get_original_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn get_current_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn get_prev_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError>;
+    fn managed_sc_address(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_owner_address(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_caller(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_original_caller_addr(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_relayer_addr(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_signal_error(&mut self, err_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_write_log(&mut self, topics_handle: i32, data_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_original_tx_hash(&mut self, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_state_root_hash(&mut self, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_block_random_seed(&mut self, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_prev_block_random_seed(&mut self, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_get_callback_closure(&mut self, callback_closure_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_upgrade_from_source_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_upgrade_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_delete_contract(&mut self, dest_handle: i32, gas_limit: i64, arguments_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_deploy_from_source_contract(&mut self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_create_contract(&mut self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> Result<i32, VMHooksError>;
+    fn managed_is_esdt_limited_transfer(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) -> Result<(), VMHooksError>;
+    fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> Result<i32, VMHooksError>;
+    fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> Result<i32, VMHooksError>;
+    fn big_float_new_from_sci(&mut self, significand: i64, exponent: i64) -> Result<i32, VMHooksError>;
+    fn big_float_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_div(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_neg(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_clone(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_float_abs(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_sign(&mut self, op_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_float_sqrt(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_pow(&mut self, destination_handle: i32, op_handle: i32, exponent: i32) -> Result<(), VMHooksError>;
+    fn big_float_floor(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_ceil(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_truncate(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_set_int64(&mut self, destination_handle: i32, value: i64) -> Result<(), VMHooksError>;
+    fn big_float_is_int(&mut self, op_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_float_set_big_int(&mut self, destination_handle: i32, big_int_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_get_const_pi(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn big_float_get_const_e(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_unsigned_argument(&mut self, id: i32, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_signed_argument(&mut self, id: i32, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_get_call_value(&mut self, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_esdt_call_value(&mut self, destination: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_esdt_call_value_by_index(&mut self, destination_handle: i32, index: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_external_balance(&mut self, address_offset: MemPtr, result: i32) -> Result<(), VMHooksError>;
+    fn big_int_get_esdt_external_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_new(&mut self, small_value: i64) -> Result<i32, VMHooksError>;
+    fn big_int_unsigned_byte_length(&mut self, reference_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_signed_byte_length(&mut self, reference_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_get_unsigned_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn big_int_get_signed_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn big_int_set_unsigned_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) -> Result<(), VMHooksError>;
+    fn big_int_set_signed_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) -> Result<(), VMHooksError>;
+    fn big_int_is_int64(&mut self, destination_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_get_int64(&mut self, destination_handle: i32) -> Result<i64, VMHooksError>;
+    fn big_int_set_int64(&mut self, destination_handle: i32, value: i64) -> Result<(), VMHooksError>;
+    fn big_int_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_tdiv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_tmod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_ediv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_emod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_sqrt(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_pow(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_log2(&mut self, op1_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_abs(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_neg(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_sign(&mut self, op_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> Result<i32, VMHooksError>;
+    fn big_int_not(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_and(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_or(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_xor(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_shr(&mut self, destination_handle: i32, op_handle: i32, bits: i32) -> Result<(), VMHooksError>;
+    fn big_int_shl(&mut self, destination_handle: i32, op_handle: i32, bits: i32) -> Result<(), VMHooksError>;
+    fn big_int_finish_unsigned(&mut self, reference_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_finish_signed(&mut self, reference_handle: i32) -> Result<(), VMHooksError>;
+    fn big_int_to_string(&mut self, big_int_handle: i32, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn mbuffer_new(&mut self) -> Result<i32, VMHooksError>;
+    fn mbuffer_new_from_bytes(&mut self, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError>;
+    fn mbuffer_get_length(&mut self, m_buffer_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_get_bytes(&mut self, m_buffer_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn mbuffer_get_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn mbuffer_copy_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_eq(&mut self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_set_bytes(&mut self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError>;
+    fn mbuffer_set_byte_slice(&mut self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn mbuffer_append(&mut self, accumulator_handle: i32, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_append_bytes(&mut self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError>;
+    fn mbuffer_to_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_storage_load(&mut self, key_handle: i32, destination_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_storage_load_from_address(&mut self, address_handle: i32, key_handle: i32, destination_handle: i32) -> Result<(), VMHooksError>;
+    fn mbuffer_get_argument(&mut self, id: i32, destination_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_finish(&mut self, source_handle: i32) -> Result<i32, VMHooksError>;
+    fn mbuffer_set_random(&mut self, destination_handle: i32, length: i32) -> Result<i32, VMHooksError>;
+    fn managed_map_new(&mut self) -> Result<i32, VMHooksError>;
+    fn managed_map_put(&mut self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_map_get(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_map_remove(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_map_contains(&mut self, m_map_handle: i32, key_handle: i32) -> Result<i32, VMHooksError>;
+    fn small_int_get_unsigned_argument(&mut self, id: i32) -> Result<i64, VMHooksError>;
+    fn small_int_get_signed_argument(&mut self, id: i32) -> Result<i64, VMHooksError>;
+    fn small_int_finish_unsigned(&mut self, value: i64) -> Result<(), VMHooksError>;
+    fn small_int_finish_signed(&mut self, value: i64) -> Result<(), VMHooksError>;
+    fn small_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError>;
+    fn small_int_storage_store_signed(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError>;
+    fn small_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError>;
+    fn small_int_storage_load_signed(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError>;
+    fn int64get_argument(&mut self, id: i32) -> Result<i64, VMHooksError>;
+    fn int64finish(&mut self, value: i64) -> Result<(), VMHooksError>;
+    fn int64storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError>;
+    fn int64storage_load(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError>;
+    fn sha256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_sha256(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError>;
+    fn keccak256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_keccak256(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError>;
+    fn ripemd160(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_ripemd160(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError>;
+    fn verify_bls(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_verify_bls(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn verify_ed25519(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_verify_ed25519(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn verify_custom_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> Result<i32, VMHooksError>;
+    fn managed_verify_custom_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> Result<i32, VMHooksError>;
+    fn verify_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_verify_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn encode_secp256k1_der_signature(&mut self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_encode_secp256k1_der_signature(&mut self, r_handle: i32, s_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn add_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) -> Result<(), VMHooksError>;
+    fn double_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> Result<(), VMHooksError>;
+    fn is_on_curve_ec(&mut self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> Result<i32, VMHooksError>;
+    fn scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError>;
+    fn managed_scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError>;
+    fn managed_scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError>;
+    fn managed_unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError>;
+    fn managed_unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError>;
+    fn managed_generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError>;
+    fn create_ec(&mut self, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError>;
+    fn managed_create_ec(&mut self, data_handle: i32) -> Result<i32, VMHooksError>;
+    fn get_curve_length_ec(&mut self, ec_handle: i32) -> Result<i32, VMHooksError>;
+    fn get_priv_key_byte_length_ec(&mut self, ec_handle: i32) -> Result<i32, VMHooksError>;
+    fn elliptic_curve_get_values(&mut self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
+    fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError>;
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -280,1217 +282,1313 @@ pub struct VMHooksDefault;
 #[allow(unused)]
 #[rustfmt::skip]
 impl VMHooks for VMHooksDefault {
-    fn get_gas_left(&mut self) -> i64 {
+    fn get_gas_left(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_gas_left");
-        0
+        Ok(0)
     }
 
-    fn get_sc_address(&mut self, result_offset: MemPtr) {
+    fn get_sc_address(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_sc_address");
+        Ok(())
     }
 
-    fn get_owner_address(&mut self, result_offset: MemPtr) {
+    fn get_owner_address(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_owner_address");
+        Ok(())
     }
 
-    fn get_shard_of_address(&mut self, address_offset: MemPtr) -> i32 {
+    fn get_shard_of_address(&mut self, address_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_shard_of_address");
-        0
+        Ok(0)
     }
 
-    fn is_smart_contract(&mut self, address_offset: MemPtr) -> i32 {
+    fn is_smart_contract(&mut self, address_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: is_smart_contract");
-        0
+        Ok(0)
     }
 
-    fn signal_error(&mut self, message_offset: MemPtr, message_length: MemLength) {
+    fn signal_error(&mut self, message_offset: MemPtr, message_length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: signal_error");
+        Ok(())
     }
 
-    fn get_external_balance(&mut self, address_offset: MemPtr, result_offset: MemPtr) {
+    fn get_external_balance(&mut self, address_offset: MemPtr, result_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_external_balance");
+        Ok(())
     }
 
-    fn get_block_hash(&mut self, nonce: i64, result_offset: MemPtr) -> i32 {
+    fn get_block_hash(&mut self, nonce: i64, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_block_hash");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32 {
+    fn get_esdt_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_balance");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_nft_name_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_name_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_nft_name_length");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_nft_attribute_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_attribute_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_nft_attribute_length");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_nft_uri_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_uri_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_nft_uri_length");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_data(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32 {
+    fn get_esdt_token_data(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_token_data");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_local_roles(&mut self, token_id_handle: i32) -> i64 {
+    fn get_esdt_local_roles(&mut self, token_id_handle: i32) -> Result<i64, VMHooksError> {
         println!("Called: get_esdt_local_roles");
-        0
+        Ok(0)
     }
 
-    fn validate_token_identifier(&mut self, token_id_handle: i32) -> i32 {
+    fn validate_token_identifier(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: validate_token_identifier");
-        0
+        Ok(0)
     }
 
-    fn transfer_value(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn transfer_value(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: transfer_value");
-        0
+        Ok(0)
     }
 
-    fn transfer_value_execute(&mut self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_value_execute(&mut self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: transfer_value_execute");
-        0
+        Ok(0)
     }
 
-    fn transfer_esdt_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_esdt_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: transfer_esdt_execute");
-        0
+        Ok(0)
     }
 
-    fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: transfer_esdt_nft_execute");
-        0
+        Ok(0)
     }
 
-    fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: multi_transfer_esdt_nft_execute");
-        0
+        Ok(0)
     }
 
-    fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
+    fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksError> {
         println!("Called: create_async_call");
-        0
+        Ok(0)
     }
 
-    fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
+    fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> Result<i32, VMHooksError> {
         println!("Called: set_async_context_callback");
-        0
+        Ok(0)
     }
 
-    fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: upgrade_contract");
+        Ok(())
     }
 
-    fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: upgrade_from_source_contract");
+        Ok(())
     }
 
-    fn delete_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn delete_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: delete_contract");
+        Ok(())
     }
 
-    fn async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) {
+    fn async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: async_call");
+        Ok(())
     }
 
-    fn get_argument_length(&mut self, id: i32) -> i32 {
+    fn get_argument_length(&mut self, id: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_argument_length");
-        0
+        Ok(0)
     }
 
-    fn get_argument(&mut self, id: i32, arg_offset: MemPtr) -> i32 {
+    fn get_argument(&mut self, id: i32, arg_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_argument");
-        0
+        Ok(0)
     }
 
-    fn get_function(&mut self, function_offset: MemPtr) -> i32 {
+    fn get_function(&mut self, function_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_function");
-        0
+        Ok(0)
     }
 
-    fn get_num_arguments(&mut self) -> i32 {
+    fn get_num_arguments(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: get_num_arguments");
-        0
+        Ok(0)
     }
 
-    fn storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: storage_store");
-        0
+        Ok(0)
     }
 
-    fn storage_load_length(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn storage_load_length(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: storage_load_length");
-        0
+        Ok(0)
     }
 
-    fn storage_load_from_address(&mut self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn storage_load_from_address(&mut self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: storage_load_from_address");
-        0
+        Ok(0)
     }
 
-    fn storage_load(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn storage_load(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: storage_load");
-        0
+        Ok(0)
     }
 
-    fn set_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32 {
+    fn set_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> Result<i32, VMHooksError> {
         println!("Called: set_storage_lock");
-        0
+        Ok(0)
     }
 
-    fn get_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn get_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError> {
         println!("Called: get_storage_lock");
-        0
+        Ok(0)
     }
 
-    fn is_storage_locked(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn is_storage_locked(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: is_storage_locked");
-        0
+        Ok(0)
     }
 
-    fn clear_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn clear_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: clear_storage_lock");
-        0
+        Ok(0)
     }
 
-    fn get_caller(&mut self, result_offset: MemPtr) {
+    fn get_caller(&mut self, result_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_caller");
+        Ok(())
     }
 
-    fn check_no_payment(&mut self) {
+    fn check_no_payment(&mut self) -> Result<(), VMHooksError> {
         println!("Called: check_no_payment");
+        Ok(())
     }
 
-    fn get_call_value(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_call_value(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_call_value");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_value(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_esdt_value(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_value");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_value_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32 {
+    fn get_esdt_value_by_index(&mut self, result_offset: MemPtr, index: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_value_by_index");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_name(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_esdt_token_name(&mut self, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_token_name");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_name_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32 {
+    fn get_esdt_token_name_by_index(&mut self, result_offset: MemPtr, index: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_token_name_by_index");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_nonce(&mut self) -> i64 {
+    fn get_esdt_token_nonce(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_esdt_token_nonce");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_nonce_by_index(&mut self, index: i32) -> i64 {
+    fn get_esdt_token_nonce_by_index(&mut self, index: i32) -> Result<i64, VMHooksError> {
         println!("Called: get_esdt_token_nonce_by_index");
-        0
+        Ok(0)
     }
 
-    fn get_current_esdt_nft_nonce(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64 {
+    fn get_current_esdt_nft_nonce(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> Result<i64, VMHooksError> {
         println!("Called: get_current_esdt_nft_nonce");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_type(&mut self) -> i32 {
+    fn get_esdt_token_type(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_token_type");
-        0
+        Ok(0)
     }
 
-    fn get_esdt_token_type_by_index(&mut self, index: i32) -> i32 {
+    fn get_esdt_token_type_by_index(&mut self, index: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_esdt_token_type_by_index");
-        0
+        Ok(0)
     }
 
-    fn get_num_esdt_transfers(&mut self) -> i32 {
+    fn get_num_esdt_transfers(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: get_num_esdt_transfers");
-        0
+        Ok(0)
     }
 
-    fn get_call_value_token_name(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32 {
+    fn get_call_value_token_name(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_call_value_token_name");
-        0
+        Ok(0)
     }
 
-    fn get_call_value_token_name_by_index(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32 {
+    fn get_call_value_token_name_by_index(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_call_value_token_name_by_index");
-        0
+        Ok(0)
     }
 
-    fn is_reserved_function_name(&mut self, name_handle: i32) -> i32 {
+    fn is_reserved_function_name(&mut self, name_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: is_reserved_function_name");
-        0
+        Ok(0)
     }
 
-    fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
+    fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) -> Result<(), VMHooksError> {
         println!("Called: write_log");
+        Ok(())
     }
 
-    fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) {
+    fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: write_event_log");
+        Ok(())
     }
 
-    fn get_block_timestamp(&mut self) -> i64 {
+    fn get_block_timestamp(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_block_timestamp");
-        0
+        Ok(0)
     }
 
-    fn get_block_nonce(&mut self) -> i64 {
+    fn get_block_nonce(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_block_nonce");
-        0
+        Ok(0)
     }
 
-    fn get_block_round(&mut self) -> i64 {
+    fn get_block_round(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_block_round");
-        0
+        Ok(0)
     }
 
-    fn get_block_epoch(&mut self) -> i64 {
+    fn get_block_epoch(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_block_epoch");
-        0
+        Ok(0)
     }
 
-    fn get_block_random_seed(&mut self, pointer: MemPtr) {
+    fn get_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_block_random_seed");
+        Ok(())
     }
 
-    fn get_state_root_hash(&mut self, pointer: MemPtr) {
+    fn get_state_root_hash(&mut self, pointer: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_state_root_hash");
+        Ok(())
     }
 
-    fn get_prev_block_timestamp(&mut self) -> i64 {
+    fn get_prev_block_timestamp(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_prev_block_timestamp");
-        0
+        Ok(0)
     }
 
-    fn get_prev_block_nonce(&mut self) -> i64 {
+    fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_prev_block_nonce");
-        0
+        Ok(0)
     }
 
-    fn get_prev_block_round(&mut self) -> i64 {
+    fn get_prev_block_round(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_prev_block_round");
-        0
+        Ok(0)
     }
 
-    fn get_prev_block_epoch(&mut self) -> i64 {
+    fn get_prev_block_epoch(&mut self) -> Result<i64, VMHooksError> {
         println!("Called: get_prev_block_epoch");
-        0
+        Ok(0)
     }
 
-    fn get_prev_block_random_seed(&mut self, pointer: MemPtr) {
+    fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_prev_block_random_seed");
+        Ok(())
     }
 
-    fn finish(&mut self, pointer: MemPtr, length: MemLength) {
+    fn finish(&mut self, pointer: MemPtr, length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: finish");
+        Ok(())
     }
 
-    fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: execute_on_same_context");
-        0
+        Ok(0)
     }
 
-    fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: execute_on_dest_context");
-        0
+        Ok(0)
     }
 
-    fn execute_read_only(&mut self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_read_only(&mut self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: execute_read_only");
-        0
+        Ok(0)
     }
 
-    fn create_contract(&mut self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn create_contract(&mut self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: create_contract");
-        0
+        Ok(0)
     }
 
-    fn deploy_from_source_contract(&mut self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn deploy_from_source_contract(&mut self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: deploy_from_source_contract");
-        0
+        Ok(0)
     }
 
-    fn get_num_return_data(&mut self) -> i32 {
+    fn get_num_return_data(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: get_num_return_data");
-        0
+        Ok(0)
     }
 
-    fn get_return_data_size(&mut self, result_id: i32) -> i32 {
+    fn get_return_data_size(&mut self, result_id: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_return_data_size");
-        0
+        Ok(0)
     }
 
-    fn get_return_data(&mut self, result_id: i32, data_offset: MemPtr) -> i32 {
+    fn get_return_data(&mut self, result_id: i32, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: get_return_data");
-        0
+        Ok(0)
     }
 
-    fn clean_return_data(&mut self) {
+    fn clean_return_data(&mut self) -> Result<(), VMHooksError> {
         println!("Called: clean_return_data");
+        Ok(())
     }
 
-    fn delete_from_return_data(&mut self, result_id: i32) {
+    fn delete_from_return_data(&mut self, result_id: i32) -> Result<(), VMHooksError> {
         println!("Called: delete_from_return_data");
+        Ok(())
     }
 
-    fn get_original_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_original_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_original_tx_hash");
+        Ok(())
     }
 
-    fn get_current_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_current_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_current_tx_hash");
+        Ok(())
     }
 
-    fn get_prev_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_prev_tx_hash(&mut self, data_offset: MemPtr) -> Result<(), VMHooksError> {
         println!("Called: get_prev_tx_hash");
+        Ok(())
     }
 
-    fn managed_sc_address(&mut self, destination_handle: i32) {
+    fn managed_sc_address(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_sc_address");
+        Ok(())
     }
 
-    fn managed_owner_address(&mut self, destination_handle: i32) {
+    fn managed_owner_address(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_owner_address");
+        Ok(())
     }
 
-    fn managed_caller(&mut self, destination_handle: i32) {
+    fn managed_caller(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_caller");
+        Ok(())
     }
 
-    fn managed_get_original_caller_addr(&mut self, destination_handle: i32) {
+    fn managed_get_original_caller_addr(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_original_caller_addr");
+        Ok(())
     }
 
-    fn managed_get_relayer_addr(&mut self, destination_handle: i32) {
+    fn managed_get_relayer_addr(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_relayer_addr");
+        Ok(())
     }
 
-    fn managed_signal_error(&mut self, err_handle: i32) {
+    fn managed_signal_error(&mut self, err_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_signal_error");
+        Ok(())
     }
 
-    fn managed_write_log(&mut self, topics_handle: i32, data_handle: i32) {
+    fn managed_write_log(&mut self, topics_handle: i32, data_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_write_log");
+        Ok(())
     }
 
-    fn managed_get_original_tx_hash(&mut self, result_handle: i32) {
+    fn managed_get_original_tx_hash(&mut self, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_original_tx_hash");
+        Ok(())
     }
 
-    fn managed_get_state_root_hash(&mut self, result_handle: i32) {
+    fn managed_get_state_root_hash(&mut self, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_state_root_hash");
+        Ok(())
     }
 
-    fn managed_get_block_random_seed(&mut self, result_handle: i32) {
+    fn managed_get_block_random_seed(&mut self, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_block_random_seed");
+        Ok(())
     }
 
-    fn managed_get_prev_block_random_seed(&mut self, result_handle: i32) {
+    fn managed_get_prev_block_random_seed(&mut self, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_prev_block_random_seed");
+        Ok(())
     }
 
-    fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32) {
+    fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_return_data");
+        Ok(())
     }
 
-    fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32) {
+    fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_multi_esdt_call_value");
+        Ok(())
     }
 
-    fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+    fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_back_transfers");
+        Ok(())
     }
 
-    fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
+    fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_esdt_balance");
+        Ok(())
     }
 
-    fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
+    fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_esdt_token_data");
+        Ok(())
     }
 
-    fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
+    fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_async_call");
+        Ok(())
     }
 
-    fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
+    fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_create_async_call");
-        0
+        Ok(0)
     }
 
-    fn managed_get_callback_closure(&mut self, callback_closure_handle: i32) {
+    fn managed_get_callback_closure(&mut self, callback_closure_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_callback_closure");
+        Ok(())
     }
 
-    fn managed_upgrade_from_source_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    fn managed_upgrade_from_source_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_upgrade_from_source_contract");
+        Ok(())
     }
 
-    fn managed_upgrade_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    fn managed_upgrade_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_upgrade_contract");
+        Ok(())
     }
 
-    fn managed_delete_contract(&mut self, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
+    fn managed_delete_contract(&mut self, dest_handle: i32, gas_limit: i64, arguments_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_delete_contract");
+        Ok(())
     }
 
-    fn managed_deploy_from_source_contract(&mut self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    fn managed_deploy_from_source_contract(&mut self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_deploy_from_source_contract");
-        0
+        Ok(0)
     }
 
-    fn managed_create_contract(&mut self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    fn managed_create_contract(&mut self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_create_contract");
-        0
+        Ok(0)
     }
 
-    fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_execute_read_only");
-        0
+        Ok(0)
     }
 
-    fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_execute_on_same_context");
-        0
+        Ok(0)
     }
 
-    fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_execute_on_dest_context");
-        0
+        Ok(0)
     }
 
-    fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_multi_transfer_esdt_nft_execute");
-        0
+        Ok(0)
     }
 
-    fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_multi_transfer_esdt_nft_execute_by_user");
-        0
+        Ok(0)
     }
 
-    fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_transfer_value_execute");
-        0
+        Ok(0)
     }
 
-    fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
+    fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> Result<i32, VMHooksError> {
         println!("Called: managed_is_esdt_frozen");
-        0
+        Ok(0)
     }
 
-    fn managed_is_esdt_limited_transfer(&mut self, token_id_handle: i32) -> i32 {
+    fn managed_is_esdt_limited_transfer(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_is_esdt_limited_transfer");
-        0
+        Ok(0)
     }
 
-    fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> i32 {
+    fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_is_esdt_paused");
-        0
+        Ok(0)
     }
 
-    fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32) {
+    fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_buffer_to_hex");
+        Ok(())
     }
 
-    fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) {
+    fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: managed_get_code_metadata");
+        Ok(())
     }
 
-    fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> i32 {
+    fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_is_builtin_function");
-        0
+        Ok(0)
     }
 
-    fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
+    fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_float_new_from_parts");
-        0
+        Ok(0)
     }
 
-    fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> i32 {
+    fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> Result<i32, VMHooksError> {
         println!("Called: big_float_new_from_frac");
-        0
+        Ok(0)
     }
 
-    fn big_float_new_from_sci(&mut self, significand: i64, exponent: i64) -> i32 {
+    fn big_float_new_from_sci(&mut self, significand: i64, exponent: i64) -> Result<i32, VMHooksError> {
         println!("Called: big_float_new_from_sci");
-        0
+        Ok(0)
     }
 
-    fn big_float_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_add");
+        Ok(())
     }
 
-    fn big_float_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_sub");
+        Ok(())
     }
 
-    fn big_float_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_mul");
+        Ok(())
     }
 
-    fn big_float_div(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_div(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_div");
+        Ok(())
     }
 
-    fn big_float_neg(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_neg(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_neg");
+        Ok(())
     }
 
-    fn big_float_clone(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_clone(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_clone");
+        Ok(())
     }
 
-    fn big_float_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32 {
+    fn big_float_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_float_cmp");
-        0
+        Ok(0)
     }
 
-    fn big_float_abs(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_abs(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_abs");
+        Ok(())
     }
 
-    fn big_float_sign(&mut self, op_handle: i32) -> i32 {
+    fn big_float_sign(&mut self, op_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_float_sign");
-        0
+        Ok(0)
     }
 
-    fn big_float_sqrt(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_sqrt(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_sqrt");
+        Ok(())
     }
 
-    fn big_float_pow(&mut self, destination_handle: i32, op_handle: i32, exponent: i32) {
+    fn big_float_pow(&mut self, destination_handle: i32, op_handle: i32, exponent: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_pow");
+        Ok(())
     }
 
-    fn big_float_floor(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_floor(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_floor");
+        Ok(())
     }
 
-    fn big_float_ceil(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_ceil(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_ceil");
+        Ok(())
     }
 
-    fn big_float_truncate(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_truncate(&mut self, dest_big_int_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_truncate");
+        Ok(())
     }
 
-    fn big_float_set_int64(&mut self, destination_handle: i32, value: i64) {
+    fn big_float_set_int64(&mut self, destination_handle: i32, value: i64) -> Result<(), VMHooksError> {
         println!("Called: big_float_set_int64");
+        Ok(())
     }
 
-    fn big_float_is_int(&mut self, op_handle: i32) -> i32 {
+    fn big_float_is_int(&mut self, op_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_float_is_int");
-        0
+        Ok(0)
     }
 
-    fn big_float_set_big_int(&mut self, destination_handle: i32, big_int_handle: i32) {
+    fn big_float_set_big_int(&mut self, destination_handle: i32, big_int_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_set_big_int");
+        Ok(())
     }
 
-    fn big_float_get_const_pi(&mut self, destination_handle: i32) {
+    fn big_float_get_const_pi(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_get_const_pi");
+        Ok(())
     }
 
-    fn big_float_get_const_e(&mut self, destination_handle: i32) {
+    fn big_float_get_const_e(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_float_get_const_e");
+        Ok(())
     }
 
-    fn big_int_get_unsigned_argument(&mut self, id: i32, destination_handle: i32) {
+    fn big_int_get_unsigned_argument(&mut self, id: i32, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_unsigned_argument");
+        Ok(())
     }
 
-    fn big_int_get_signed_argument(&mut self, id: i32, destination_handle: i32) {
+    fn big_int_get_signed_argument(&mut self, id: i32, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_signed_argument");
+        Ok(())
     }
 
-    fn big_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32 {
+    fn big_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_storage_store_unsigned");
-        0
+        Ok(0)
     }
 
-    fn big_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32 {
+    fn big_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_storage_load_unsigned");
-        0
+        Ok(0)
     }
 
-    fn big_int_get_call_value(&mut self, destination_handle: i32) {
+    fn big_int_get_call_value(&mut self, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_call_value");
+        Ok(())
     }
 
-    fn big_int_get_esdt_call_value(&mut self, destination: i32) {
+    fn big_int_get_esdt_call_value(&mut self, destination: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_esdt_call_value");
+        Ok(())
     }
 
-    fn big_int_get_esdt_call_value_by_index(&mut self, destination_handle: i32, index: i32) {
+    fn big_int_get_esdt_call_value_by_index(&mut self, destination_handle: i32, index: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_esdt_call_value_by_index");
+        Ok(())
     }
 
-    fn big_int_get_external_balance(&mut self, address_offset: MemPtr, result: i32) {
+    fn big_int_get_external_balance(&mut self, address_offset: MemPtr, result: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_external_balance");
+        Ok(())
     }
 
-    fn big_int_get_esdt_external_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) {
+    fn big_int_get_esdt_external_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_get_esdt_external_balance");
+        Ok(())
     }
 
-    fn big_int_new(&mut self, small_value: i64) -> i32 {
+    fn big_int_new(&mut self, small_value: i64) -> Result<i32, VMHooksError> {
         println!("Called: big_int_new");
-        0
+        Ok(0)
     }
 
-    fn big_int_unsigned_byte_length(&mut self, reference_handle: i32) -> i32 {
+    fn big_int_unsigned_byte_length(&mut self, reference_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_unsigned_byte_length");
-        0
+        Ok(0)
     }
 
-    fn big_int_signed_byte_length(&mut self, reference_handle: i32) -> i32 {
+    fn big_int_signed_byte_length(&mut self, reference_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_signed_byte_length");
-        0
+        Ok(0)
     }
 
-    fn big_int_get_unsigned_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
+    fn big_int_get_unsigned_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: big_int_get_unsigned_bytes");
-        0
+        Ok(0)
     }
 
-    fn big_int_get_signed_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
+    fn big_int_get_signed_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: big_int_get_signed_bytes");
-        0
+        Ok(0)
     }
 
-    fn big_int_set_unsigned_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
+    fn big_int_set_unsigned_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: big_int_set_unsigned_bytes");
+        Ok(())
     }
 
-    fn big_int_set_signed_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
+    fn big_int_set_signed_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) -> Result<(), VMHooksError> {
         println!("Called: big_int_set_signed_bytes");
+        Ok(())
     }
 
-    fn big_int_is_int64(&mut self, destination_handle: i32) -> i32 {
+    fn big_int_is_int64(&mut self, destination_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_is_int64");
-        0
+        Ok(0)
     }
 
-    fn big_int_get_int64(&mut self, destination_handle: i32) -> i64 {
+    fn big_int_get_int64(&mut self, destination_handle: i32) -> Result<i64, VMHooksError> {
         println!("Called: big_int_get_int64");
-        0
+        Ok(0)
     }
 
-    fn big_int_set_int64(&mut self, destination_handle: i32, value: i64) {
+    fn big_int_set_int64(&mut self, destination_handle: i32, value: i64) -> Result<(), VMHooksError> {
         println!("Called: big_int_set_int64");
+        Ok(())
     }
 
-    fn big_int_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_add");
+        Ok(())
     }
 
-    fn big_int_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_sub");
+        Ok(())
     }
 
-    fn big_int_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_mul");
+        Ok(())
     }
 
-    fn big_int_tdiv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_tdiv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_tdiv");
+        Ok(())
     }
 
-    fn big_int_tmod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_tmod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_tmod");
+        Ok(())
     }
 
-    fn big_int_ediv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_ediv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_ediv");
+        Ok(())
     }
 
-    fn big_int_emod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_emod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_emod");
+        Ok(())
     }
 
-    fn big_int_sqrt(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_sqrt(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_sqrt");
+        Ok(())
     }
 
-    fn big_int_pow(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_pow(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_pow");
+        Ok(())
     }
 
-    fn big_int_log2(&mut self, op1_handle: i32) -> i32 {
+    fn big_int_log2(&mut self, op1_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_log2");
-        0
+        Ok(0)
     }
 
-    fn big_int_abs(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_abs(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_abs");
+        Ok(())
     }
 
-    fn big_int_neg(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_neg(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_neg");
+        Ok(())
     }
 
-    fn big_int_sign(&mut self, op_handle: i32) -> i32 {
+    fn big_int_sign(&mut self, op_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_sign");
-        0
+        Ok(0)
     }
 
-    fn big_int_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32 {
+    fn big_int_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: big_int_cmp");
-        0
+        Ok(0)
     }
 
-    fn big_int_not(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_not(&mut self, destination_handle: i32, op_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_not");
+        Ok(())
     }
 
-    fn big_int_and(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_and(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_and");
+        Ok(())
     }
 
-    fn big_int_or(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_or(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_or");
+        Ok(())
     }
 
-    fn big_int_xor(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_xor(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_xor");
+        Ok(())
     }
 
-    fn big_int_shr(&mut self, destination_handle: i32, op_handle: i32, bits: i32) {
+    fn big_int_shr(&mut self, destination_handle: i32, op_handle: i32, bits: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_shr");
+        Ok(())
     }
 
-    fn big_int_shl(&mut self, destination_handle: i32, op_handle: i32, bits: i32) {
+    fn big_int_shl(&mut self, destination_handle: i32, op_handle: i32, bits: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_shl");
+        Ok(())
     }
 
-    fn big_int_finish_unsigned(&mut self, reference_handle: i32) {
+    fn big_int_finish_unsigned(&mut self, reference_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_finish_unsigned");
+        Ok(())
     }
 
-    fn big_int_finish_signed(&mut self, reference_handle: i32) {
+    fn big_int_finish_signed(&mut self, reference_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_finish_signed");
+        Ok(())
     }
 
-    fn big_int_to_string(&mut self, big_int_handle: i32, destination_handle: i32) {
+    fn big_int_to_string(&mut self, big_int_handle: i32, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: big_int_to_string");
+        Ok(())
     }
 
-    fn mbuffer_new(&mut self) -> i32 {
+    fn mbuffer_new(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_new");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_new_from_bytes(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_new_from_bytes(&mut self, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_new_from_bytes");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_get_length(&mut self, m_buffer_handle: i32) -> i32 {
+    fn mbuffer_get_length(&mut self, m_buffer_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_get_length");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_get_bytes(&mut self, m_buffer_handle: i32, result_offset: MemPtr) -> i32 {
+    fn mbuffer_get_bytes(&mut self, m_buffer_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_get_bytes");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_get_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32 {
+    fn mbuffer_get_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_get_byte_slice");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_copy_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_copy_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_copy_byte_slice");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_eq(&mut self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
+    fn mbuffer_eq(&mut self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_eq");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_set_bytes(&mut self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_set_bytes(&mut self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_set_bytes");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_set_byte_slice(&mut self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn mbuffer_set_byte_slice(&mut self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_set_byte_slice");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_append(&mut self, accumulator_handle: i32, data_handle: i32) -> i32 {
+    fn mbuffer_append(&mut self, accumulator_handle: i32, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_append");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_append_bytes(&mut self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_append_bytes(&mut self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_append_bytes");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_to_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_to_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_to_big_int_unsigned");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_to_big_int_signed");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_from_big_int_unsigned");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_from_big_int_signed");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_to_big_float");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_from_big_float");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> i32 {
+    fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_storage_store");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_storage_load(&mut self, key_handle: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_storage_load(&mut self, key_handle: i32, destination_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_storage_load");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_storage_load_from_address(&mut self, address_handle: i32, key_handle: i32, destination_handle: i32) {
+    fn mbuffer_storage_load_from_address(&mut self, address_handle: i32, key_handle: i32, destination_handle: i32) -> Result<(), VMHooksError> {
         println!("Called: mbuffer_storage_load_from_address");
+        Ok(())
     }
 
-    fn mbuffer_get_argument(&mut self, id: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_get_argument(&mut self, id: i32, destination_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_get_argument");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_finish(&mut self, source_handle: i32) -> i32 {
+    fn mbuffer_finish(&mut self, source_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_finish");
-        0
+        Ok(0)
     }
 
-    fn mbuffer_set_random(&mut self, destination_handle: i32, length: i32) -> i32 {
+    fn mbuffer_set_random(&mut self, destination_handle: i32, length: i32) -> Result<i32, VMHooksError> {
         println!("Called: mbuffer_set_random");
-        0
+        Ok(0)
     }
 
-    fn managed_map_new(&mut self) -> i32 {
+    fn managed_map_new(&mut self) -> Result<i32, VMHooksError> {
         println!("Called: managed_map_new");
-        0
+        Ok(0)
     }
 
-    fn managed_map_put(&mut self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+    fn managed_map_put(&mut self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_map_put");
-        0
+        Ok(0)
     }
 
-    fn managed_map_get(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    fn managed_map_get(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_map_get");
-        0
+        Ok(0)
     }
 
-    fn managed_map_remove(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    fn managed_map_remove(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_map_remove");
-        0
+        Ok(0)
     }
 
-    fn managed_map_contains(&mut self, m_map_handle: i32, key_handle: i32) -> i32 {
+    fn managed_map_contains(&mut self, m_map_handle: i32, key_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_map_contains");
-        0
+        Ok(0)
     }
 
-    fn small_int_get_unsigned_argument(&mut self, id: i32) -> i64 {
+    fn small_int_get_unsigned_argument(&mut self, id: i32) -> Result<i64, VMHooksError> {
         println!("Called: small_int_get_unsigned_argument");
-        0
+        Ok(0)
     }
 
-    fn small_int_get_signed_argument(&mut self, id: i32) -> i64 {
+    fn small_int_get_signed_argument(&mut self, id: i32) -> Result<i64, VMHooksError> {
         println!("Called: small_int_get_signed_argument");
-        0
+        Ok(0)
     }
 
-    fn small_int_finish_unsigned(&mut self, value: i64) {
+    fn small_int_finish_unsigned(&mut self, value: i64) -> Result<(), VMHooksError> {
         println!("Called: small_int_finish_unsigned");
+        Ok(())
     }
 
-    fn small_int_finish_signed(&mut self, value: i64) {
+    fn small_int_finish_signed(&mut self, value: i64) -> Result<(), VMHooksError> {
         println!("Called: small_int_finish_signed");
+        Ok(())
     }
 
-    fn small_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn small_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError> {
         println!("Called: small_int_storage_store_unsigned");
-        0
+        Ok(0)
     }
 
-    fn small_int_storage_store_signed(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn small_int_storage_store_signed(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError> {
         println!("Called: small_int_storage_store_signed");
-        0
+        Ok(0)
     }
 
-    fn small_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn small_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError> {
         println!("Called: small_int_storage_load_unsigned");
-        0
+        Ok(0)
     }
 
-    fn small_int_storage_load_signed(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn small_int_storage_load_signed(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError> {
         println!("Called: small_int_storage_load_signed");
-        0
+        Ok(0)
     }
 
-    fn int64get_argument(&mut self, id: i32) -> i64 {
+    fn int64get_argument(&mut self, id: i32) -> Result<i64, VMHooksError> {
         println!("Called: int64get_argument");
-        0
+        Ok(0)
     }
 
-    fn int64finish(&mut self, value: i64) {
+    fn int64finish(&mut self, value: i64) -> Result<(), VMHooksError> {
         println!("Called: int64finish");
+        Ok(())
     }
 
-    fn int64storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn int64storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> Result<i32, VMHooksError> {
         println!("Called: int64storage_store");
-        0
+        Ok(0)
     }
 
-    fn int64storage_load(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn int64storage_load(&mut self, key_offset: MemPtr, key_length: MemLength) -> Result<i64, VMHooksError> {
         println!("Called: int64storage_load");
-        0
+        Ok(0)
     }
 
-    fn sha256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn sha256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: sha256");
-        0
+        Ok(0)
     }
 
-    fn managed_sha256(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_sha256(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_sha256");
-        0
+        Ok(0)
     }
 
-    fn keccak256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn keccak256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: keccak256");
-        0
+        Ok(0)
     }
 
-    fn managed_keccak256(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_keccak256(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_keccak256");
-        0
+        Ok(0)
     }
 
-    fn ripemd160(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn ripemd160(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: ripemd160");
-        0
+        Ok(0)
     }
 
-    fn managed_ripemd160(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_ripemd160(&mut self, input_handle: i32, output_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_ripemd160");
-        0
+        Ok(0)
     }
 
-    fn verify_bls(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_bls(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: verify_bls");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_bls(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_bls(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_bls");
-        0
+        Ok(0)
     }
 
-    fn verify_ed25519(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_ed25519(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: verify_ed25519");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_ed25519(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_ed25519(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_ed25519");
-        0
+        Ok(0)
     }
 
-    fn verify_custom_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32 {
+    fn verify_custom_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> Result<i32, VMHooksError> {
         println!("Called: verify_custom_secp256k1");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_custom_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
+    fn managed_verify_custom_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_custom_secp256k1");
-        0
+        Ok(0)
     }
 
-    fn verify_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: verify_secp256k1");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_secp256k1");
-        0
+        Ok(0)
     }
 
-    fn encode_secp256k1_der_signature(&mut self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn encode_secp256k1_der_signature(&mut self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: encode_secp256k1_der_signature");
-        0
+        Ok(0)
     }
 
-    fn managed_encode_secp256k1_der_signature(&mut self, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_encode_secp256k1_der_signature(&mut self, r_handle: i32, s_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_encode_secp256k1_der_signature");
-        0
+        Ok(0)
     }
 
-    fn add_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
+    fn add_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) -> Result<(), VMHooksError> {
         println!("Called: add_ec");
+        Ok(())
     }
 
-    fn double_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
+    fn double_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> Result<(), VMHooksError> {
         println!("Called: double_ec");
+        Ok(())
     }
 
-    fn is_on_curve_ec(&mut self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
+    fn is_on_curve_ec(&mut self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> Result<i32, VMHooksError> {
         println!("Called: is_on_curve_ec");
-        0
+        Ok(0)
     }
 
-    fn scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: scalar_base_mult_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_scalar_base_mult_ec");
-        0
+        Ok(0)
     }
 
-    fn scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: scalar_mult_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
+    fn managed_scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_scalar_mult_ec");
-        0
+        Ok(0)
     }
 
-    fn marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: marshal_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_marshal_ec");
-        0
+        Ok(0)
     }
 
-    fn marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: marshal_compressed_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_marshal_compressed_ec");
-        0
+        Ok(0)
     }
 
-    fn unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: unmarshal_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_unmarshal_ec");
-        0
+        Ok(0)
     }
 
-    fn unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: unmarshal_compressed_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_unmarshal_compressed_ec");
-        0
+        Ok(0)
     }
 
-    fn generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> Result<i32, VMHooksError> {
         println!("Called: generate_key_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_generate_key_ec");
-        0
+        Ok(0)
     }
 
-    fn create_ec(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn create_ec(&mut self, data_offset: MemPtr, data_length: MemLength) -> Result<i32, VMHooksError> {
         println!("Called: create_ec");
-        0
+        Ok(0)
     }
 
-    fn managed_create_ec(&mut self, data_handle: i32) -> i32 {
+    fn managed_create_ec(&mut self, data_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_create_ec");
-        0
+        Ok(0)
     }
 
-    fn get_curve_length_ec(&mut self, ec_handle: i32) -> i32 {
+    fn get_curve_length_ec(&mut self, ec_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_curve_length_ec");
-        0
+        Ok(0)
     }
 
-    fn get_priv_key_byte_length_ec(&mut self, ec_handle: i32) -> i32 {
+    fn get_priv_key_byte_length_ec(&mut self, ec_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: get_priv_key_byte_length_ec");
-        0
+        Ok(0)
     }
 
-    fn elliptic_curve_get_values(&mut self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
+    fn elliptic_curve_get_values(&mut self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: elliptic_curve_get_values");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_secp256r1");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_blssignature_share");
-        0
+        Ok(0)
     }
 
-    fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksError> {
         println!("Called: managed_verify_blsaggregated_signature");
-        0
+        Ok(0)
     }
 }

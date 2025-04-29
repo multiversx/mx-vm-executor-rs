@@ -22,4 +22,4 @@ pub use schedule::*;
 pub use service_error::ServiceError;
 pub use service_trait::*;
 pub use vm_hooks::{VMHooksLegacy, VMHooksLegacyDefault};
-pub use vm_hooks_new::{VMHooks, VMHooksDefault};
+pub use vm_hooks_new::{VMHooks, VMHooksDefault, VMHooksError};
