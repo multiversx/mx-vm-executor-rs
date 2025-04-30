@@ -15,7 +15,7 @@ pub use breakpoint_value::*;
 pub use executor::ExecutorLegacy;
 pub use executor_new::Executor;
 pub use instance::*;
-pub use instance_new::Instance;
+pub use instance_new::{Instance, InstanceCallError};
 pub use instance_state::InstanceState;
 pub use opcode_cost::OpcodeCost;
 pub use schedule::*;

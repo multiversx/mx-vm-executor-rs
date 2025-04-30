@@ -10,8 +10,8 @@ use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceLegacy, InstanceState,
-    OpcodeCost, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallError,
+    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksError,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
@@ -219,7 +219,7 @@ fn push_middlewares(
 }
 
 impl Instance for ExperimentalInstance {
-    fn call(&self, func_name: &str) -> Result<(), ExecutorError> {
+    fn call(&self, func_name: &str) -> Result<(), InstanceCallError> {
         trace!("Rust instance call: {func_name}");
 
         let func = self
@@ -227,16 +227,31 @@ impl Instance for ExperimentalInstance {
             .wasmer_instance
             .exports
             .get_function(func_name)
-            .map_err(|_| "function not found".to_string())?;
+            .map_err(|_| InstanceCallError::FunctionNotFound)?;
 
         match func.call(&mut *self.wasmer_store.borrow_mut(), &[]) {
             Ok(_) => {
                 trace!("Call succeeded: {func_name}");
                 Ok(())
             }
-            Err(err) => {
-                trace!("Call failed: {func_name} - {err}");
-                Err(anyhow!("runtime error {err}").into())
+            Err(runtime_error) => {
+                trace!("Call failed: {func_name} - {runtime_error}");
+
+                match runtime_error.downcast::<VMHooksError>() {
+                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksError(vm_hooks_error)),
+                    Err(other_error) => {
+                        let breakpoint = self
+                            .get_breakpoint_value()
+                            .expect("error retrieving instance breakpoint value");
+                        if breakpoint != BreakpointValue::None {
+                            Err(InstanceCallError::Breakpoint(breakpoint))
+                        } else {
+                            Err(InstanceCallError::RuntimeError(
+                                anyhow!("runtime error {other_error}").into(),
+                            ))
+                        }
+                    }
+                }
             }
         }
     }

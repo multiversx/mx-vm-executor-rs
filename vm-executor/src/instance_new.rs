@@ -1,9 +1,16 @@
-use crate::{BreakpointValue, ExecutorError};
+use crate::{BreakpointValue, ExecutorError, VMHooksError};
+
+pub enum InstanceCallError {
+    FunctionNotFound,
+    RuntimeError(ExecutorError),
+    VMHooksError(VMHooksError),
+    Breakpoint(BreakpointValue),
+}
 
 /// The new instance trait, only used for configuring & calling the wasmer instance.
 pub trait Instance {
     /// Calls an exported function of a WebAssembly instance by `name`.
-    fn call(&self, func_name: &str) -> Result<(), ExecutorError>;
+    fn call(&self, func_name: &str) -> Result<(), InstanceCallError>;
 
     /// Checks that all public module functions (SC endpoints) have no arguments or results.
     fn check_signatures(&self) -> bool;
