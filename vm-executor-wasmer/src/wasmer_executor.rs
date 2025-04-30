@@ -45,14 +45,6 @@ impl WasmerExecutorData {
         self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
         Ok(())
     }
-
-    pub(crate) fn get_vm_hooks(&self) -> Rc<RefCell<Box<dyn VMHooksLegacy>>> {
-        self.vm_hooks.clone()
-    }
-
-    pub(crate) fn get_opcode_cost(&self) -> Arc<Mutex<OpcodeCost>> {
-        self.opcode_cost.clone()
-    }
 }
 
 pub struct WasmerExecutor {
@@ -83,8 +75,13 @@ impl ExecutorLegacy for WasmerExecutor {
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
-        let instance =
-            WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)?;
+        let data = self.data.borrow();
+        let instance = WasmerInstance::try_new_instance(
+            data.vm_hooks.clone(),
+            data.opcode_cost.clone(),
+            wasm_bytes,
+            compilation_options,
+        )?;
         Ok(Box::new(instance))
     }
 
@@ -93,8 +90,10 @@ impl ExecutorLegacy for WasmerExecutor {
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
+        let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance_from_cache(
-            self.data.clone(),
+            data.vm_hooks.clone(),
+            data.opcode_cost.clone(),
             cache_bytes,
             compilation_options,
         )?;
