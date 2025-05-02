@@ -1,3 +1,4 @@
+pub mod new_traits;
 mod wasmer_breakpoints;
 mod wasmer_executor;
 mod wasmer_helpers;
