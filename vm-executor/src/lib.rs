@@ -9,6 +9,7 @@ mod opcode_cost;
 mod schedule;
 mod service_error;
 mod service_trait;
+mod vh_hooks_legacy_adapter;
 mod vm_hooks;
 mod vm_hooks_new;
 
@@ -23,5 +24,6 @@ pub use opcode_cost::OpcodeCost;
 pub use schedule::*;
 pub use service_error::ServiceError;
 pub use service_trait::*;
+pub use vh_hooks_legacy_adapter::VMHooksLegacyAdapter;
 pub use vm_hooks::{VMHooksLegacy, VMHooksLegacyDefault};
 pub use vm_hooks_new::{VMHooks, VMHooksDefault, VMHooksError};
