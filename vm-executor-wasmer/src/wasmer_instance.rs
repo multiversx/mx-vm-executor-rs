@@ -1,17 +1,18 @@
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
-use crate::WasmerInstanceState;
 use crate::{
     wasmer_breakpoints::*, wasmer_imports::generate_import_object, wasmer_metering::*,
-    wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper, WasmerExecutorData,
+    wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper,
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, InstanceFull, InstanceState, ServiceError,
+    BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost, ServiceError,
+    VMHooksLegacy,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
 use std::cell::RefCell;
+use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
 use wasmer::Universal;
 use wasmer::{CompilerConfig, Extern, Module, Store};
@@ -26,7 +27,8 @@ pub struct WasmerInstance {
 
 impl WasmerInstance {
     pub fn try_new_instance(
-        executor_data: Rc<RefCell<WasmerExecutorData>>,
+        vm_hooks: Rc<RefCell<Box<dyn VMHooksLegacy>>>,
+        opcode_cost: Arc<Mutex<OpcodeCost>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Self, ExecutorError> {
@@ -34,7 +36,7 @@ impl WasmerInstance {
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
+        push_middlewares(&mut compiler, compilation_options, opcode_cost);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -44,9 +46,7 @@ impl WasmerInstance {
 
         // Create an empty import object.
         trace!("Generating imports ...");
-        let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().get_vm_hooks(),
-        };
+        let vm_hooks_wrapper = VMHooksWrapper { vm_hooks };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
         trace!("Instantiating WasmerInstance ...");
@@ -72,7 +72,8 @@ impl WasmerInstance {
     }
 
     pub fn try_new_instance_from_cache(
-        executor_data: Rc<RefCell<WasmerExecutorData>>,
+        vm_hooks: Rc<RefCell<Box<dyn VMHooksLegacy>>>,
+        opcode_cost: Arc<Mutex<OpcodeCost>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Self, ExecutorError> {
@@ -80,7 +81,7 @@ impl WasmerInstance {
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, executor_data.clone());
+        push_middlewares(&mut compiler, compilation_options, opcode_cost);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -93,9 +94,7 @@ impl WasmerInstance {
 
         // Create an empty import object.
         trace!("Generating imports ...");
-        let vm_hooks_wrapper = VMHooksWrapper {
-            vm_hooks: executor_data.borrow().get_vm_hooks(),
-        };
+        let vm_hooks_wrapper = VMHooksWrapper { vm_hooks };
         let import_object = generate_import_object(&store, &vm_hooks_wrapper);
 
         trace!("Instantiating WasmerInstance ...");
@@ -174,7 +173,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
 fn push_middlewares(
     compiler: &mut Singlepass,
     compilation_options: &CompilationOptions,
-    executor_data: Rc<RefCell<WasmerExecutorData>>,
+    opcode_cost: Arc<Mutex<OpcodeCost>>,
 ) {
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
@@ -191,7 +190,7 @@ fn push_middlewares(
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         compilation_options.unmetered_locals,
-        executor_data.borrow().get_opcode_cost(),
+        opcode_cost,
         breakpoints_middleware.clone(),
     ));
 
@@ -218,7 +217,7 @@ fn push_middlewares(
     }
 }
 
-impl InstanceFull for WasmerInstance {
+impl InstanceLegacy for WasmerInstance {
     fn call(&self, func_name: &str) -> Result<(), String> {
         trace!("Rust instance call: {func_name}");
 
@@ -269,13 +268,6 @@ impl InstanceFull for WasmerInstance {
             })
             .cloned()
             .collect()
-    }
-
-    fn state_ref(&self) -> Box<dyn InstanceState + '_> {
-        Box::new(WasmerInstanceState {
-            wasmer_instance: &self.wasmer_instance,
-            memory_name: &self.memory_name,
-        })
     }
 
     fn set_points_limit(&self, limit: u64) -> Result<(), String> {

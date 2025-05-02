@@ -1,8 +1,8 @@
 use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorError, ExecutorFull, InstanceFull, OpcodeCost, ServiceError,
-    VMHooks,
+    CompilationOptions, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost, ServiceError,
+    VMHooksLegacy,
 };
 use std::cell::RefCell;
 use std::ffi::c_void;
@@ -18,12 +18,12 @@ pub fn force_sighandler_reinstall() {
 }
 
 pub struct WasmerExecutorData {
-    vm_hooks: Rc<RefCell<Box<dyn VMHooks>>>,
+    vm_hooks: Rc<RefCell<Box<dyn VMHooksLegacy>>>,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
 }
 
 impl WasmerExecutorData {
-    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
             vm_hooks: Rc::new(RefCell::new(vm_hooks)),
             opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
@@ -45,14 +45,6 @@ impl WasmerExecutorData {
         self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
         Ok(())
     }
-
-    pub(crate) fn get_vm_hooks(&self) -> Rc<RefCell<Box<dyn VMHooks>>> {
-        self.vm_hooks.clone()
-    }
-
-    pub(crate) fn get_opcode_cost(&self) -> Arc<Mutex<OpcodeCost>> {
-        self.opcode_cost.clone()
-    }
 }
 
 pub struct WasmerExecutor {
@@ -60,14 +52,14 @@ pub struct WasmerExecutor {
 }
 
 impl WasmerExecutor {
-    pub fn new(vm_hooks: Box<dyn VMHooks>) -> Self {
+    pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
             data: Rc::new(RefCell::new(WasmerExecutorData::new(vm_hooks))),
         }
     }
 }
 
-impl ExecutorFull for WasmerExecutor {
+impl ExecutorLegacy for WasmerExecutor {
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         trace!("Setting vmhooks ...");
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
@@ -82,9 +74,14 @@ impl ExecutorFull for WasmerExecutor {
         &self,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
-        let instance =
-            WasmerInstance::try_new_instance(self.data.clone(), wasm_bytes, compilation_options)?;
+    ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
+        let data = self.data.borrow();
+        let instance = WasmerInstance::try_new_instance(
+            data.vm_hooks.clone(),
+            data.opcode_cost.clone(),
+            wasm_bytes,
+            compilation_options,
+        )?;
         Ok(Box::new(instance))
     }
 
@@ -92,9 +89,11 @@ impl ExecutorFull for WasmerExecutor {
         &self,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Result<Box<dyn InstanceFull>, ExecutorError> {
+    ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
+        let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance_from_cache(
-            self.data.clone(),
+            data.vm_hooks.clone(),
+            data.opcode_cost.clone(),
             cache_bytes,
             compilation_options,
         )?;
