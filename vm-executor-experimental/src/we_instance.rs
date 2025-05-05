@@ -11,7 +11,7 @@ use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallError,
-    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksError,
+    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksEarlyExit,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
@@ -247,8 +247,8 @@ impl Instance for ExperimentalInstance {
             Err(runtime_error) => {
                 trace!("Call failed: {func_name} - {runtime_error}");
 
-                match runtime_error.downcast::<VMHooksError>() {
-                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksError(vm_hooks_error)),
+                match runtime_error.downcast::<VMHooksEarlyExit>() {
+                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksEarlyExit(vm_hooks_error)),
                     Err(other_error) => {
                         let breakpoint = self
                             .get_breakpoint_value()

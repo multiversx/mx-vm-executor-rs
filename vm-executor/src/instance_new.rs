@@ -1,9 +1,9 @@
-use crate::{BreakpointValue, ExecutorError, VMHooksError};
+use crate::{BreakpointValue, ExecutorError, VMHooksEarlyExit};
 
 pub enum InstanceCallError {
     FunctionNotFound,
     RuntimeError(ExecutorError),
-    VMHooksError(VMHooksError),
+    VMHooksEarlyExit(VMHooksEarlyExit),
     Breakpoint(BreakpointValue),
 }
 
