@@ -17,33 +17,31 @@ impl WasmerProdInstance {
     }
 }
 
+fn wrap_runtime_error(err: String) -> InstanceCallError {
+    InstanceCallError::RuntimeError(anyhow!("wrapped instance error: {err}").into())
+}
+
 impl Instance for WasmerProdInstance {
     fn call(&self, func_name: &str) -> Result<(), InstanceCallError> {
+        if !self.inner_instance_ref.has_function(func_name) {
+            return Err(InstanceCallError::FunctionNotFound);
+        }
+
         let result = self.inner_instance_ref.call(func_name);
 
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
-                if err == "function not found" {
-                    return Err(InstanceCallError::FunctionNotFound);
-                }
-
-                let breakpoint_value =
-                    self.inner_instance_ref
-                        .get_breakpoint_value()
-                        .map_err(|err| {
-                            InstanceCallError::RuntimeError(
-                                anyhow!("wrapped instance error: {err}").into(),
-                            )
-                        })?;
+                let breakpoint_value = self
+                    .inner_instance_ref
+                    .get_breakpoint_value()
+                    .map_err(wrap_runtime_error)?;
 
                 if breakpoint_value != BreakpointValue::None {
                     return Err(InstanceCallError::Breakpoint(breakpoint_value));
                 }
 
-                Err(InstanceCallError::RuntimeError(
-                    anyhow!("wrapped instance error: {err}").into(),
-                ))
+                Err(wrap_runtime_error(err))
             }
         }
     }
