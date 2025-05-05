@@ -116,6 +116,16 @@ impl ExperimentalInstance {
             inner,
         })
     }
+
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
+        let value = get_breakpoint_value(
+            &self.inner.wasmer_instance,
+            &mut self.wasmer_store.borrow_mut(),
+        )?;
+        value
+            .try_into()
+            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
+    }
 }
 
 fn get_memory_ref<'a>(
@@ -292,31 +302,12 @@ impl Instance for ExperimentalInstance {
             .collect()
     }
 
-    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError> {
-        set_points_limit(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-            limit,
-        )
-        .map_err(|err| err.into())
-    }
-
     fn get_points_used(&self) -> Result<u64, ExecutorError> {
         get_points_used(
             &self.inner.wasmer_instance,
             &mut self.wasmer_store.borrow_mut(),
         )
         .map_err(|err| err.into())
-    }
-
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
-        let value = get_breakpoint_value(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-        )?;
-        value
-            .try_into()
-            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {

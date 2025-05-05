@@ -60,21 +60,9 @@ impl Instance for WasmerProdInstance {
         self.inner_instance_ref.get_exported_function_names()
     }
 
-    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError> {
-        self.inner_instance_ref
-            .set_points_limit(limit)
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
-    }
-
     fn get_points_used(&self) -> Result<u64, ExecutorError> {
         self.inner_instance_ref
             .get_points_used()
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
-    }
-
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
-        self.inner_instance_ref
-            .get_breakpoint_value()
             .map_err(|err| anyhow!("wrapped instance error: {err}").into())
     }
 
