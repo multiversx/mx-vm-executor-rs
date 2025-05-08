@@ -8,8 +8,9 @@ mod missing_wasm;
 mod opcode_cost;
 mod service_error;
 mod service_trait;
-mod vh_hooks_legacy_adapter;
 mod vm_hooks;
+mod vm_hooks_early_exit;
+mod vm_hooks_legacy_adapter;
 mod vm_hooks_new;
 
 pub use breakpoint_value::*;
@@ -22,6 +23,10 @@ pub use missing_wasm::{check_missing_wasm, MissingWasmError};
 pub use opcode_cost::OpcodeCost;
 pub use service_error::ServiceError;
 pub use service_trait::*;
-pub use vh_hooks_legacy_adapter::VMHooksLegacyAdapter;
 pub use vm_hooks::{VMHooksLegacy, VMHooksLegacyDefault};
-pub use vm_hooks_new::{VMHooks, VMHooksDefault, VMHooksError};
+pub use vm_hooks_early_exit::VMHooksEarlyExit;
+pub use vm_hooks_legacy_adapter::VMHooksLegacyAdapter;
+pub use vm_hooks_new::{VMHooks, VMHooksDefault};
+
+/// Temporary. TODO: delete.
+pub type VMHooksError = VMHooksEarlyExit;

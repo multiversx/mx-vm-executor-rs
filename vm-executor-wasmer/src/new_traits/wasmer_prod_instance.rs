@@ -17,33 +17,35 @@ impl WasmerProdInstance {
     }
 }
 
+fn wrap_runtime_error(err: String) -> InstanceCallError {
+    InstanceCallError::RuntimeError(anyhow!("wrapped instance error: {err}").into())
+}
+
 impl Instance for WasmerProdInstance {
     fn call(&self, func_name: &str) -> Result<(), InstanceCallError> {
+        if !self.inner_instance_ref.has_function(func_name) {
+            return Err(InstanceCallError::FunctionNotFound);
+        }
+
         let result = self.inner_instance_ref.call(func_name);
 
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
-                if err == "function not found" {
-                    return Err(InstanceCallError::FunctionNotFound);
+                if let Some(early_exit) = self.inner_instance_ref.take_early_exit() {
+                    return Err(InstanceCallError::VMHooksEarlyExit(early_exit));
                 }
 
-                let breakpoint_value =
-                    self.inner_instance_ref
-                        .get_breakpoint_value()
-                        .map_err(|err| {
-                            InstanceCallError::RuntimeError(
-                                anyhow!("wrapped instance error: {err}").into(),
-                            )
-                        })?;
+                let breakpoint_value = self
+                    .inner_instance_ref
+                    .get_breakpoint_value()
+                    .map_err(wrap_runtime_error)?;
 
                 if breakpoint_value != BreakpointValue::None {
                     return Err(InstanceCallError::Breakpoint(breakpoint_value));
                 }
 
-                Err(InstanceCallError::RuntimeError(
-                    anyhow!("wrapped instance error: {err}").into(),
-                ))
+                Err(wrap_runtime_error(err))
             }
         }
     }
@@ -60,21 +62,9 @@ impl Instance for WasmerProdInstance {
         self.inner_instance_ref.get_exported_function_names()
     }
 
-    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError> {
-        self.inner_instance_ref
-            .set_points_limit(limit)
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
-    }
-
     fn get_points_used(&self) -> Result<u64, ExecutorError> {
         self.inner_instance_ref
             .get_points_used()
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
-    }
-
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
-        self.inner_instance_ref
-            .get_breakpoint_value()
             .map_err(|err| anyhow!("wrapped instance error: {err}").into())
     }
 

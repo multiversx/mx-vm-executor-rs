@@ -1,9 +1,9 @@
-use crate::{BreakpointValue, ExecutorError, VMHooksError};
+use crate::{BreakpointValue, ExecutorError, VMHooksEarlyExit};
 
 pub enum InstanceCallError {
     FunctionNotFound,
     RuntimeError(ExecutorError),
-    VMHooksError(VMHooksError),
+    VMHooksEarlyExit(VMHooksEarlyExit),
     Breakpoint(BreakpointValue),
 }
 
@@ -21,14 +21,8 @@ pub trait Instance {
     /// Required to be able to extract all SC endpoint names.
     fn get_exported_function_names(&self) -> Vec<String>;
 
-    /// Sets the number of points(gas) limit for the given instance.
-    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError>;
-
     /// Returns the number of points(gas) used by the given instance.
     fn get_points_used(&self) -> Result<u64, ExecutorError>;
-
-    /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), ExecutorError>;

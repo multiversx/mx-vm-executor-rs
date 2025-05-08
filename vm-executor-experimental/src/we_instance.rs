@@ -11,7 +11,7 @@ use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallError,
-    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksError,
+    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksEarlyExit,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
@@ -115,6 +115,16 @@ impl ExperimentalInstance {
             wasmer_store: RefCell::new(store),
             inner,
         })
+    }
+
+    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
+        let value = get_breakpoint_value(
+            &self.inner.wasmer_instance,
+            &mut self.wasmer_store.borrow_mut(),
+        )?;
+        value
+            .try_into()
+            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
     }
 }
 
@@ -237,8 +247,8 @@ impl Instance for ExperimentalInstance {
             Err(runtime_error) => {
                 trace!("Call failed: {func_name} - {runtime_error}");
 
-                match runtime_error.downcast::<VMHooksError>() {
-                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksError(vm_hooks_error)),
+                match runtime_error.downcast::<VMHooksEarlyExit>() {
+                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksEarlyExit(vm_hooks_error)),
                     Err(other_error) => {
                         let breakpoint = self
                             .get_breakpoint_value()
@@ -292,31 +302,12 @@ impl Instance for ExperimentalInstance {
             .collect()
     }
 
-    fn set_points_limit(&self, limit: u64) -> Result<(), ExecutorError> {
-        set_points_limit(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-            limit,
-        )
-        .map_err(|err| err.into())
-    }
-
     fn get_points_used(&self) -> Result<u64, ExecutorError> {
         get_points_used(
             &self.inner.wasmer_instance,
             &mut self.wasmer_store.borrow_mut(),
         )
         .map_err(|err| err.into())
-    }
-
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
-        let value = get_breakpoint_value(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-        )?;
-        value
-            .try_into()
-            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {
