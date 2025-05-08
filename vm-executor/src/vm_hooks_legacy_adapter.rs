@@ -6,20 +6,20 @@
 
 use std::ffi::c_void;
 
-use crate::{BreakpointValue, MemLength, MemPtr, VMHooks, VMHooksEarlyExit, VMHooksLegacy};
+use crate::{MemLength, MemPtr, VMHooks, VMHooksEarlyExit, VMHooksLegacy};
 
 /// Allow conversion from the new VMHooks to the old.
 ///
 /// Will eventually be removed, once everything gets migrated.
 pub trait VMHooksLegacyAdapter: VMHooks {
-    fn set_breakpoint_value(&self, value: BreakpointValue);
+    fn set_early_exit(&self, early_exit: VMHooksEarlyExit);
 
     fn unwrap_or_set_breakpoint<R>(&mut self, result: Result<R, VMHooksEarlyExit>) -> R
     where
         R: Default,
     {
-        result.unwrap_or_else(|err| {
-            self.set_breakpoint_value(err.to_legacy_breakpoint());
+        result.unwrap_or_else(|early_exit| {
+            self.set_early_exit(early_exit);
             R::default()
         })
     }
