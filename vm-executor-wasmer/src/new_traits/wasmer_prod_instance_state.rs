@@ -2,6 +2,7 @@ use crate::WasmerInstance;
 use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
     BreakpointValue, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
+    VMHooksEarlyExit,
 };
 
 use std::rc::{Rc, Weak};
@@ -27,6 +28,10 @@ impl WasmerProdInstanceState {
             .unwrap()
             .set_breakpoint_value(value)
             .expect("set_breakpoint_value_legacy globals error");
+    }
+
+    pub fn set_early_exit(&self, early_exit: VMHooksEarlyExit) {
+        self.instance_rc().unwrap().set_early_exit(early_exit);
     }
 }
 

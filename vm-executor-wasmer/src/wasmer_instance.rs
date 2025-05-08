@@ -7,7 +7,7 @@ use crate::{
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost, ServiceError,
-    VMHooksLegacy,
+    VMHooksEarlyExit, VMHooksLegacy,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -23,6 +23,7 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct WasmerInstance {
     wasmer_instance: wasmer::Instance,
     memory_name: String,
+    early_exit_cell: RefCell<Option<VMHooksEarlyExit>>,
 }
 
 impl WasmerInstance {
@@ -68,6 +69,7 @@ impl WasmerInstance {
         Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
+            early_exit_cell: RefCell::new(None),
         })
     }
 
@@ -116,6 +118,7 @@ impl WasmerInstance {
         Ok(WasmerInstance {
             wasmer_instance,
             memory_name,
+            early_exit_cell: RefCell::new(None),
         })
     }
 
@@ -125,6 +128,14 @@ impl WasmerInstance {
             Ok(memory) => Ok(memory),
             Err(err) => Err(err.to_string()),
         }
+    }
+
+    pub fn set_early_exit(&self, early_exit: VMHooksEarlyExit) {
+        *self.early_exit_cell.borrow_mut() = Some(early_exit);
+    }
+
+    pub fn take_early_exit(&self) -> Option<VMHooksEarlyExit> {
+        self.early_exit_cell.take()
     }
 }
 

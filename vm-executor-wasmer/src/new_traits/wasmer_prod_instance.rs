@@ -32,6 +32,10 @@ impl Instance for WasmerProdInstance {
         match result {
             Ok(()) => Ok(()),
             Err(err) => {
+                if let Some(early_exit) = self.inner_instance_ref.take_early_exit() {
+                    return Err(InstanceCallError::VMHooksEarlyExit(early_exit));
+                }
+
                 let breakpoint_value = self
                     .inner_instance_ref
                     .get_breakpoint_value()
