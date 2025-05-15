@@ -1,3 +1,4 @@
+mod breakpoint_value_new;
 mod executor_new;
 mod instance_new;
 mod instance_state;
@@ -5,6 +6,7 @@ mod vm_hooks_early_exit;
 mod vm_hooks_legacy_adapter;
 mod vm_hooks_new;
 
+pub use breakpoint_value_new::BreakpointValue;
 pub use executor_new::Executor;
 pub use instance_new::{Instance, InstanceCallResult};
 pub use instance_state::InstanceState;

@@ -1,7 +1,8 @@
 use crate::WasmerInstance;
 use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, ExecutorError, Instance, InstanceCallResult, InstanceLegacy,
+    BreakpointValue, BreakpointValueLegacy, ExecutorError, Instance, InstanceCallResult,
+    InstanceLegacy,
 };
 
 use std::rc::Rc;
@@ -43,11 +44,15 @@ impl Instance for WasmerProdInstance {
                     }
                 };
 
-                if breakpoint_value != BreakpointValue::None {
-                    return InstanceCallResult::Breakpoint(breakpoint_value);
+                match breakpoint_value {
+                    BreakpointValueLegacy::OutOfGas => {
+                        InstanceCallResult::Breakpoint(BreakpointValue::OutOfGas)
+                    }
+                    BreakpointValueLegacy::MemoryLimit => {
+                        InstanceCallResult::Breakpoint(BreakpointValue::MemoryLimit)
+                    }
+                    _ => wrap_runtime_error(err),
                 }
-
-                wrap_runtime_error(err)
             }
         }
     }

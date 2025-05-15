@@ -1,4 +1,4 @@
-use crate::{BreakpointValue, ExecutorError, MemLength, MemPtr};
+use crate::{BreakpointValueLegacy, ExecutorError, MemLength, MemPtr};
 
 /// The old instance trait, used both:
 /// - from the "outside": configuring & calling the instance;
@@ -41,10 +41,10 @@ pub trait InstanceLegacy {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String>;
+    fn set_breakpoint_value(&self, value: BreakpointValueLegacy) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValueLegacy, String>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), String>;
