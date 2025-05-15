@@ -6,7 +6,7 @@ mod vm_hooks_legacy_adapter;
 mod vm_hooks_new;
 
 pub use executor_new::Executor;
-pub use instance_new::{Instance, InstanceCallError};
+pub use instance_new::{Instance, InstanceCallResult};
 pub use instance_state::InstanceState;
 pub use vm_hooks_early_exit::VMHooksEarlyExit;
 pub use vm_hooks_legacy_adapter::VMHooksLegacyAdapter;

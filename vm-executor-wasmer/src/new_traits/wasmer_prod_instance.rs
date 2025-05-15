@@ -1,7 +1,7 @@
 use crate::WasmerInstance;
 use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, ExecutorError, Instance, InstanceCallError, InstanceLegacy,
+    BreakpointValue, ExecutorError, Instance, InstanceCallResult, InstanceLegacy,
 };
 
 use std::rc::Rc;
@@ -17,35 +17,37 @@ impl WasmerProdInstance {
     }
 }
 
-fn wrap_runtime_error(err: String) -> InstanceCallError {
-    InstanceCallError::RuntimeError(anyhow!("wrapped instance error: {err}").into())
+fn wrap_runtime_error(err: String) -> InstanceCallResult {
+    InstanceCallResult::RuntimeError(anyhow!("wrapped instance error: {err}").into())
 }
 
 impl Instance for WasmerProdInstance {
-    fn call(&self, func_name: &str) -> Result<(), InstanceCallError> {
+    fn call(&self, func_name: &str) -> InstanceCallResult {
         if !self.inner_instance_ref.has_function(func_name) {
-            return Err(InstanceCallError::FunctionNotFound);
+            return InstanceCallResult::FunctionNotFound;
         }
 
         let result = self.inner_instance_ref.call(func_name);
 
         match result {
-            Ok(()) => Ok(()),
+            Ok(()) => InstanceCallResult::Ok,
             Err(err) => {
                 if let Some(early_exit) = self.inner_instance_ref.take_early_exit() {
-                    return Err(InstanceCallError::VMHooksEarlyExit(early_exit));
+                    return InstanceCallResult::VMHooksEarlyExit(early_exit);
                 }
 
-                let breakpoint_value = self
-                    .inner_instance_ref
-                    .get_breakpoint_value()
-                    .map_err(wrap_runtime_error)?;
+                let breakpoint_value = match self.inner_instance_ref.get_breakpoint_value() {
+                    Ok(breakpoint_value) => breakpoint_value,
+                    Err(err) => {
+                        return wrap_runtime_error(err);
+                    }
+                };
 
                 if breakpoint_value != BreakpointValue::None {
-                    return Err(InstanceCallError::Breakpoint(breakpoint_value));
+                    return InstanceCallResult::Breakpoint(breakpoint_value);
                 }
 
-                Err(wrap_runtime_error(err))
+                wrap_runtime_error(err)
             }
         }
     }
