@@ -1,20 +1,4 @@
-use crate::{BreakpointValue, ExecutorError};
-
-pub struct CompilationOptions {
-    pub gas_limit: u64,
-    pub unmetered_locals: usize,
-    pub max_memory_grow: usize,
-    pub max_memory_grow_delta: usize,
-    pub opcode_trace: bool,
-    pub metering: bool,
-    pub runtime_breakpoints: bool,
-}
-
-/// The argument type for dealing with executor memory pointers.
-pub type MemPtr = isize;
-
-/// The argument type for dealing with lengths of slices of the executor memory.
-pub type MemLength = isize;
+use crate::{BreakpointValue, ExecutorError, MemLength, MemPtr};
 
 /// The old instance trait, used both:
 /// - from the "outside": configuring & calling the instance;
