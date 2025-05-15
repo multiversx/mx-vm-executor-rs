@@ -1,4 +1,4 @@
-use crate::{BreakpointValue, ExecutorError, MemLength, MemPtr};
+use crate::{ExecutorError, MemLength, MemPtr};
 
 /// The interface through which VM hooks update the instance state.
 pub trait InstanceState {
@@ -23,7 +23,4 @@ pub trait InstanceState {
 
     /// Loads data to given slice. In certain cases
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError>;
-
-    /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError>;
 }

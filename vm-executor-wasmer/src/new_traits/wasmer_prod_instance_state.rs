@@ -73,10 +73,4 @@ impl InstanceState for WasmerProdInstanceState {
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
         self.instance_rc()?.memory_store(mem_ptr, data)
     }
-
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
-        self.instance_rc()?
-            .set_breakpoint_value(value.to_legacy())
-            .map_err(|err| anyhow!("globals error: {err}").into())
-    }
 }

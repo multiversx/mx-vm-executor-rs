@@ -80,14 +80,4 @@ impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
         memory_view.write(offset as u64, data)?;
         Ok(())
     }
-
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
-        let wasmer_inner = self.get_wasmer_inner()?;
-        set_breakpoint_value(
-            &wasmer_inner.wasmer_instance,
-            self.store_mut,
-            value.as_u64(),
-        )
-        .map_err(|err| err.into())
-    }
 }

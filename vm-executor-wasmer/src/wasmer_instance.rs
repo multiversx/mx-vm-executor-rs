@@ -6,8 +6,8 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValueLegacy, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost, ServiceError,
-    VMHooksEarlyExit, VMHooksLegacy,
+    BreakpointValueLegacy, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost,
+    ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
