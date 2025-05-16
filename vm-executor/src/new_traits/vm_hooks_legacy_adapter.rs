@@ -18,19 +18,25 @@ pub trait VMHooksSetEarlyExit: VMHooks {
 /// Will eventually be removed, once everything gets migrated.
 #[derive(Debug)]
 pub struct VMHooksLegacyAdapter<VH: VMHooksSetEarlyExit> {
-    inner: RefCell<VH>,
+    inner_cell: RefCell<VH>,
 }
 
 impl<VH: VMHooksSetEarlyExit> VMHooksLegacyAdapter<VH> {
+    pub fn new(inner: VH) -> Self {
+        VMHooksLegacyAdapter {
+            inner_cell: RefCell::new(inner),
+        }
+    }
+
     fn adapt_vm_hooks<F, R>(&self, f: F) -> R
     where
         R: Default,
         F: FnOnce(&mut dyn VMHooks) -> Result<R, VMHooksEarlyExit>,
     {
-        let mut vm_hooks = self.inner.borrow_mut();
+        let mut vm_hooks = self.inner_cell.borrow_mut();
         let result = f(&mut *vm_hooks);
         result.unwrap_or_else(|early_exit| {
-            self.inner.borrow().set_early_exit(early_exit);
+            self.inner_cell.borrow().set_early_exit(early_exit);
             R::default()
         })
     }
