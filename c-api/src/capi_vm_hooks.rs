@@ -24,11 +24,11 @@ impl CapiVMHooks {
         }
     }
 
-    fn convert_mem_ptr(&mut self, mem_ptr: MemPtr) -> i32 {
+    fn convert_mem_ptr(&self, mem_ptr: MemPtr) -> i32 {
         mem_ptr as i32
     }
 
-    fn convert_mem_length(&mut self, mem_length: MemLength) -> i32 {
+    fn convert_mem_length(&self, mem_length: MemLength) -> i32 {
         mem_length as i32
     }
 }
@@ -39,1051 +39,1051 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         self.vm_hooks_ptr = vm_hooks_ptr;
     }
 
-    fn get_gas_left(&mut self) -> i64 {
+    fn get_gas_left(&self) -> i64 {
         (self.c_func_pointers_ptr.get_gas_left_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_sc_address(&mut self, result_offset: MemPtr) {
+    fn get_sc_address(&self, result_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_sc_address_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_owner_address(&mut self, result_offset: MemPtr) {
+    fn get_owner_address(&self, result_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_owner_address_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_shard_of_address(&mut self, address_offset: MemPtr) -> i32 {
+    fn get_shard_of_address(&self, address_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_shard_of_address_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset))
     }
 
-    fn is_smart_contract(&mut self, address_offset: MemPtr) -> i32 {
+    fn is_smart_contract(&self, address_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.is_smart_contract_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset))
     }
 
-    fn signal_error(&mut self, message_offset: MemPtr, message_length: MemLength) {
+    fn signal_error(&self, message_offset: MemPtr, message_length: MemLength) {
         (self.c_func_pointers_ptr.signal_error_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(message_offset), self.convert_mem_length(message_length))
     }
 
-    fn get_external_balance(&mut self, address_offset: MemPtr, result_offset: MemPtr) {
+    fn get_external_balance(&self, address_offset: MemPtr, result_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_external_balance_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(result_offset))
     }
 
-    fn get_block_hash(&mut self, nonce: i64, result_offset: MemPtr) -> i32 {
+    fn get_block_hash(&self, nonce: i64, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_block_hash_func_ptr)(self.vm_hooks_ptr, nonce, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_esdt_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32 {
+    fn get_esdt_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_balance_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_esdt_nft_name_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_name_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_nft_name_length_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce)
     }
 
-    fn get_esdt_nft_attribute_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_attribute_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_nft_attribute_length_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce)
     }
 
-    fn get_esdt_nft_uri_length(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
+    fn get_esdt_nft_uri_length(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_nft_uri_length_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce)
     }
 
-    fn get_esdt_token_data(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32 {
+    fn get_esdt_token_data(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, value_handle: i32, properties_offset: MemPtr, hash_offset: MemPtr, name_offset: MemPtr, attributes_offset: MemPtr, creator_offset: MemPtr, royalties_handle: i32, uris_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_token_data_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce, value_handle, self.convert_mem_ptr(properties_offset), self.convert_mem_ptr(hash_offset), self.convert_mem_ptr(name_offset), self.convert_mem_ptr(attributes_offset), self.convert_mem_ptr(creator_offset), royalties_handle, self.convert_mem_ptr(uris_offset))
     }
 
-    fn get_esdt_local_roles(&mut self, token_id_handle: i32) -> i64 {
+    fn get_esdt_local_roles(&self, token_id_handle: i32) -> i64 {
         (self.c_func_pointers_ptr.get_esdt_local_roles_func_ptr)(self.vm_hooks_ptr, token_id_handle)
     }
 
-    fn validate_token_identifier(&mut self, token_id_handle: i32) -> i32 {
+    fn validate_token_identifier(&self, token_id_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.validate_token_identifier_func_ptr)(self.vm_hooks_ptr, token_id_handle)
     }
 
-    fn transfer_value(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn transfer_value(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.transfer_value_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn transfer_value_execute(&mut self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_value_execute(&self, dest_offset: MemPtr, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.transfer_value_execute_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), gas_limit, self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn transfer_esdt_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_esdt_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.transfer_esdt_execute_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), self.convert_mem_ptr(value_offset), gas_limit, self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn transfer_esdt_nft_execute(&self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), self.convert_mem_ptr(value_offset), nonce, gas_limit, self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn multi_transfer_esdt_nft_execute(&self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), num_token_transfers, self.convert_mem_ptr(token_transfers_args_length_offset), self.convert_mem_ptr(token_transfer_data_offset), gas_limit, self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
+    fn create_async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
         (self.c_func_pointers_ptr.create_async_call_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length), self.convert_mem_ptr(success_offset), self.convert_mem_length(success_length), self.convert_mem_ptr(error_offset), self.convert_mem_length(error_length), gas, extra_gas_for_callback)
     }
 
-    fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
+    fn set_async_context_callback(&self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
         (self.c_func_pointers_ptr.set_async_context_callback_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(callback), self.convert_mem_length(callback_length), self.convert_mem_ptr(data), self.convert_mem_length(data_length), gas)
     }
 
-    fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn upgrade_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.upgrade_contract_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), gas_limit, self.convert_mem_ptr(value_offset), self.convert_mem_ptr(code_offset), self.convert_mem_ptr(code_metadata_offset), self.convert_mem_length(length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn upgrade_from_source_contract(&self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.upgrade_from_source_contract_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), gas_limit, self.convert_mem_ptr(value_offset), self.convert_mem_ptr(source_contract_address_offset), self.convert_mem_ptr(code_metadata_offset), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn delete_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
+    fn delete_contract(&self, dest_offset: MemPtr, gas_limit: i64, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.delete_contract_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), gas_limit, num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) {
+    fn async_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, length: MemLength) {
         (self.c_func_pointers_ptr.async_call_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn get_argument_length(&mut self, id: i32) -> i32 {
+    fn get_argument_length(&self, id: i32) -> i32 {
         (self.c_func_pointers_ptr.get_argument_length_func_ptr)(self.vm_hooks_ptr, id)
     }
 
-    fn get_argument(&mut self, id: i32, arg_offset: MemPtr) -> i32 {
+    fn get_argument(&self, id: i32, arg_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_argument_func_ptr)(self.vm_hooks_ptr, id, self.convert_mem_ptr(arg_offset))
     }
 
-    fn get_function(&mut self, function_offset: MemPtr) -> i32 {
+    fn get_function(&self, function_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_function_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(function_offset))
     }
 
-    fn get_num_arguments(&mut self) -> i32 {
+    fn get_num_arguments(&self) -> i32 {
         (self.c_func_pointers_ptr.get_num_arguments_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn storage_store(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr, data_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.storage_store_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn storage_load_length(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn storage_load_length(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.storage_load_length_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn storage_load_from_address(&mut self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn storage_load_from_address(&self, address_offset: MemPtr, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.storage_load_from_address_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), self.convert_mem_ptr(data_offset))
     }
 
-    fn storage_load(&mut self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn storage_load(&self, key_offset: MemPtr, key_length: MemLength, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.storage_load_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), self.convert_mem_ptr(data_offset))
     }
 
-    fn set_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32 {
+    fn set_storage_lock(&self, key_offset: MemPtr, key_length: MemLength, lock_timestamp: i64) -> i32 {
         (self.c_func_pointers_ptr.set_storage_lock_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), lock_timestamp)
     }
 
-    fn get_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn get_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         (self.c_func_pointers_ptr.get_storage_lock_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn is_storage_locked(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn is_storage_locked(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.is_storage_locked_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn clear_storage_lock(&mut self, key_offset: MemPtr, key_length: MemLength) -> i32 {
+    fn clear_storage_lock(&self, key_offset: MemPtr, key_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.clear_storage_lock_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn get_caller(&mut self, result_offset: MemPtr) {
+    fn get_caller(&self, result_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_caller_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn check_no_payment(&mut self) {
+    fn check_no_payment(&self) {
         (self.c_func_pointers_ptr.check_no_payment_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_call_value(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_call_value(&self, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_call_value_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_esdt_value(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_esdt_value(&self, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_value_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_esdt_value_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32 {
+    fn get_esdt_value_by_index(&self, result_offset: MemPtr, index: i32) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_value_by_index_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset), index)
     }
 
-    fn get_esdt_token_name(&mut self, result_offset: MemPtr) -> i32 {
+    fn get_esdt_token_name(&self, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_token_name_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset))
     }
 
-    fn get_esdt_token_name_by_index(&mut self, result_offset: MemPtr, index: i32) -> i32 {
+    fn get_esdt_token_name_by_index(&self, result_offset: MemPtr, index: i32) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_token_name_by_index_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(result_offset), index)
     }
 
-    fn get_esdt_token_nonce(&mut self) -> i64 {
+    fn get_esdt_token_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_esdt_token_nonce_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_esdt_token_nonce_by_index(&mut self, index: i32) -> i64 {
+    fn get_esdt_token_nonce_by_index(&self, index: i32) -> i64 {
         (self.c_func_pointers_ptr.get_esdt_token_nonce_by_index_func_ptr)(self.vm_hooks_ptr, index)
     }
 
-    fn get_current_esdt_nft_nonce(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64 {
+    fn get_current_esdt_nft_nonce(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength) -> i64 {
         (self.c_func_pointers_ptr.get_current_esdt_nft_nonce_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len))
     }
 
-    fn get_esdt_token_type(&mut self) -> i32 {
+    fn get_esdt_token_type(&self) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_token_type_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_esdt_token_type_by_index(&mut self, index: i32) -> i32 {
+    fn get_esdt_token_type_by_index(&self, index: i32) -> i32 {
         (self.c_func_pointers_ptr.get_esdt_token_type_by_index_func_ptr)(self.vm_hooks_ptr, index)
     }
 
-    fn get_num_esdt_transfers(&mut self) -> i32 {
+    fn get_num_esdt_transfers(&self) -> i32 {
         (self.c_func_pointers_ptr.get_num_esdt_transfers_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_call_value_token_name(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32 {
+    fn get_call_value_token_name(&self, call_value_offset: MemPtr, token_name_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_call_value_token_name_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(call_value_offset), self.convert_mem_ptr(token_name_offset))
     }
 
-    fn get_call_value_token_name_by_index(&mut self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32 {
+    fn get_call_value_token_name_by_index(&self, call_value_offset: MemPtr, token_name_offset: MemPtr, index: i32) -> i32 {
         (self.c_func_pointers_ptr.get_call_value_token_name_by_index_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(call_value_offset), self.convert_mem_ptr(token_name_offset), index)
     }
 
-    fn is_reserved_function_name(&mut self, name_handle: i32) -> i32 {
+    fn is_reserved_function_name(&self, name_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.is_reserved_function_name_func_ptr)(self.vm_hooks_ptr, name_handle)
     }
 
-    fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
+    fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) {
         (self.c_func_pointers_ptr.write_log_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_pointer), self.convert_mem_length(data_length), self.convert_mem_ptr(topic_ptr), num_topics)
     }
 
-    fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) {
+    fn write_event_log(&self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) {
         (self.c_func_pointers_ptr.write_event_log_func_ptr)(self.vm_hooks_ptr, num_topics, self.convert_mem_ptr(topic_lengths_offset), self.convert_mem_ptr(topic_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn get_block_timestamp(&mut self) -> i64 {
+    fn get_block_timestamp(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_block_nonce(&mut self) -> i64 {
+    fn get_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_block_round(&mut self) -> i64 {
+    fn get_block_round(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_round_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_block_epoch(&mut self) -> i64 {
+    fn get_block_epoch(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_epoch_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_block_random_seed(&mut self, pointer: MemPtr) {
+    fn get_block_random_seed(&self, pointer: MemPtr) {
         (self.c_func_pointers_ptr.get_block_random_seed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
     }
 
-    fn get_state_root_hash(&mut self, pointer: MemPtr) {
+    fn get_state_root_hash(&self, pointer: MemPtr) {
         (self.c_func_pointers_ptr.get_state_root_hash_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
     }
 
-    fn get_prev_block_timestamp(&mut self) -> i64 {
+    fn get_prev_block_timestamp(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_prev_block_nonce(&mut self) -> i64 {
+    fn get_prev_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_prev_block_round(&mut self) -> i64 {
+    fn get_prev_block_round(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_round_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_prev_block_epoch(&mut self) -> i64 {
+    fn get_prev_block_epoch(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_epoch_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_prev_block_random_seed(&mut self, pointer: MemPtr) {
+    fn get_prev_block_random_seed(&self, pointer: MemPtr) {
         (self.c_func_pointers_ptr.get_prev_block_random_seed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
     }
 
-    fn finish(&mut self, pointer: MemPtr, length: MemLength) {
+    fn finish(&self, pointer: MemPtr, length: MemLength) {
         (self.c_func_pointers_ptr.finish_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer), self.convert_mem_length(length))
     }
 
-    fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_on_same_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.execute_on_same_context_func_ptr)(self.vm_hooks_ptr, gas_limit, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_on_dest_context(&self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.execute_on_dest_context_func_ptr)(self.vm_hooks_ptr, gas_limit, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn execute_read_only(&mut self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn execute_read_only(&self, gas_limit: i64, address_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.execute_read_only_func_ptr)(self.vm_hooks_ptr, gas_limit, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(function_offset), self.convert_mem_length(function_length), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn create_contract(&mut self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn create_contract(&self, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, result_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.create_contract_func_ptr)(self.vm_hooks_ptr, gas_limit, self.convert_mem_ptr(value_offset), self.convert_mem_ptr(code_offset), self.convert_mem_ptr(code_metadata_offset), self.convert_mem_length(length), self.convert_mem_ptr(result_offset), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn deploy_from_source_contract(&mut self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
+    fn deploy_from_source_contract(&self, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, result_address_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.deploy_from_source_contract_func_ptr)(self.vm_hooks_ptr, gas_limit, self.convert_mem_ptr(value_offset), self.convert_mem_ptr(source_contract_address_offset), self.convert_mem_ptr(code_metadata_offset), self.convert_mem_ptr(result_address_offset), num_arguments, self.convert_mem_ptr(arguments_length_offset), self.convert_mem_ptr(data_offset))
     }
 
-    fn get_num_return_data(&mut self) -> i32 {
+    fn get_num_return_data(&self) -> i32 {
         (self.c_func_pointers_ptr.get_num_return_data_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn get_return_data_size(&mut self, result_id: i32) -> i32 {
+    fn get_return_data_size(&self, result_id: i32) -> i32 {
         (self.c_func_pointers_ptr.get_return_data_size_func_ptr)(self.vm_hooks_ptr, result_id)
     }
 
-    fn get_return_data(&mut self, result_id: i32, data_offset: MemPtr) -> i32 {
+    fn get_return_data(&self, result_id: i32, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.get_return_data_func_ptr)(self.vm_hooks_ptr, result_id, self.convert_mem_ptr(data_offset))
     }
 
-    fn clean_return_data(&mut self) {
+    fn clean_return_data(&self) {
         (self.c_func_pointers_ptr.clean_return_data_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn delete_from_return_data(&mut self, result_id: i32) {
+    fn delete_from_return_data(&self, result_id: i32) {
         (self.c_func_pointers_ptr.delete_from_return_data_func_ptr)(self.vm_hooks_ptr, result_id)
     }
 
-    fn get_original_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_original_tx_hash(&self, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_original_tx_hash_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset))
     }
 
-    fn get_current_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_current_tx_hash(&self, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_current_tx_hash_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset))
     }
 
-    fn get_prev_tx_hash(&mut self, data_offset: MemPtr) {
+    fn get_prev_tx_hash(&self, data_offset: MemPtr) {
         (self.c_func_pointers_ptr.get_prev_tx_hash_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset))
     }
 
-    fn managed_sc_address(&mut self, destination_handle: i32) {
+    fn managed_sc_address(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.managed_sc_address_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn managed_owner_address(&mut self, destination_handle: i32) {
+    fn managed_owner_address(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.managed_owner_address_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn managed_caller(&mut self, destination_handle: i32) {
+    fn managed_caller(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.managed_caller_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn managed_get_original_caller_addr(&mut self, destination_handle: i32) {
+    fn managed_get_original_caller_addr(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_original_caller_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn managed_get_relayer_addr(&mut self, destination_handle: i32) {
+    fn managed_get_relayer_addr(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_relayer_addr_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn managed_signal_error(&mut self, err_handle: i32) {
+    fn managed_signal_error(&self, err_handle: i32) {
         (self.c_func_pointers_ptr.managed_signal_error_func_ptr)(self.vm_hooks_ptr, err_handle)
     }
 
-    fn managed_write_log(&mut self, topics_handle: i32, data_handle: i32) {
+    fn managed_write_log(&self, topics_handle: i32, data_handle: i32) {
         (self.c_func_pointers_ptr.managed_write_log_func_ptr)(self.vm_hooks_ptr, topics_handle, data_handle)
     }
 
-    fn managed_get_original_tx_hash(&mut self, result_handle: i32) {
+    fn managed_get_original_tx_hash(&self, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_original_tx_hash_func_ptr)(self.vm_hooks_ptr, result_handle)
     }
 
-    fn managed_get_state_root_hash(&mut self, result_handle: i32) {
+    fn managed_get_state_root_hash(&self, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_state_root_hash_func_ptr)(self.vm_hooks_ptr, result_handle)
     }
 
-    fn managed_get_block_random_seed(&mut self, result_handle: i32) {
+    fn managed_get_block_random_seed(&self, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_block_random_seed_func_ptr)(self.vm_hooks_ptr, result_handle)
     }
 
-    fn managed_get_prev_block_random_seed(&mut self, result_handle: i32) {
+    fn managed_get_prev_block_random_seed(&self, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_prev_block_random_seed_func_ptr)(self.vm_hooks_ptr, result_handle)
     }
 
-    fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32) {
+    fn managed_get_return_data(&self, result_id: i32, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_return_data_func_ptr)(self.vm_hooks_ptr, result_id, result_handle)
     }
 
-    fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32) {
+    fn managed_get_multi_esdt_call_value(&self, multi_call_value_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
-    fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
+    fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, egld_value_handle)
     }
 
-    fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
+    fn managed_get_esdt_balance(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_esdt_balance_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, value_handle)
     }
 
-    fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
+    fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_esdt_token_data_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
     }
 
-    fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
+    fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
         (self.c_func_pointers_ptr.managed_async_call_func_ptr)(self.vm_hooks_ptr, dest_handle, value_handle, function_handle, arguments_handle)
     }
 
-    fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
+    fn managed_create_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_create_async_call_func_ptr)(self.vm_hooks_ptr, dest_handle, value_handle, function_handle, arguments_handle, self.convert_mem_ptr(success_offset), self.convert_mem_length(success_length), self.convert_mem_ptr(error_offset), self.convert_mem_length(error_length), gas, extra_gas_for_callback, callback_closure_handle)
     }
 
-    fn managed_get_callback_closure(&mut self, callback_closure_handle: i32) {
+    fn managed_get_callback_closure(&self, callback_closure_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_callback_closure_func_ptr)(self.vm_hooks_ptr, callback_closure_handle)
     }
 
-    fn managed_upgrade_from_source_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    fn managed_upgrade_from_source_contract(&self, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_upgrade_from_source_contract_func_ptr)(self.vm_hooks_ptr, dest_handle, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_handle)
     }
 
-    fn managed_upgrade_contract(&mut self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
+    fn managed_upgrade_contract(&self, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
         (self.c_func_pointers_ptr.managed_upgrade_contract_func_ptr)(self.vm_hooks_ptr, dest_handle, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_handle)
     }
 
-    fn managed_delete_contract(&mut self, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
+    fn managed_delete_contract(&self, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
         (self.c_func_pointers_ptr.managed_delete_contract_func_ptr)(self.vm_hooks_ptr, dest_handle, gas_limit, arguments_handle)
     }
 
-    fn managed_deploy_from_source_contract(&mut self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    fn managed_deploy_from_source_contract(&self, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_deploy_from_source_contract_func_ptr)(self.vm_hooks_ptr, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
     }
 
-    fn managed_create_contract(&mut self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
+    fn managed_create_contract(&self, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_create_contract_func_ptr)(self.vm_hooks_ptr, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
     }
 
-    fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_read_only(&self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_execute_read_only_func_ptr)(self.vm_hooks_ptr, gas, address_handle, function_handle, arguments_handle, result_handle)
     }
 
-    fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_on_same_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_execute_on_same_context_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
     }
 
-    fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    fn managed_execute_on_dest_context(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_execute_on_dest_context_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
     }
 
-    fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
-    fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(self.vm_hooks_ptr, user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
-    fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    fn managed_transfer_value_execute(&self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_transfer_value_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, value_handle, gas_limit, function_handle, arguments_handle)
     }
 
-    fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
+    fn managed_is_esdt_frozen(&self, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
         (self.c_func_pointers_ptr.managed_is_esdt_frozen_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce)
     }
 
-    fn managed_is_esdt_limited_transfer(&mut self, token_id_handle: i32) -> i32 {
+    fn managed_is_esdt_limited_transfer(&self, token_id_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_is_esdt_limited_transfer_func_ptr)(self.vm_hooks_ptr, token_id_handle)
     }
 
-    fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> i32 {
+    fn managed_is_esdt_paused(&self, token_id_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_is_esdt_paused_func_ptr)(self.vm_hooks_ptr, token_id_handle)
     }
 
-    fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32) {
+    fn managed_buffer_to_hex(&self, source_handle: i32, dest_handle: i32) {
         (self.c_func_pointers_ptr.managed_buffer_to_hex_func_ptr)(self.vm_hooks_ptr, source_handle, dest_handle)
     }
 
-    fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) {
+    fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_code_metadata_func_ptr)(self.vm_hooks_ptr, address_handle, response_handle)
     }
 
-    fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> i32 {
+    fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_is_builtin_function_func_ptr)(self.vm_hooks_ptr, function_name_handle)
     }
 
-    fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
+    fn big_float_new_from_parts(&self, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
         (self.c_func_pointers_ptr.big_float_new_from_parts_func_ptr)(self.vm_hooks_ptr, integral_part, fractional_part, exponent)
     }
 
-    fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> i32 {
+    fn big_float_new_from_frac(&self, numerator: i64, denominator: i64) -> i32 {
         (self.c_func_pointers_ptr.big_float_new_from_frac_func_ptr)(self.vm_hooks_ptr, numerator, denominator)
     }
 
-    fn big_float_new_from_sci(&mut self, significand: i64, exponent: i64) -> i32 {
+    fn big_float_new_from_sci(&self, significand: i64, exponent: i64) -> i32 {
         (self.c_func_pointers_ptr.big_float_new_from_sci_func_ptr)(self.vm_hooks_ptr, significand, exponent)
     }
 
-    fn big_float_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_add(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_float_add_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_float_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_sub(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_float_sub_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_float_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_mul(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_float_mul_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_float_div(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_float_div(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_float_div_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_float_neg(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_neg(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_neg_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_float_clone(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_clone(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_clone_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_float_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32 {
+    fn big_float_cmp(&self, op1_handle: i32, op2_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_float_cmp_func_ptr)(self.vm_hooks_ptr, op1_handle, op2_handle)
     }
 
-    fn big_float_abs(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_abs(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_abs_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_float_sign(&mut self, op_handle: i32) -> i32 {
+    fn big_float_sign(&self, op_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_float_sign_func_ptr)(self.vm_hooks_ptr, op_handle)
     }
 
-    fn big_float_sqrt(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_float_sqrt(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_sqrt_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_float_pow(&mut self, destination_handle: i32, op_handle: i32, exponent: i32) {
+    fn big_float_pow(&self, destination_handle: i32, op_handle: i32, exponent: i32) {
         (self.c_func_pointers_ptr.big_float_pow_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle, exponent)
     }
 
-    fn big_float_floor(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_floor(&self, dest_big_int_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_floor_func_ptr)(self.vm_hooks_ptr, dest_big_int_handle, op_handle)
     }
 
-    fn big_float_ceil(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_ceil(&self, dest_big_int_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_ceil_func_ptr)(self.vm_hooks_ptr, dest_big_int_handle, op_handle)
     }
 
-    fn big_float_truncate(&mut self, dest_big_int_handle: i32, op_handle: i32) {
+    fn big_float_truncate(&self, dest_big_int_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_float_truncate_func_ptr)(self.vm_hooks_ptr, dest_big_int_handle, op_handle)
     }
 
-    fn big_float_set_int64(&mut self, destination_handle: i32, value: i64) {
+    fn big_float_set_int64(&self, destination_handle: i32, value: i64) {
         (self.c_func_pointers_ptr.big_float_set_int64_func_ptr)(self.vm_hooks_ptr, destination_handle, value)
     }
 
-    fn big_float_is_int(&mut self, op_handle: i32) -> i32 {
+    fn big_float_is_int(&self, op_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_float_is_int_func_ptr)(self.vm_hooks_ptr, op_handle)
     }
 
-    fn big_float_set_big_int(&mut self, destination_handle: i32, big_int_handle: i32) {
+    fn big_float_set_big_int(&self, destination_handle: i32, big_int_handle: i32) {
         (self.c_func_pointers_ptr.big_float_set_big_int_func_ptr)(self.vm_hooks_ptr, destination_handle, big_int_handle)
     }
 
-    fn big_float_get_const_pi(&mut self, destination_handle: i32) {
+    fn big_float_get_const_pi(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_float_get_const_pi_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn big_float_get_const_e(&mut self, destination_handle: i32) {
+    fn big_float_get_const_e(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_float_get_const_e_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn big_int_get_unsigned_argument(&mut self, id: i32, destination_handle: i32) {
+    fn big_int_get_unsigned_argument(&self, id: i32, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_int_get_unsigned_argument_func_ptr)(self.vm_hooks_ptr, id, destination_handle)
     }
 
-    fn big_int_get_signed_argument(&mut self, id: i32, destination_handle: i32) {
+    fn big_int_get_signed_argument(&self, id: i32, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_int_get_signed_argument_func_ptr)(self.vm_hooks_ptr, id, destination_handle)
     }
 
-    fn big_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32 {
+    fn big_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, source_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_storage_store_unsigned_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), source_handle)
     }
 
-    fn big_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32 {
+    fn big_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength, destination_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_storage_load_unsigned_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), destination_handle)
     }
 
-    fn big_int_get_call_value(&mut self, destination_handle: i32) {
+    fn big_int_get_call_value(&self, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_int_get_call_value_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn big_int_get_esdt_call_value(&mut self, destination: i32) {
+    fn big_int_get_esdt_call_value(&self, destination: i32) {
         (self.c_func_pointers_ptr.big_int_get_esdt_call_value_func_ptr)(self.vm_hooks_ptr, destination)
     }
 
-    fn big_int_get_esdt_call_value_by_index(&mut self, destination_handle: i32, index: i32) {
+    fn big_int_get_esdt_call_value_by_index(&self, destination_handle: i32, index: i32) {
         (self.c_func_pointers_ptr.big_int_get_esdt_call_value_by_index_func_ptr)(self.vm_hooks_ptr, destination_handle, index)
     }
 
-    fn big_int_get_external_balance(&mut self, address_offset: MemPtr, result: i32) {
+    fn big_int_get_external_balance(&self, address_offset: MemPtr, result: i32) {
         (self.c_func_pointers_ptr.big_int_get_external_balance_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), result)
     }
 
-    fn big_int_get_esdt_external_balance(&mut self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) {
+    fn big_int_get_esdt_external_balance(&self, address_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, nonce: i64, result_handle: i32) {
         (self.c_func_pointers_ptr.big_int_get_esdt_external_balance_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(address_offset), self.convert_mem_ptr(token_id_offset), self.convert_mem_length(token_id_len), nonce, result_handle)
     }
 
-    fn big_int_new(&mut self, small_value: i64) -> i32 {
+    fn big_int_new(&self, small_value: i64) -> i32 {
         (self.c_func_pointers_ptr.big_int_new_func_ptr)(self.vm_hooks_ptr, small_value)
     }
 
-    fn big_int_unsigned_byte_length(&mut self, reference_handle: i32) -> i32 {
+    fn big_int_unsigned_byte_length(&self, reference_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_unsigned_byte_length_func_ptr)(self.vm_hooks_ptr, reference_handle)
     }
 
-    fn big_int_signed_byte_length(&mut self, reference_handle: i32) -> i32 {
+    fn big_int_signed_byte_length(&self, reference_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_signed_byte_length_func_ptr)(self.vm_hooks_ptr, reference_handle)
     }
 
-    fn big_int_get_unsigned_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
+    fn big_int_get_unsigned_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.big_int_get_unsigned_bytes_func_ptr)(self.vm_hooks_ptr, reference_handle, self.convert_mem_ptr(byte_offset))
     }
 
-    fn big_int_get_signed_bytes(&mut self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
+    fn big_int_get_signed_bytes(&self, reference_handle: i32, byte_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.big_int_get_signed_bytes_func_ptr)(self.vm_hooks_ptr, reference_handle, self.convert_mem_ptr(byte_offset))
     }
 
-    fn big_int_set_unsigned_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
+    fn big_int_set_unsigned_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
         (self.c_func_pointers_ptr.big_int_set_unsigned_bytes_func_ptr)(self.vm_hooks_ptr, destination_handle, self.convert_mem_ptr(byte_offset), self.convert_mem_length(byte_length))
     }
 
-    fn big_int_set_signed_bytes(&mut self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
+    fn big_int_set_signed_bytes(&self, destination_handle: i32, byte_offset: MemPtr, byte_length: MemLength) {
         (self.c_func_pointers_ptr.big_int_set_signed_bytes_func_ptr)(self.vm_hooks_ptr, destination_handle, self.convert_mem_ptr(byte_offset), self.convert_mem_length(byte_length))
     }
 
-    fn big_int_is_int64(&mut self, destination_handle: i32) -> i32 {
+    fn big_int_is_int64(&self, destination_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_is_int64_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn big_int_get_int64(&mut self, destination_handle: i32) -> i64 {
+    fn big_int_get_int64(&self, destination_handle: i32) -> i64 {
         (self.c_func_pointers_ptr.big_int_get_int64_func_ptr)(self.vm_hooks_ptr, destination_handle)
     }
 
-    fn big_int_set_int64(&mut self, destination_handle: i32, value: i64) {
+    fn big_int_set_int64(&self, destination_handle: i32, value: i64) {
         (self.c_func_pointers_ptr.big_int_set_int64_func_ptr)(self.vm_hooks_ptr, destination_handle, value)
     }
 
-    fn big_int_add(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_add(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_add_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_sub(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_sub(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_sub_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_mul(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_mul(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_mul_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_tdiv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_tdiv(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_tdiv_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_tmod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_tmod(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_tmod_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_ediv(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_ediv(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_ediv_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_emod(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_emod(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_emod_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_sqrt(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_sqrt(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_int_sqrt_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_int_pow(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_pow(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_pow_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_log2(&mut self, op1_handle: i32) -> i32 {
+    fn big_int_log2(&self, op1_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_log2_func_ptr)(self.vm_hooks_ptr, op1_handle)
     }
 
-    fn big_int_abs(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_abs(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_int_abs_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_int_neg(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_neg(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_int_neg_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_int_sign(&mut self, op_handle: i32) -> i32 {
+    fn big_int_sign(&self, op_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_sign_func_ptr)(self.vm_hooks_ptr, op_handle)
     }
 
-    fn big_int_cmp(&mut self, op1_handle: i32, op2_handle: i32) -> i32 {
+    fn big_int_cmp(&self, op1_handle: i32, op2_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.big_int_cmp_func_ptr)(self.vm_hooks_ptr, op1_handle, op2_handle)
     }
 
-    fn big_int_not(&mut self, destination_handle: i32, op_handle: i32) {
+    fn big_int_not(&self, destination_handle: i32, op_handle: i32) {
         (self.c_func_pointers_ptr.big_int_not_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle)
     }
 
-    fn big_int_and(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_and(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_and_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_or(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_or(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_or_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_xor(&mut self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
+    fn big_int_xor(&self, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
         (self.c_func_pointers_ptr.big_int_xor_func_ptr)(self.vm_hooks_ptr, destination_handle, op1_handle, op2_handle)
     }
 
-    fn big_int_shr(&mut self, destination_handle: i32, op_handle: i32, bits: i32) {
+    fn big_int_shr(&self, destination_handle: i32, op_handle: i32, bits: i32) {
         (self.c_func_pointers_ptr.big_int_shr_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle, bits)
     }
 
-    fn big_int_shl(&mut self, destination_handle: i32, op_handle: i32, bits: i32) {
+    fn big_int_shl(&self, destination_handle: i32, op_handle: i32, bits: i32) {
         (self.c_func_pointers_ptr.big_int_shl_func_ptr)(self.vm_hooks_ptr, destination_handle, op_handle, bits)
     }
 
-    fn big_int_finish_unsigned(&mut self, reference_handle: i32) {
+    fn big_int_finish_unsigned(&self, reference_handle: i32) {
         (self.c_func_pointers_ptr.big_int_finish_unsigned_func_ptr)(self.vm_hooks_ptr, reference_handle)
     }
 
-    fn big_int_finish_signed(&mut self, reference_handle: i32) {
+    fn big_int_finish_signed(&self, reference_handle: i32) {
         (self.c_func_pointers_ptr.big_int_finish_signed_func_ptr)(self.vm_hooks_ptr, reference_handle)
     }
 
-    fn big_int_to_string(&mut self, big_int_handle: i32, destination_handle: i32) {
+    fn big_int_to_string(&self, big_int_handle: i32, destination_handle: i32) {
         (self.c_func_pointers_ptr.big_int_to_string_func_ptr)(self.vm_hooks_ptr, big_int_handle, destination_handle)
     }
 
-    fn mbuffer_new(&mut self) -> i32 {
+    fn mbuffer_new(&self) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_new_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn mbuffer_new_from_bytes(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_new_from_bytes(&self, data_offset: MemPtr, data_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_new_from_bytes_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn mbuffer_get_length(&mut self, m_buffer_handle: i32) -> i32 {
+    fn mbuffer_get_length(&self, m_buffer_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_get_length_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
     }
 
-    fn mbuffer_get_bytes(&mut self, m_buffer_handle: i32, result_offset: MemPtr) -> i32 {
+    fn mbuffer_get_bytes(&self, m_buffer_handle: i32, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_get_bytes_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, self.convert_mem_ptr(result_offset))
     }
 
-    fn mbuffer_get_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32 {
+    fn mbuffer_get_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_get_byte_slice_func_ptr)(self.vm_hooks_ptr, source_handle, starting_position, slice_length, self.convert_mem_ptr(result_offset))
     }
 
-    fn mbuffer_copy_byte_slice(&mut self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_copy_byte_slice(&self, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_copy_byte_slice_func_ptr)(self.vm_hooks_ptr, source_handle, starting_position, slice_length, destination_handle)
     }
 
-    fn mbuffer_eq(&mut self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
+    fn mbuffer_eq(&self, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_eq_func_ptr)(self.vm_hooks_ptr, m_buffer_handle1, m_buffer_handle2)
     }
 
-    fn mbuffer_set_bytes(&mut self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_set_bytes(&self, m_buffer_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_set_bytes_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn mbuffer_set_byte_slice(&mut self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32 {
+    fn mbuffer_set_byte_slice(&self, m_buffer_handle: i32, starting_position: i32, data_length: MemLength, data_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_set_byte_slice_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, starting_position, self.convert_mem_length(data_length), self.convert_mem_ptr(data_offset))
     }
 
-    fn mbuffer_append(&mut self, accumulator_handle: i32, data_handle: i32) -> i32 {
+    fn mbuffer_append(&self, accumulator_handle: i32, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_append_func_ptr)(self.vm_hooks_ptr, accumulator_handle, data_handle)
     }
 
-    fn mbuffer_append_bytes(&mut self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn mbuffer_append_bytes(&self, accumulator_handle: i32, data_offset: MemPtr, data_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_append_bytes_func_ptr)(self.vm_hooks_ptr, accumulator_handle, self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn mbuffer_to_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_to_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_to_big_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
     }
 
-    fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_to_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_to_big_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
     }
 
-    fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_from_big_int_unsigned(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_from_big_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
     }
 
-    fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
+    fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_from_big_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
     }
 
-    fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_to_big_float_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_float_handle)
     }
 
-    fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
+    fn mbuffer_from_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_from_big_float_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_float_handle)
     }
 
-    fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> i32 {
+    fn mbuffer_storage_store(&self, key_handle: i32, source_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_storage_store_func_ptr)(self.vm_hooks_ptr, key_handle, source_handle)
     }
 
-    fn mbuffer_storage_load(&mut self, key_handle: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_storage_load(&self, key_handle: i32, destination_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_storage_load_func_ptr)(self.vm_hooks_ptr, key_handle, destination_handle)
     }
 
-    fn mbuffer_storage_load_from_address(&mut self, address_handle: i32, key_handle: i32, destination_handle: i32) {
+    fn mbuffer_storage_load_from_address(&self, address_handle: i32, key_handle: i32, destination_handle: i32) {
         (self.c_func_pointers_ptr.mbuffer_storage_load_from_address_func_ptr)(self.vm_hooks_ptr, address_handle, key_handle, destination_handle)
     }
 
-    fn mbuffer_get_argument(&mut self, id: i32, destination_handle: i32) -> i32 {
+    fn mbuffer_get_argument(&self, id: i32, destination_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_get_argument_func_ptr)(self.vm_hooks_ptr, id, destination_handle)
     }
 
-    fn mbuffer_finish(&mut self, source_handle: i32) -> i32 {
+    fn mbuffer_finish(&self, source_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_finish_func_ptr)(self.vm_hooks_ptr, source_handle)
     }
 
-    fn mbuffer_set_random(&mut self, destination_handle: i32, length: i32) -> i32 {
+    fn mbuffer_set_random(&self, destination_handle: i32, length: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_set_random_func_ptr)(self.vm_hooks_ptr, destination_handle, length)
     }
 
-    fn managed_map_new(&mut self) -> i32 {
+    fn managed_map_new(&self) -> i32 {
         (self.c_func_pointers_ptr.managed_map_new_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn managed_map_put(&mut self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
+    fn managed_map_put(&self, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_map_put_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, value_handle)
     }
 
-    fn managed_map_get(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    fn managed_map_get(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_map_get_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, out_value_handle)
     }
 
-    fn managed_map_remove(&mut self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
+    fn managed_map_remove(&self, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_map_remove_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle, out_value_handle)
     }
 
-    fn managed_map_contains(&mut self, m_map_handle: i32, key_handle: i32) -> i32 {
+    fn managed_map_contains(&self, m_map_handle: i32, key_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_map_contains_func_ptr)(self.vm_hooks_ptr, m_map_handle, key_handle)
     }
 
-    fn small_int_get_unsigned_argument(&mut self, id: i32) -> i64 {
+    fn small_int_get_unsigned_argument(&self, id: i32) -> i64 {
         (self.c_func_pointers_ptr.small_int_get_unsigned_argument_func_ptr)(self.vm_hooks_ptr, id)
     }
 
-    fn small_int_get_signed_argument(&mut self, id: i32) -> i64 {
+    fn small_int_get_signed_argument(&self, id: i32) -> i64 {
         (self.c_func_pointers_ptr.small_int_get_signed_argument_func_ptr)(self.vm_hooks_ptr, id)
     }
 
-    fn small_int_finish_unsigned(&mut self, value: i64) {
+    fn small_int_finish_unsigned(&self, value: i64) {
         (self.c_func_pointers_ptr.small_int_finish_unsigned_func_ptr)(self.vm_hooks_ptr, value)
     }
 
-    fn small_int_finish_signed(&mut self, value: i64) {
+    fn small_int_finish_signed(&self, value: i64) {
         (self.c_func_pointers_ptr.small_int_finish_signed_func_ptr)(self.vm_hooks_ptr, value)
     }
 
-    fn small_int_storage_store_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn small_int_storage_store_unsigned(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         (self.c_func_pointers_ptr.small_int_storage_store_unsigned_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), value)
     }
 
-    fn small_int_storage_store_signed(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn small_int_storage_store_signed(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         (self.c_func_pointers_ptr.small_int_storage_store_signed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), value)
     }
 
-    fn small_int_storage_load_unsigned(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn small_int_storage_load_unsigned(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         (self.c_func_pointers_ptr.small_int_storage_load_unsigned_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn small_int_storage_load_signed(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn small_int_storage_load_signed(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         (self.c_func_pointers_ptr.small_int_storage_load_signed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn int64get_argument(&mut self, id: i32) -> i64 {
+    fn int64get_argument(&self, id: i32) -> i64 {
         (self.c_func_pointers_ptr.int64get_argument_func_ptr)(self.vm_hooks_ptr, id)
     }
 
-    fn int64finish(&mut self, value: i64) {
+    fn int64finish(&self, value: i64) {
         (self.c_func_pointers_ptr.int64finish_func_ptr)(self.vm_hooks_ptr, value)
     }
 
-    fn int64storage_store(&mut self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
+    fn int64storage_store(&self, key_offset: MemPtr, key_length: MemLength, value: i64) -> i32 {
         (self.c_func_pointers_ptr.int64storage_store_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), value)
     }
 
-    fn int64storage_load(&mut self, key_offset: MemPtr, key_length: MemLength) -> i64 {
+    fn int64storage_load(&self, key_offset: MemPtr, key_length: MemLength) -> i64 {
         (self.c_func_pointers_ptr.int64storage_load_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length))
     }
 
-    fn sha256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn sha256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.sha256_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset), self.convert_mem_length(length), self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_sha256(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_sha256(&self, input_handle: i32, output_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_sha256_func_ptr)(self.vm_hooks_ptr, input_handle, output_handle)
     }
 
-    fn keccak256(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn keccak256(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.keccak256_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset), self.convert_mem_length(length), self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_keccak256(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_keccak256(&self, input_handle: i32, output_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_keccak256_func_ptr)(self.vm_hooks_ptr, input_handle, output_handle)
     }
 
-    fn ripemd160(&mut self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
+    fn ripemd160(&self, data_offset: MemPtr, length: MemLength, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.ripemd160_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset), self.convert_mem_length(length), self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_ripemd160(&mut self, input_handle: i32, output_handle: i32) -> i32 {
+    fn managed_ripemd160(&self, input_handle: i32, output_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_ripemd160_func_ptr)(self.vm_hooks_ptr, input_handle, output_handle)
     }
 
-    fn verify_bls(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_bls(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.verify_bls_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_ptr(message_offset), self.convert_mem_length(message_length), self.convert_mem_ptr(sig_offset))
     }
 
-    fn managed_verify_bls(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_bls(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_bls_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 
-    fn verify_ed25519(&mut self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_ed25519(&self, key_offset: MemPtr, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.verify_ed25519_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_ptr(message_offset), self.convert_mem_length(message_length), self.convert_mem_ptr(sig_offset))
     }
 
-    fn managed_verify_ed25519(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_ed25519(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_ed25519_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 
-    fn verify_custom_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32 {
+    fn verify_custom_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr, hash_type: i32) -> i32 {
         (self.c_func_pointers_ptr.verify_custom_secp256k1_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), self.convert_mem_ptr(message_offset), self.convert_mem_length(message_length), self.convert_mem_ptr(sig_offset), hash_type)
     }
 
-    fn managed_verify_custom_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
+    fn managed_verify_custom_secp256k1(&self, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_custom_secp256k1_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle, hash_type)
     }
 
-    fn verify_secp256k1(&mut self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn verify_secp256k1(&self, key_offset: MemPtr, key_length: MemLength, message_offset: MemPtr, message_length: MemLength, sig_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.verify_secp256k1_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(key_offset), self.convert_mem_length(key_length), self.convert_mem_ptr(message_offset), self.convert_mem_length(message_length), self.convert_mem_ptr(sig_offset))
     }
 
-    fn managed_verify_secp256k1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_secp256k1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_secp256k1_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 
-    fn encode_secp256k1_der_signature(&mut self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32 {
+    fn encode_secp256k1_der_signature(&self, r_offset: MemPtr, r_length: MemLength, s_offset: MemPtr, s_length: MemLength, sig_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.encode_secp256k1_der_signature_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(r_offset), self.convert_mem_length(r_length), self.convert_mem_ptr(s_offset), self.convert_mem_length(s_length), self.convert_mem_ptr(sig_offset))
     }
 
-    fn managed_encode_secp256k1_der_signature(&mut self, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_encode_secp256k1_der_signature(&self, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_encode_secp256k1_der_signature_func_ptr)(self.vm_hooks_ptr, r_handle, s_handle, sig_handle)
     }
 
-    fn add_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
+    fn add_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
         (self.c_func_pointers_ptr.add_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, fst_point_xhandle, fst_point_yhandle, snd_point_xhandle, snd_point_yhandle)
     }
 
-    fn double_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
+    fn double_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
         (self.c_func_pointers_ptr.double_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle)
     }
 
-    fn is_on_curve_ec(&mut self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
+    fn is_on_curve_ec(&self, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
         (self.c_func_pointers_ptr.is_on_curve_ec_func_ptr)(self.vm_hooks_ptr, ec_handle, point_xhandle, point_yhandle)
     }
 
-    fn scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.scalar_base_mult_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn managed_scalar_base_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_scalar_base_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_scalar_base_mult_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, data_handle)
     }
 
-    fn scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.scalar_mult_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn managed_scalar_mult_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
+    fn managed_scalar_mult_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_scalar_mult_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, data_handle)
     }
 
-    fn marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.marshal_ec_func_ptr)(self.vm_hooks_ptr, x_pair_handle, y_pair_handle, ec_handle, self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_marshal_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_marshal_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_marshal_ec_func_ptr)(self.vm_hooks_ptr, x_pair_handle, y_pair_handle, ec_handle, result_handle)
     }
 
-    fn marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.marshal_compressed_ec_func_ptr)(self.vm_hooks_ptr, x_pair_handle, y_pair_handle, ec_handle, self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_marshal_compressed_ec(&mut self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_marshal_compressed_ec(&self, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_marshal_compressed_ec_func_ptr)(self.vm_hooks_ptr, x_pair_handle, y_pair_handle, ec_handle, result_handle)
     }
 
-    fn unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.unmarshal_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn managed_unmarshal_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_unmarshal_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_unmarshal_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, data_handle)
     }
 
-    fn unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
+    fn unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: MemPtr, length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.unmarshal_compressed_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, self.convert_mem_ptr(data_offset), self.convert_mem_length(length))
     }
 
-    fn managed_unmarshal_compressed_ec(&mut self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
+    fn managed_unmarshal_compressed_ec(&self, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_unmarshal_compressed_ec_func_ptr)(self.vm_hooks_ptr, x_result_handle, y_result_handle, ec_handle, data_handle)
     }
 
-    fn generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
+    fn generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: MemPtr) -> i32 {
         (self.c_func_pointers_ptr.generate_key_ec_func_ptr)(self.vm_hooks_ptr, x_pub_key_handle, y_pub_key_handle, ec_handle, self.convert_mem_ptr(result_offset))
     }
 
-    fn managed_generate_key_ec(&mut self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
+    fn managed_generate_key_ec(&self, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_generate_key_ec_func_ptr)(self.vm_hooks_ptr, x_pub_key_handle, y_pub_key_handle, ec_handle, result_handle)
     }
 
-    fn create_ec(&mut self, data_offset: MemPtr, data_length: MemLength) -> i32 {
+    fn create_ec(&self, data_offset: MemPtr, data_length: MemLength) -> i32 {
         (self.c_func_pointers_ptr.create_ec_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length))
     }
 
-    fn managed_create_ec(&mut self, data_handle: i32) -> i32 {
+    fn managed_create_ec(&self, data_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_create_ec_func_ptr)(self.vm_hooks_ptr, data_handle)
     }
 
-    fn get_curve_length_ec(&mut self, ec_handle: i32) -> i32 {
+    fn get_curve_length_ec(&self, ec_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.get_curve_length_ec_func_ptr)(self.vm_hooks_ptr, ec_handle)
     }
 
-    fn get_priv_key_byte_length_ec(&mut self, ec_handle: i32) -> i32 {
+    fn get_priv_key_byte_length_ec(&self, ec_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.get_priv_key_byte_length_ec_func_ptr)(self.vm_hooks_ptr, ec_handle)
     }
 
-    fn elliptic_curve_get_values(&mut self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
+    fn elliptic_curve_get_values(&self, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.elliptic_curve_get_values_func_ptr)(self.vm_hooks_ptr, ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
     }
 
-    fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_secp256r1_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 
-    fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_blssignature_share_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 
-    fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
+    fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_blsaggregated_signature_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
 }
