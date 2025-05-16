@@ -18,21 +18,21 @@ pub fn force_sighandler_reinstall() {
 }
 
 pub struct WasmerExecutorData {
-    vm_hooks: Rc<RefCell<Box<dyn VMHooksLegacy>>>,
+    vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
 }
 
 impl WasmerExecutorData {
     pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
-            vm_hooks: Rc::new(RefCell::new(vm_hooks)),
+            vm_hooks: Rc::new(vm_hooks),
             opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
         }
     }
 
     fn set_vm_hooks_ptr(&mut self, vm_hooks_ptr: *mut c_void) -> Result<(), ExecutorError> {
         if let Some(vm_hooks) = Rc::get_mut(&mut self.vm_hooks) {
-            vm_hooks.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr);
+            vm_hooks.set_vm_hooks_ptr(vm_hooks_ptr);
             Ok(())
         } else {
             Err(Box::new(ServiceError::new(
