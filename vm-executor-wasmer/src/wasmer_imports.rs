@@ -12,1312 +12,1312 @@ use crate::wasmer_vm_hooks::VMHooksWrapper;
 
 #[rustfmt::skip]
 fn wasmer_import_get_gas_left(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_gas_left())
+    env.vm_hooks.get_gas_left()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_sc_address(env: &VMHooksWrapper, result_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_sc_address(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_sc_address(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_owner_address(env: &VMHooksWrapper, result_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_owner_address(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_owner_address(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_shard_of_address(env: &VMHooksWrapper, address_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_shard_of_address(env.convert_mem_ptr(address_offset)))
+    env.vm_hooks.get_shard_of_address(env.convert_mem_ptr(address_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_is_smart_contract(env: &VMHooksWrapper, address_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.is_smart_contract(env.convert_mem_ptr(address_offset)))
+    env.vm_hooks.is_smart_contract(env.convert_mem_ptr(address_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_signal_error(env: &VMHooksWrapper, message_offset: i32, message_length: i32) {
-    env.with_vm_hooks(|vh| vh.signal_error(env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length)))
+    env.vm_hooks.signal_error(env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_external_balance(env: &VMHooksWrapper, address_offset: i32, result_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_hash(env: &VMHooksWrapper, nonce: i64, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_block_hash(nonce, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_block_hash(nonce, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_balance(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_esdt_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_nft_name_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_nft_name_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce))
+    env.vm_hooks.get_esdt_nft_name_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_nft_attribute_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_nft_attribute_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce))
+    env.vm_hooks.get_esdt_nft_attribute_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_nft_uri_length(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_nft_uri_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce))
+    env.vm_hooks.get_esdt_nft_uri_length(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_data(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, value_handle: i32, properties_offset: i32, hash_offset: i32, name_offset: i32, attributes_offset: i32, creator_offset: i32, royalties_handle: i32, uris_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_data(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, value_handle, env.convert_mem_ptr(properties_offset), env.convert_mem_ptr(hash_offset), env.convert_mem_ptr(name_offset), env.convert_mem_ptr(attributes_offset), env.convert_mem_ptr(creator_offset), royalties_handle, env.convert_mem_ptr(uris_offset)))
+    env.vm_hooks.get_esdt_token_data(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, value_handle, env.convert_mem_ptr(properties_offset), env.convert_mem_ptr(hash_offset), env.convert_mem_ptr(name_offset), env.convert_mem_ptr(attributes_offset), env.convert_mem_ptr(creator_offset), royalties_handle, env.convert_mem_ptr(uris_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_local_roles(env: &VMHooksWrapper, token_id_handle: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_esdt_local_roles(token_id_handle))
+    env.vm_hooks.get_esdt_local_roles(token_id_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_validate_token_identifier(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.validate_token_identifier(token_id_handle))
+    env.vm_hooks.validate_token_identifier(token_id_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_transfer_value(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.transfer_value(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.transfer_value(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_transfer_value_execute(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.transfer_value_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.transfer_value_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_transfer_esdt_execute(env: &VMHooksWrapper, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.transfer_esdt_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.transfer_esdt_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_transfer_esdt_nft_execute(env: &VMHooksWrapper, dest_offset: i32, token_id_offset: i32, token_id_len: i32, value_offset: i32, nonce: i64, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), nonce, gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), env.convert_mem_ptr(value_offset), nonce, gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dest_offset: i32, num_token_transfers: i32, token_transfers_args_length_offset: i32, token_transfer_data_offset: i32, gas_limit: i64, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.multi_transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), num_token_transfers, env.convert_mem_ptr(token_transfers_args_length_offset), env.convert_mem_ptr(token_transfer_data_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.multi_transfer_esdt_nft_execute(env.convert_mem_ptr(dest_offset), num_token_transfers, env.convert_mem_ptr(token_transfers_args_length_offset), env.convert_mem_ptr(token_transfer_data_offset), gas_limit, env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_create_async_call(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.create_async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length), env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback))
+    env.vm_hooks.create_async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length), env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_set_async_context_callback(env: &VMHooksWrapper, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.set_async_context_callback(env.convert_mem_ptr(callback), env.convert_mem_length(callback_length), env.convert_mem_ptr(data), env.convert_mem_length(data_length), gas))
+    env.vm_hooks.set_async_context_callback(env.convert_mem_ptr(callback), env.convert_mem_length(callback_length), env.convert_mem_ptr(data), env.convert_mem_length(data_length), gas)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_upgrade_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.upgrade_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.upgrade_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_upgrade_from_source_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.upgrade_from_source_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.upgrade_from_source_contract(env.convert_mem_ptr(dest_offset), gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_delete_contract(env: &VMHooksWrapper, dest_offset: i32, gas_limit: i64, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.delete_contract(env.convert_mem_ptr(dest_offset), gas_limit, num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.delete_contract(env.convert_mem_ptr(dest_offset), gas_limit, num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_async_call(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, length: i32) {
-    env.with_vm_hooks(|vh| vh.async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.async_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_argument_length(env: &VMHooksWrapper, id: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_argument_length(id))
+    env.vm_hooks.get_argument_length(id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_argument(env: &VMHooksWrapper, id: i32, arg_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_argument(id, env.convert_mem_ptr(arg_offset)))
+    env.vm_hooks.get_argument(id, env.convert_mem_ptr(arg_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_function(env: &VMHooksWrapper, function_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_function(env.convert_mem_ptr(function_offset)))
+    env.vm_hooks.get_function(env.convert_mem_ptr(function_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_num_arguments(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_num_arguments())
+    env.vm_hooks.get_num_arguments()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_storage_store(env: &VMHooksWrapper, key_offset: i32, key_length: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_storage_load_length(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.storage_load_length(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.storage_load_length(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_storage_load_from_address(env: &VMHooksWrapper, address_offset: i32, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.storage_load_from_address(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.storage_load_from_address(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_storage_load(env: &VMHooksWrapper, key_offset: i32, key_length: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_set_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32, lock_timestamp: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.set_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), lock_timestamp))
+    env.vm_hooks.set_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), lock_timestamp)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.get_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_is_storage_locked(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.is_storage_locked(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.is_storage_locked(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_clear_storage_lock(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.clear_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.clear_storage_lock(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_caller(env: &VMHooksWrapper, result_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_caller(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_caller(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_check_no_payment(env: &VMHooksWrapper) {
-    env.with_vm_hooks(|vh| vh.check_no_payment())
+    env.vm_hooks.check_no_payment()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_call_value(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_call_value(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_call_value(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_value(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_value(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_esdt_value(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_value_by_index(env: &VMHooksWrapper, result_offset: i32, index: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_value_by_index(env.convert_mem_ptr(result_offset), index))
+    env.vm_hooks.get_esdt_value_by_index(env.convert_mem_ptr(result_offset), index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_name(env: &VMHooksWrapper, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_name(env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.get_esdt_token_name(env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_name_by_index(env: &VMHooksWrapper, result_offset: i32, index: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_name_by_index(env.convert_mem_ptr(result_offset), index))
+    env.vm_hooks.get_esdt_token_name_by_index(env.convert_mem_ptr(result_offset), index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_nonce(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_nonce())
+    env.vm_hooks.get_esdt_token_nonce()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_nonce_by_index(env: &VMHooksWrapper, index: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_nonce_by_index(index))
+    env.vm_hooks.get_esdt_token_nonce_by_index(index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_current_esdt_nft_nonce(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_current_esdt_nft_nonce(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len)))
+    env.vm_hooks.get_current_esdt_nft_nonce(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_type(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_type())
+    env.vm_hooks.get_esdt_token_type()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_esdt_token_type_by_index(env: &VMHooksWrapper, index: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_esdt_token_type_by_index(index))
+    env.vm_hooks.get_esdt_token_type_by_index(index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_num_esdt_transfers(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_num_esdt_transfers())
+    env.vm_hooks.get_num_esdt_transfers()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_call_value_token_name(env: &VMHooksWrapper, call_value_offset: i32, token_name_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_call_value_token_name(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset)))
+    env.vm_hooks.get_call_value_token_name(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_call_value_token_name_by_index(env: &VMHooksWrapper, call_value_offset: i32, token_name_offset: i32, index: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_call_value_token_name_by_index(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset), index))
+    env.vm_hooks.get_call_value_token_name_by_index(env.convert_mem_ptr(call_value_offset), env.convert_mem_ptr(token_name_offset), index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_is_reserved_function_name(env: &VMHooksWrapper, name_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.is_reserved_function_name(name_handle))
+    env.vm_hooks.is_reserved_function_name(name_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_write_log(env: &VMHooksWrapper, data_pointer: i32, data_length: i32, topic_ptr: i32, num_topics: i32) {
-    env.with_vm_hooks(|vh| vh.write_log(env.convert_mem_ptr(data_pointer), env.convert_mem_length(data_length), env.convert_mem_ptr(topic_ptr), num_topics))
+    env.vm_hooks.write_log(env.convert_mem_ptr(data_pointer), env.convert_mem_length(data_length), env.convert_mem_ptr(topic_ptr), num_topics)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_write_event_log(env: &VMHooksWrapper, num_topics: i32, topic_lengths_offset: i32, topic_offset: i32, data_offset: i32, data_length: i32) {
-    env.with_vm_hooks(|vh| vh.write_event_log(num_topics, env.convert_mem_ptr(topic_lengths_offset), env.convert_mem_ptr(topic_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.write_event_log(num_topics, env.convert_mem_ptr(topic_lengths_offset), env.convert_mem_ptr(topic_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_timestamp(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_block_timestamp())
+    env.vm_hooks.get_block_timestamp()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_nonce(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_block_nonce())
+    env.vm_hooks.get_block_nonce()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_round(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_block_round())
+    env.vm_hooks.get_block_round()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_epoch(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_block_epoch())
+    env.vm_hooks.get_block_epoch()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_block_random_seed(env: &VMHooksWrapper, pointer: i32) {
-    env.with_vm_hooks(|vh| vh.get_block_random_seed(env.convert_mem_ptr(pointer)))
+    env.vm_hooks.get_block_random_seed(env.convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_state_root_hash(env: &VMHooksWrapper, pointer: i32) {
-    env.with_vm_hooks(|vh| vh.get_state_root_hash(env.convert_mem_ptr(pointer)))
+    env.vm_hooks.get_state_root_hash(env.convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_timestamp(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_prev_block_timestamp())
+    env.vm_hooks.get_prev_block_timestamp()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_nonce(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_prev_block_nonce())
+    env.vm_hooks.get_prev_block_nonce()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_round(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_prev_block_round())
+    env.vm_hooks.get_prev_block_round()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_epoch(env: &VMHooksWrapper) -> i64 {
-    env.with_vm_hooks(|vh| vh.get_prev_block_epoch())
+    env.vm_hooks.get_prev_block_epoch()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_random_seed(env: &VMHooksWrapper, pointer: i32) {
-    env.with_vm_hooks(|vh| vh.get_prev_block_random_seed(env.convert_mem_ptr(pointer)))
+    env.vm_hooks.get_prev_block_random_seed(env.convert_mem_ptr(pointer))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_finish(env: &VMHooksWrapper, pointer: i32, length: i32) {
-    env.with_vm_hooks(|vh| vh.finish(env.convert_mem_ptr(pointer), env.convert_mem_length(length)))
+    env.vm_hooks.finish(env.convert_mem_ptr(pointer), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_execute_on_same_context(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.execute_on_same_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.execute_on_same_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_execute_on_dest_context(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, value_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.execute_on_dest_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.execute_on_dest_context(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_execute_read_only(env: &VMHooksWrapper, gas_limit: i64, address_offset: i32, function_offset: i32, function_length: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.execute_read_only(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.execute_read_only(gas_limit, env.convert_mem_ptr(address_offset), env.convert_mem_ptr(function_offset), env.convert_mem_length(function_length), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_create_contract(env: &VMHooksWrapper, gas_limit: i64, value_offset: i32, code_offset: i32, code_metadata_offset: i32, length: i32, result_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.create_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.create_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(code_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_deploy_from_source_contract(env: &VMHooksWrapper, gas_limit: i64, value_offset: i32, source_contract_address_offset: i32, code_metadata_offset: i32, result_address_offset: i32, num_arguments: i32, arguments_length_offset: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.deploy_from_source_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_ptr(result_address_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.deploy_from_source_contract(gas_limit, env.convert_mem_ptr(value_offset), env.convert_mem_ptr(source_contract_address_offset), env.convert_mem_ptr(code_metadata_offset), env.convert_mem_ptr(result_address_offset), num_arguments, env.convert_mem_ptr(arguments_length_offset), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_num_return_data(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_num_return_data())
+    env.vm_hooks.get_num_return_data()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_return_data_size(env: &VMHooksWrapper, result_id: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_return_data_size(result_id))
+    env.vm_hooks.get_return_data_size(result_id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_return_data(env: &VMHooksWrapper, result_id: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_return_data(result_id, env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.get_return_data(result_id, env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_clean_return_data(env: &VMHooksWrapper) {
-    env.with_vm_hooks(|vh| vh.clean_return_data())
+    env.vm_hooks.clean_return_data()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_delete_from_return_data(env: &VMHooksWrapper, result_id: i32) {
-    env.with_vm_hooks(|vh| vh.delete_from_return_data(result_id))
+    env.vm_hooks.delete_from_return_data(result_id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_original_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_original_tx_hash(env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.get_original_tx_hash(env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_current_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_current_tx_hash(env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.get_current_tx_hash(env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_prev_tx_hash(env: &VMHooksWrapper, data_offset: i32) {
-    env.with_vm_hooks(|vh| vh.get_prev_tx_hash(env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.get_prev_tx_hash(env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_sc_address(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_sc_address(destination_handle))
+    env.vm_hooks.managed_sc_address(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_owner_address(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_owner_address(destination_handle))
+    env.vm_hooks.managed_owner_address(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_caller(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_caller(destination_handle))
+    env.vm_hooks.managed_caller(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_original_caller_addr(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_original_caller_addr(destination_handle))
+    env.vm_hooks.managed_get_original_caller_addr(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_relayer_addr(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_relayer_addr(destination_handle))
+    env.vm_hooks.managed_get_relayer_addr(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_signal_error(env: &VMHooksWrapper, err_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_signal_error(err_handle))
+    env.vm_hooks.managed_signal_error(err_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_write_log(env: &VMHooksWrapper, topics_handle: i32, data_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_write_log(topics_handle, data_handle))
+    env.vm_hooks.managed_write_log(topics_handle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_original_tx_hash(env: &VMHooksWrapper, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_original_tx_hash(result_handle))
+    env.vm_hooks.managed_get_original_tx_hash(result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_state_root_hash(env: &VMHooksWrapper, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_state_root_hash(result_handle))
+    env.vm_hooks.managed_get_state_root_hash(result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_block_random_seed(env: &VMHooksWrapper, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_block_random_seed(result_handle))
+    env.vm_hooks.managed_get_block_random_seed(result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_prev_block_random_seed(env: &VMHooksWrapper, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_prev_block_random_seed(result_handle))
+    env.vm_hooks.managed_get_prev_block_random_seed(result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_return_data(env: &VMHooksWrapper, result_id: i32, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_return_data(result_id, result_handle))
+    env.vm_hooks.managed_get_return_data(result_id, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_call_value_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_multi_esdt_call_value(multi_call_value_handle))
+    env.vm_hooks.managed_get_multi_esdt_call_value(multi_call_value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle))
+    env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_esdt_balance(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_esdt_balance(address_handle, token_id_handle, nonce, value_handle))
+    env.vm_hooks.managed_get_esdt_balance(address_handle, token_id_handle, nonce, value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_esdt_token_data(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_esdt_token_data(address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle))
+    env.vm_hooks.managed_get_esdt_token_data(address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_async_call(env: &VMHooksWrapper, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_async_call(dest_handle, value_handle, function_handle, arguments_handle))
+    env.vm_hooks.managed_async_call(dest_handle, value_handle, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_create_async_call(env: &VMHooksWrapper, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_create_async_call(dest_handle, value_handle, function_handle, arguments_handle, env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback, callback_closure_handle))
+    env.vm_hooks.managed_create_async_call(dest_handle, value_handle, function_handle, arguments_handle, env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback, callback_closure_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_callback_closure(env: &VMHooksWrapper, callback_closure_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_callback_closure(callback_closure_handle))
+    env.vm_hooks.managed_get_callback_closure(callback_closure_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_upgrade_from_source_contract(env: &VMHooksWrapper, dest_handle: i32, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_upgrade_from_source_contract(dest_handle, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_handle))
+    env.vm_hooks.managed_upgrade_from_source_contract(dest_handle, gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_upgrade_contract(env: &VMHooksWrapper, dest_handle: i32, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_upgrade_contract(dest_handle, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_handle))
+    env.vm_hooks.managed_upgrade_contract(dest_handle, gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_delete_contract(env: &VMHooksWrapper, dest_handle: i32, gas_limit: i64, arguments_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_delete_contract(dest_handle, gas_limit, arguments_handle))
+    env.vm_hooks.managed_delete_contract(dest_handle, gas_limit, arguments_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_deploy_from_source_contract(env: &VMHooksWrapper, gas: i64, value_handle: i32, address_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_deploy_from_source_contract(gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle))
+    env.vm_hooks.managed_deploy_from_source_contract(gas, value_handle, address_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_create_contract(env: &VMHooksWrapper, gas: i64, value_handle: i32, code_handle: i32, code_metadata_handle: i32, arguments_handle: i32, result_address_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_create_contract(gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle))
+    env.vm_hooks.managed_create_contract(gas, value_handle, code_handle, code_metadata_handle, arguments_handle, result_address_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_execute_read_only(env: &VMHooksWrapper, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_execute_read_only(gas, address_handle, function_handle, arguments_handle, result_handle))
+    env.vm_hooks.managed_execute_read_only(gas, address_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_execute_on_same_context(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_execute_on_same_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle))
+    env.vm_hooks.managed_execute_on_same_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_execute_on_dest_context(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_execute_on_dest_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle))
+    env.vm_hooks.managed_execute_on_dest_context(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle))
+    env.vm_hooks.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user(env: &VMHooksWrapper, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_multi_transfer_esdt_nft_execute_by_user(user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle))
+    env.vm_hooks.managed_multi_transfer_esdt_nft_execute_by_user(user_handle, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_transfer_value_execute(env: &VMHooksWrapper, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_transfer_value_execute(dst_handle, value_handle, gas_limit, function_handle, arguments_handle))
+    env.vm_hooks.managed_transfer_value_execute(dst_handle, value_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_is_esdt_frozen(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_is_esdt_frozen(address_handle, token_id_handle, nonce))
+    env.vm_hooks.managed_is_esdt_frozen(address_handle, token_id_handle, nonce)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_is_esdt_limited_transfer(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_is_esdt_limited_transfer(token_id_handle))
+    env.vm_hooks.managed_is_esdt_limited_transfer(token_id_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_is_esdt_paused(env: &VMHooksWrapper, token_id_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_is_esdt_paused(token_id_handle))
+    env.vm_hooks.managed_is_esdt_paused(token_id_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_buffer_to_hex(env: &VMHooksWrapper, source_handle: i32, dest_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_buffer_to_hex(source_handle, dest_handle))
+    env.vm_hooks.managed_buffer_to_hex(source_handle, dest_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_code_metadata(env: &VMHooksWrapper, address_handle: i32, response_handle: i32) {
-    env.with_vm_hooks(|vh| vh.managed_get_code_metadata(address_handle, response_handle))
+    env.vm_hooks.managed_get_code_metadata(address_handle, response_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_is_builtin_function(env: &VMHooksWrapper, function_name_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_is_builtin_function(function_name_handle))
+    env.vm_hooks.managed_is_builtin_function(function_name_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_new_from_parts(env: &VMHooksWrapper, integral_part: i32, fractional_part: i32, exponent: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_new_from_parts(integral_part, fractional_part, exponent))
+    env.vm_hooks.big_float_new_from_parts(integral_part, fractional_part, exponent)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_new_from_frac(env: &VMHooksWrapper, numerator: i64, denominator: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_new_from_frac(numerator, denominator))
+    env.vm_hooks.big_float_new_from_frac(numerator, denominator)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_new_from_sci(env: &VMHooksWrapper, significand: i64, exponent: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_new_from_sci(significand, exponent))
+    env.vm_hooks.big_float_new_from_sci(significand, exponent)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_add(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_add(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_float_add(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_sub(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_sub(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_float_sub(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_mul(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_mul(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_float_mul(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_div(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_div(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_float_div(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_neg(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_neg(destination_handle, op_handle))
+    env.vm_hooks.big_float_neg(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_clone(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_clone(destination_handle, op_handle))
+    env.vm_hooks.big_float_clone(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_cmp(env: &VMHooksWrapper, op1_handle: i32, op2_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_cmp(op1_handle, op2_handle))
+    env.vm_hooks.big_float_cmp(op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_abs(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_abs(destination_handle, op_handle))
+    env.vm_hooks.big_float_abs(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_sign(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_sign(op_handle))
+    env.vm_hooks.big_float_sign(op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_sqrt(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_sqrt(destination_handle, op_handle))
+    env.vm_hooks.big_float_sqrt(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_pow(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, exponent: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_pow(destination_handle, op_handle, exponent))
+    env.vm_hooks.big_float_pow(destination_handle, op_handle, exponent)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_floor(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_floor(dest_big_int_handle, op_handle))
+    env.vm_hooks.big_float_floor(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_ceil(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_ceil(dest_big_int_handle, op_handle))
+    env.vm_hooks.big_float_ceil(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_truncate(env: &VMHooksWrapper, dest_big_int_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_truncate(dest_big_int_handle, op_handle))
+    env.vm_hooks.big_float_truncate(dest_big_int_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_set_int64(env: &VMHooksWrapper, destination_handle: i32, value: i64) {
-    env.with_vm_hooks(|vh| vh.big_float_set_int64(destination_handle, value))
+    env.vm_hooks.big_float_set_int64(destination_handle, value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_is_int(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_float_is_int(op_handle))
+    env.vm_hooks.big_float_is_int(op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_set_big_int(env: &VMHooksWrapper, destination_handle: i32, big_int_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_set_big_int(destination_handle, big_int_handle))
+    env.vm_hooks.big_float_set_big_int(destination_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_get_const_pi(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_get_const_pi(destination_handle))
+    env.vm_hooks.big_float_get_const_pi(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_float_get_const_e(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_float_get_const_e(destination_handle))
+    env.vm_hooks.big_float_get_const_e(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_unsigned_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_unsigned_argument(id, destination_handle))
+    env.vm_hooks.big_int_get_unsigned_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_signed_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_signed_argument(id, destination_handle))
+    env.vm_hooks.big_int_get_signed_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_storage_store_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, source_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), source_handle))
+    env.vm_hooks.big_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), source_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_storage_load_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, destination_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), destination_handle))
+    env.vm_hooks.big_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_call_value(env: &VMHooksWrapper, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_call_value(destination_handle))
+    env.vm_hooks.big_int_get_call_value(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_esdt_call_value(env: &VMHooksWrapper, destination: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_esdt_call_value(destination))
+    env.vm_hooks.big_int_get_esdt_call_value(destination)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_esdt_call_value_by_index(env: &VMHooksWrapper, destination_handle: i32, index: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_esdt_call_value_by_index(destination_handle, index))
+    env.vm_hooks.big_int_get_esdt_call_value_by_index(destination_handle, index)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_external_balance(env: &VMHooksWrapper, address_offset: i32, result: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_external_balance(env.convert_mem_ptr(address_offset), result))
+    env.vm_hooks.big_int_get_external_balance(env.convert_mem_ptr(address_offset), result)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_esdt_external_balance(env: &VMHooksWrapper, address_offset: i32, token_id_offset: i32, token_id_len: i32, nonce: i64, result_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_get_esdt_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, result_handle))
+    env.vm_hooks.big_int_get_esdt_external_balance(env.convert_mem_ptr(address_offset), env.convert_mem_ptr(token_id_offset), env.convert_mem_length(token_id_len), nonce, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_new(env: &VMHooksWrapper, small_value: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_new(small_value))
+    env.vm_hooks.big_int_new(small_value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_unsigned_byte_length(env: &VMHooksWrapper, reference_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_unsigned_byte_length(reference_handle))
+    env.vm_hooks.big_int_unsigned_byte_length(reference_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_signed_byte_length(env: &VMHooksWrapper, reference_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_signed_byte_length(reference_handle))
+    env.vm_hooks.big_int_signed_byte_length(reference_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_unsigned_bytes(env: &VMHooksWrapper, reference_handle: i32, byte_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_get_unsigned_bytes(reference_handle, env.convert_mem_ptr(byte_offset)))
+    env.vm_hooks.big_int_get_unsigned_bytes(reference_handle, env.convert_mem_ptr(byte_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_signed_bytes(env: &VMHooksWrapper, reference_handle: i32, byte_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_get_signed_bytes(reference_handle, env.convert_mem_ptr(byte_offset)))
+    env.vm_hooks.big_int_get_signed_bytes(reference_handle, env.convert_mem_ptr(byte_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_set_unsigned_bytes(env: &VMHooksWrapper, destination_handle: i32, byte_offset: i32, byte_length: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_set_unsigned_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length)))
+    env.vm_hooks.big_int_set_unsigned_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_set_signed_bytes(env: &VMHooksWrapper, destination_handle: i32, byte_offset: i32, byte_length: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_set_signed_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length)))
+    env.vm_hooks.big_int_set_signed_bytes(destination_handle, env.convert_mem_ptr(byte_offset), env.convert_mem_length(byte_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_is_int64(env: &VMHooksWrapper, destination_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_is_int64(destination_handle))
+    env.vm_hooks.big_int_is_int64(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_get_int64(env: &VMHooksWrapper, destination_handle: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.big_int_get_int64(destination_handle))
+    env.vm_hooks.big_int_get_int64(destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_set_int64(env: &VMHooksWrapper, destination_handle: i32, value: i64) {
-    env.with_vm_hooks(|vh| vh.big_int_set_int64(destination_handle, value))
+    env.vm_hooks.big_int_set_int64(destination_handle, value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_add(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_add(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_add(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_sub(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_sub(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_sub(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_mul(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_mul(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_mul(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_tdiv(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_tdiv(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_tdiv(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_tmod(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_tmod(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_tmod(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_ediv(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_ediv(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_ediv(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_emod(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_emod(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_emod(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_sqrt(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_sqrt(destination_handle, op_handle))
+    env.vm_hooks.big_int_sqrt(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_pow(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_pow(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_pow(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_log2(env: &VMHooksWrapper, op1_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_log2(op1_handle))
+    env.vm_hooks.big_int_log2(op1_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_abs(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_abs(destination_handle, op_handle))
+    env.vm_hooks.big_int_abs(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_neg(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_neg(destination_handle, op_handle))
+    env.vm_hooks.big_int_neg(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_sign(env: &VMHooksWrapper, op_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_sign(op_handle))
+    env.vm_hooks.big_int_sign(op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_cmp(env: &VMHooksWrapper, op1_handle: i32, op2_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.big_int_cmp(op1_handle, op2_handle))
+    env.vm_hooks.big_int_cmp(op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_not(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_not(destination_handle, op_handle))
+    env.vm_hooks.big_int_not(destination_handle, op_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_and(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_and(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_and(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_or(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_or(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_or(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_xor(env: &VMHooksWrapper, destination_handle: i32, op1_handle: i32, op2_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_xor(destination_handle, op1_handle, op2_handle))
+    env.vm_hooks.big_int_xor(destination_handle, op1_handle, op2_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_shr(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, bits: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_shr(destination_handle, op_handle, bits))
+    env.vm_hooks.big_int_shr(destination_handle, op_handle, bits)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_shl(env: &VMHooksWrapper, destination_handle: i32, op_handle: i32, bits: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_shl(destination_handle, op_handle, bits))
+    env.vm_hooks.big_int_shl(destination_handle, op_handle, bits)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_finish_unsigned(env: &VMHooksWrapper, reference_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_finish_unsigned(reference_handle))
+    env.vm_hooks.big_int_finish_unsigned(reference_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_finish_signed(env: &VMHooksWrapper, reference_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_finish_signed(reference_handle))
+    env.vm_hooks.big_int_finish_signed(reference_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_big_int_to_string(env: &VMHooksWrapper, big_int_handle: i32, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.big_int_to_string(big_int_handle, destination_handle))
+    env.vm_hooks.big_int_to_string(big_int_handle, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_new(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_new())
+    env.vm_hooks.mbuffer_new()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_new_from_bytes(env: &VMHooksWrapper, data_offset: i32, data_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_new_from_bytes(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.mbuffer_new_from_bytes(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_get_length(env: &VMHooksWrapper, m_buffer_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_get_length(m_buffer_handle))
+    env.vm_hooks.mbuffer_get_length(m_buffer_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_get_bytes(env: &VMHooksWrapper, m_buffer_handle: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_get_bytes(m_buffer_handle, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.mbuffer_get_bytes(m_buffer_handle, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_get_byte_slice(env: &VMHooksWrapper, source_handle: i32, starting_position: i32, slice_length: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_get_byte_slice(source_handle, starting_position, slice_length, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.mbuffer_get_byte_slice(source_handle, starting_position, slice_length, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_copy_byte_slice(env: &VMHooksWrapper, source_handle: i32, starting_position: i32, slice_length: i32, destination_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_copy_byte_slice(source_handle, starting_position, slice_length, destination_handle))
+    env.vm_hooks.mbuffer_copy_byte_slice(source_handle, starting_position, slice_length, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_eq(env: &VMHooksWrapper, m_buffer_handle1: i32, m_buffer_handle2: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_eq(m_buffer_handle1, m_buffer_handle2))
+    env.vm_hooks.mbuffer_eq(m_buffer_handle1, m_buffer_handle2)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_set_bytes(env: &VMHooksWrapper, m_buffer_handle: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_set_bytes(m_buffer_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.mbuffer_set_bytes(m_buffer_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_set_byte_slice(env: &VMHooksWrapper, m_buffer_handle: i32, starting_position: i32, data_length: i32, data_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_set_byte_slice(m_buffer_handle, starting_position, env.convert_mem_length(data_length), env.convert_mem_ptr(data_offset)))
+    env.vm_hooks.mbuffer_set_byte_slice(m_buffer_handle, starting_position, env.convert_mem_length(data_length), env.convert_mem_ptr(data_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_append(env: &VMHooksWrapper, accumulator_handle: i32, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_append(accumulator_handle, data_handle))
+    env.vm_hooks.mbuffer_append(accumulator_handle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_append_bytes(env: &VMHooksWrapper, accumulator_handle: i32, data_offset: i32, data_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_append_bytes(accumulator_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.mbuffer_append_bytes(accumulator_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_to_big_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_to_big_int_unsigned(m_buffer_handle, big_int_handle))
+    env.vm_hooks.mbuffer_to_big_int_unsigned(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_to_big_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_to_big_int_signed(m_buffer_handle, big_int_handle))
+    env.vm_hooks.mbuffer_to_big_int_signed(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_from_big_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_from_big_int_unsigned(m_buffer_handle, big_int_handle))
+    env.vm_hooks.mbuffer_from_big_int_unsigned(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_from_big_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_from_big_int_signed(m_buffer_handle, big_int_handle))
+    env.vm_hooks.mbuffer_from_big_int_signed(m_buffer_handle, big_int_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_to_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_to_big_float(m_buffer_handle, big_float_handle))
+    env.vm_hooks.mbuffer_to_big_float(m_buffer_handle, big_float_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_from_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_from_big_float(m_buffer_handle, big_float_handle))
+    env.vm_hooks.mbuffer_from_big_float(m_buffer_handle, big_float_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_storage_store(env: &VMHooksWrapper, key_handle: i32, source_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_storage_store(key_handle, source_handle))
+    env.vm_hooks.mbuffer_storage_store(key_handle, source_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_storage_load(env: &VMHooksWrapper, key_handle: i32, destination_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_storage_load(key_handle, destination_handle))
+    env.vm_hooks.mbuffer_storage_load(key_handle, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_storage_load_from_address(env: &VMHooksWrapper, address_handle: i32, key_handle: i32, destination_handle: i32) {
-    env.with_vm_hooks(|vh| vh.mbuffer_storage_load_from_address(address_handle, key_handle, destination_handle))
+    env.vm_hooks.mbuffer_storage_load_from_address(address_handle, key_handle, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_get_argument(env: &VMHooksWrapper, id: i32, destination_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_get_argument(id, destination_handle))
+    env.vm_hooks.mbuffer_get_argument(id, destination_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_finish(env: &VMHooksWrapper, source_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_finish(source_handle))
+    env.vm_hooks.mbuffer_finish(source_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_mbuffer_set_random(env: &VMHooksWrapper, destination_handle: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.mbuffer_set_random(destination_handle, length))
+    env.vm_hooks.mbuffer_set_random(destination_handle, length)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_map_new(env: &VMHooksWrapper) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_map_new())
+    env.vm_hooks.managed_map_new()
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_map_put(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, value_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_map_put(m_map_handle, key_handle, value_handle))
+    env.vm_hooks.managed_map_put(m_map_handle, key_handle, value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_map_get(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_map_get(m_map_handle, key_handle, out_value_handle))
+    env.vm_hooks.managed_map_get(m_map_handle, key_handle, out_value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_map_remove(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32, out_value_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_map_remove(m_map_handle, key_handle, out_value_handle))
+    env.vm_hooks.managed_map_remove(m_map_handle, key_handle, out_value_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_map_contains(env: &VMHooksWrapper, m_map_handle: i32, key_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_map_contains(m_map_handle, key_handle))
+    env.vm_hooks.managed_map_contains(m_map_handle, key_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_get_unsigned_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.small_int_get_unsigned_argument(id))
+    env.vm_hooks.small_int_get_unsigned_argument(id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_get_signed_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.small_int_get_signed_argument(id))
+    env.vm_hooks.small_int_get_signed_argument(id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_finish_unsigned(env: &VMHooksWrapper, value: i64) {
-    env.with_vm_hooks(|vh| vh.small_int_finish_unsigned(value))
+    env.vm_hooks.small_int_finish_unsigned(value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_finish_signed(env: &VMHooksWrapper, value: i64) {
-    env.with_vm_hooks(|vh| vh.small_int_finish_signed(value))
+    env.vm_hooks.small_int_finish_signed(value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_storage_store_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.small_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value))
+    env.vm_hooks.small_int_storage_store_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_storage_store_signed(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.small_int_storage_store_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value))
+    env.vm_hooks.small_int_storage_store_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_storage_load_unsigned(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.small_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.small_int_storage_load_unsigned(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_small_int_storage_load_signed(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.small_int_storage_load_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.small_int_storage_load_signed(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_int64get_argument(env: &VMHooksWrapper, id: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.int64get_argument(id))
+    env.vm_hooks.int64get_argument(id)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_int64finish(env: &VMHooksWrapper, value: i64) {
-    env.with_vm_hooks(|vh| vh.int64finish(value))
+    env.vm_hooks.int64finish(value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_int64storage_store(env: &VMHooksWrapper, key_offset: i32, key_length: i32, value: i64) -> i32 {
-    env.with_vm_hooks(|vh| vh.int64storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value))
+    env.vm_hooks.int64storage_store(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), value)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_int64storage_load(env: &VMHooksWrapper, key_offset: i32, key_length: i32) -> i64 {
-    env.with_vm_hooks(|vh| vh.int64storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length)))
+    env.vm_hooks.int64storage_load(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_sha256(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.sha256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.sha256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_sha256(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_sha256(input_handle, output_handle))
+    env.vm_hooks.managed_sha256(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_keccak256(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.keccak256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.keccak256(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_keccak256(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_keccak256(input_handle, output_handle))
+    env.vm_hooks.managed_keccak256(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_ripemd160(env: &VMHooksWrapper, data_offset: i32, length: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.ripemd160(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.ripemd160(env.convert_mem_ptr(data_offset), env.convert_mem_length(length), env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_ripemd160(env: &VMHooksWrapper, input_handle: i32, output_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_ripemd160(input_handle, output_handle))
+    env.vm_hooks.managed_ripemd160(input_handle, output_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_verify_bls(env: &VMHooksWrapper, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.verify_bls(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset)))
+    env.vm_hooks.verify_bls(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_bls(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_bls(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_bls(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_verify_ed25519(env: &VMHooksWrapper, key_offset: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.verify_ed25519(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset)))
+    env.vm_hooks.verify_ed25519(env.convert_mem_ptr(key_offset), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_ed25519(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_ed25519(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_ed25519(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_verify_custom_secp256k1(env: &VMHooksWrapper, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32, hash_type: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.verify_custom_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset), hash_type))
+    env.vm_hooks.verify_custom_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset), hash_type)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_custom_secp256k1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32, hash_type: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_custom_secp256k1(key_handle, message_handle, sig_handle, hash_type))
+    env.vm_hooks.managed_verify_custom_secp256k1(key_handle, message_handle, sig_handle, hash_type)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_verify_secp256k1(env: &VMHooksWrapper, key_offset: i32, key_length: i32, message_offset: i32, message_length: i32, sig_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.verify_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset)))
+    env.vm_hooks.verify_secp256k1(env.convert_mem_ptr(key_offset), env.convert_mem_length(key_length), env.convert_mem_ptr(message_offset), env.convert_mem_length(message_length), env.convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_secp256k1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_secp256k1(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_secp256k1(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_encode_secp256k1_der_signature(env: &VMHooksWrapper, r_offset: i32, r_length: i32, s_offset: i32, s_length: i32, sig_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.encode_secp256k1_der_signature(env.convert_mem_ptr(r_offset), env.convert_mem_length(r_length), env.convert_mem_ptr(s_offset), env.convert_mem_length(s_length), env.convert_mem_ptr(sig_offset)))
+    env.vm_hooks.encode_secp256k1_der_signature(env.convert_mem_ptr(r_offset), env.convert_mem_length(r_length), env.convert_mem_ptr(s_offset), env.convert_mem_length(s_length), env.convert_mem_ptr(sig_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_encode_secp256k1_der_signature(env: &VMHooksWrapper, r_handle: i32, s_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_encode_secp256k1_der_signature(r_handle, s_handle, sig_handle))
+    env.vm_hooks.managed_encode_secp256k1_der_signature(r_handle, s_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_add_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, fst_point_xhandle: i32, fst_point_yhandle: i32, snd_point_xhandle: i32, snd_point_yhandle: i32) {
-    env.with_vm_hooks(|vh| vh.add_ec(x_result_handle, y_result_handle, ec_handle, fst_point_xhandle, fst_point_yhandle, snd_point_xhandle, snd_point_yhandle))
+    env.vm_hooks.add_ec(x_result_handle, y_result_handle, ec_handle, fst_point_xhandle, fst_point_yhandle, snd_point_xhandle, snd_point_yhandle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_double_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) {
-    env.with_vm_hooks(|vh| vh.double_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle))
+    env.vm_hooks.double_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_is_on_curve_ec(env: &VMHooksWrapper, ec_handle: i32, point_xhandle: i32, point_yhandle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.is_on_curve_ec(ec_handle, point_xhandle, point_yhandle))
+    env.vm_hooks.is_on_curve_ec(ec_handle, point_xhandle, point_yhandle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_scalar_base_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_scalar_base_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, data_handle))
+    env.vm_hooks.managed_scalar_base_mult_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_scalar_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_offset: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_scalar_mult_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, point_xhandle: i32, point_yhandle: i32, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, data_handle))
+    env.vm_hooks.managed_scalar_mult_ec(x_result_handle, y_result_handle, ec_handle, point_xhandle, point_yhandle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_marshal_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.marshal_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.marshal_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_marshal_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_marshal_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle))
+    env.vm_hooks.managed_marshal_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_marshal_compressed_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_marshal_compressed_ec(env: &VMHooksWrapper, x_pair_handle: i32, y_pair_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle))
+    env.vm_hooks.managed_marshal_compressed_ec(x_pair_handle, y_pair_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_unmarshal_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.unmarshal_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.unmarshal_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_unmarshal_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_unmarshal_ec(x_result_handle, y_result_handle, ec_handle, data_handle))
+    env.vm_hooks.managed_unmarshal_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_unmarshal_compressed_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_offset: i32, length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length)))
+    env.vm_hooks.unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, env.convert_mem_ptr(data_offset), env.convert_mem_length(length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_unmarshal_compressed_ec(env: &VMHooksWrapper, x_result_handle: i32, y_result_handle: i32, ec_handle: i32, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, data_handle))
+    env.vm_hooks.managed_unmarshal_compressed_ec(x_result_handle, y_result_handle, ec_handle, data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_generate_key_ec(env: &VMHooksWrapper, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_offset: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, env.convert_mem_ptr(result_offset)))
+    env.vm_hooks.generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, env.convert_mem_ptr(result_offset))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_generate_key_ec(env: &VMHooksWrapper, x_pub_key_handle: i32, y_pub_key_handle: i32, ec_handle: i32, result_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, result_handle))
+    env.vm_hooks.managed_generate_key_ec(x_pub_key_handle, y_pub_key_handle, ec_handle, result_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_create_ec(env: &VMHooksWrapper, data_offset: i32, data_length: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.create_ec(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length)))
+    env.vm_hooks.create_ec(env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length))
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_create_ec(env: &VMHooksWrapper, data_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_create_ec(data_handle))
+    env.vm_hooks.managed_create_ec(data_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_curve_length_ec(env: &VMHooksWrapper, ec_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_curve_length_ec(ec_handle))
+    env.vm_hooks.get_curve_length_ec(ec_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_get_priv_key_byte_length_ec(env: &VMHooksWrapper, ec_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.get_priv_key_byte_length_ec(ec_handle))
+    env.vm_hooks.get_priv_key_byte_length_ec(ec_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_elliptic_curve_get_values(env: &VMHooksWrapper, ec_handle: i32, field_order_handle: i32, base_point_order_handle: i32, eq_constant_handle: i32, x_base_point_handle: i32, y_base_point_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.elliptic_curve_get_values(ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle))
+    env.vm_hooks.elliptic_curve_get_values(ec_handle, field_order_handle, base_point_order_handle, eq_constant_handle, x_base_point_handle, y_base_point_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_secp256r1(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_secp256r1(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_secp256r1(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_blssignature_share(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_blssignature_share(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_blssignature_share(key_handle, message_handle, sig_handle)
 }
 
 #[rustfmt::skip]
 fn wasmer_import_managed_verify_blsaggregated_signature(env: &VMHooksWrapper, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
-    env.with_vm_hooks(|vh| vh.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle))
+    env.vm_hooks.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle)
 }
 
 pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObject {

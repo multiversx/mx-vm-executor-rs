@@ -21,11 +21,4 @@ impl VMHooksWrapper {
     pub(crate) fn convert_mem_length(&self, raw: i32) -> MemLength {
         raw as MemLength
     }
-
-    pub fn with_vm_hooks<F, R>(&self, f: F) -> R
-    where
-        F: FnOnce(&dyn VMHooksLegacy) -> R,
-    {
-        f(&**self.vm_hooks)
-    }
 }
