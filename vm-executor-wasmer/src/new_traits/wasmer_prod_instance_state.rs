@@ -26,7 +26,7 @@ impl WasmerProdInstanceState {
     pub fn set_breakpoint_value_legacy(&self, value: BreakpointValue) {
         self.instance_rc()
             .unwrap()
-            .set_breakpoint_value(value)
+            .set_breakpoint_value(value.to_legacy())
             .expect("set_breakpoint_value_legacy globals error");
     }
 
@@ -72,11 +72,5 @@ impl InstanceState for WasmerProdInstanceState {
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
         self.instance_rc()?.memory_store(mem_ptr, data)
-    }
-
-    fn set_breakpoint_value(&mut self, value: BreakpointValue) -> Result<(), ExecutorError> {
-        self.instance_rc()?
-            .set_breakpoint_value(value)
-            .map_err(|err| anyhow!("globals error: {err}").into())
     }
 }

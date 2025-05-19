@@ -1,7 +1,5 @@
 use std::{borrow::Cow, fmt};
 
-use crate::BreakpointValue;
-
 /// Contains details regarding an early exit triggered by a VM hook.
 ///
 /// It doesn't have to be an error, for instance in the case of legacy async calls
@@ -28,10 +26,6 @@ impl VMHooksEarlyExit {
     pub fn with_message(mut self, message: String) -> Self {
         self.message = Cow::Owned(message);
         self
-    }
-
-    pub fn to_legacy_breakpoint(&self) -> BreakpointValue {
-        BreakpointValue::try_from(self.code).unwrap_or(BreakpointValue::ExecutionFailed)
     }
 }
 

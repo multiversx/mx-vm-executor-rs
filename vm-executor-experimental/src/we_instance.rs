@@ -10,7 +10,7 @@ use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use anyhow::anyhow;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallError,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult,
     InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksEarlyExit,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
@@ -229,36 +229,33 @@ fn push_middlewares(
 }
 
 impl Instance for ExperimentalInstance {
-    fn call(&self, func_name: &str) -> Result<(), InstanceCallError> {
+    fn call(&self, func_name: &str) -> InstanceCallResult {
         trace!("Rust instance call: {func_name}");
 
-        let func = self
-            .inner
-            .wasmer_instance
-            .exports
-            .get_function(func_name)
-            .map_err(|_| InstanceCallError::FunctionNotFound)?;
+        let Ok(func) = self.inner.wasmer_instance.exports.get_function(func_name) else {
+            return InstanceCallResult::FunctionNotFound;
+        };
 
         match func.call(&mut *self.wasmer_store.borrow_mut(), &[]) {
             Ok(_) => {
                 trace!("Call succeeded: {func_name}");
-                Ok(())
+                InstanceCallResult::Ok
             }
             Err(runtime_error) => {
                 trace!("Call failed: {func_name} - {runtime_error}");
 
                 match runtime_error.downcast::<VMHooksEarlyExit>() {
-                    Ok(vm_hooks_error) => Err(InstanceCallError::VMHooksEarlyExit(vm_hooks_error)),
+                    Ok(vm_hooks_error) => InstanceCallResult::VMHooksEarlyExit(vm_hooks_error),
                     Err(other_error) => {
                         let breakpoint = self
                             .get_breakpoint_value()
                             .expect("error retrieving instance breakpoint value");
                         if breakpoint != BreakpointValue::None {
-                            Err(InstanceCallError::Breakpoint(breakpoint))
+                            InstanceCallResult::Breakpoint(breakpoint)
                         } else {
-                            Err(InstanceCallError::RuntimeError(
+                            InstanceCallResult::RuntimeError(
                                 anyhow!("runtime error {other_error}").into(),
-                            ))
+                            )
                         }
                     }
                 }

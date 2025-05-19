@@ -6,8 +6,8 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost, ServiceError,
-    VMHooksEarlyExit, VMHooksLegacy,
+    BreakpointValueLegacy, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost,
+    ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
@@ -345,11 +345,11 @@ impl InstanceLegacy for WasmerInstance {
         }
     }
 
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String> {
+    fn set_breakpoint_value(&self, value: BreakpointValueLegacy) -> Result<(), String> {
         set_breakpoint_value(&self.wasmer_instance, value.as_u64())
     }
 
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String> {
+    fn get_breakpoint_value(&self) -> Result<BreakpointValueLegacy, String> {
         get_breakpoint_value(&self.wasmer_instance)?.try_into()
     }
 
