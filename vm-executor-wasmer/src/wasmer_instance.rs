@@ -21,7 +21,7 @@ use wasmer::{Pages, Singlepass};
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
-    wasmer_instance: wasmer::Instance,
+    pub(crate) wasmer_instance: wasmer::Instance,
     memory_name: String,
     early_exit_cell: RefCell<Option<VMHooksEarlyExit>>,
 }

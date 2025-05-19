@@ -11,7 +11,7 @@ pub enum InstanceCallResult {
 /// The new instance trait, only used for configuring & calling the wasmer instance.
 pub trait Instance {
     /// Calls an exported function of a WebAssembly instance by `name`.
-    fn call(&self, func_name: &str) -> InstanceCallResult;
+    fn call(&mut self, func_name: &str, points_limit: u64) -> InstanceCallResult;
 
     /// Checks that all public module functions (SC endpoints) have no arguments or results.
     fn check_signatures(&self) -> bool;
@@ -23,7 +23,7 @@ pub trait Instance {
     fn get_exported_function_names(&self) -> Vec<String>;
 
     /// Returns the number of points(gas) used by the given instance.
-    fn get_points_used(&self) -> Result<u64, ExecutorError>;
+    fn get_points_used(&mut self) -> Result<u64, ExecutorError>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), ExecutorError>;

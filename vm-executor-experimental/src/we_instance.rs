@@ -25,7 +25,7 @@ use wasmer::{imports, AsStoreMut, Extern, Memory, Module, Pages, Store, StoreMut
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct ExperimentalInstance {
-    wasmer_store: RefCell<wasmer::Store>,
+    wasmer_store: wasmer::Store,
     inner: Rc<ExperimentalInstanceInner>,
 }
 
@@ -112,16 +112,13 @@ impl ExperimentalInstance {
         })?;
 
         Ok(ExperimentalInstance {
-            wasmer_store: RefCell::new(store),
+            wasmer_store: store,
             inner,
         })
     }
 
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, ExecutorError> {
-        let value = get_breakpoint_value(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-        )?;
+    fn get_breakpoint_value(&mut self) -> Result<BreakpointValue, ExecutorError> {
+        let value = get_breakpoint_value(&self.inner.wasmer_instance, &mut self.wasmer_store)?;
         value
             .try_into()
             .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
@@ -229,14 +226,22 @@ fn push_middlewares(
 }
 
 impl Instance for ExperimentalInstance {
-    fn call(&self, func_name: &str) -> InstanceCallResult {
+    fn call(&mut self, func_name: &str, points_limit: u64) -> InstanceCallResult {
         trace!("Rust instance call: {func_name}");
 
         let Ok(func) = self.inner.wasmer_instance.exports.get_function(func_name) else {
             return InstanceCallResult::FunctionNotFound;
         };
 
-        match func.call(&mut *self.wasmer_store.borrow_mut(), &[]) {
+        if let Err(err) = set_points_limit(
+            &self.inner.wasmer_instance,
+            &mut self.wasmer_store,
+            points_limit,
+        ) {
+            return InstanceCallResult::RuntimeError(err.into());
+        }
+
+        match func.call(&mut self.wasmer_store, &[]) {
             Ok(_) => {
                 trace!("Call succeeded: {func_name}");
                 InstanceCallResult::Ok
@@ -266,10 +271,10 @@ impl Instance for ExperimentalInstance {
     fn check_signatures(&self) -> bool {
         for (_, export) in self.inner.wasmer_instance.exports.iter() {
             if let Extern::Function(endpoint) = export {
-                if endpoint.param_arity(&self.wasmer_store.borrow()) > 0 {
+                if endpoint.param_arity(&self.wasmer_store) > 0 {
                     return false;
                 }
-                if endpoint.result_arity(&self.wasmer_store.borrow()) > 0 {
+                if endpoint.result_arity(&self.wasmer_store) > 0 {
                     return false;
                 }
             }
@@ -299,12 +304,9 @@ impl Instance for ExperimentalInstance {
             .collect()
     }
 
-    fn get_points_used(&self) -> Result<u64, ExecutorError> {
-        get_points_used(
-            &self.inner.wasmer_instance,
-            &mut self.wasmer_store.borrow_mut(),
-        )
-        .map_err(|err| err.into())
+    fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
+        get_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store)
+            .map_err(|err| err.into())
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {

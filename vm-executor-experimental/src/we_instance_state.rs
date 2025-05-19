@@ -21,7 +21,6 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
     pub store_mut: &'s mut StoreMut<'s>,
-    // pub breakpoint: BreakpointValue,
     pub points_limit: u64,
     pub points_used: u64,
 }
