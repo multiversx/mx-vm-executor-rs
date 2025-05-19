@@ -4,7 +4,6 @@ use multiversx_chain_vm_executor::{
     VMHooksLegacy,
 };
 use std::{
-    cell::RefCell,
     fmt,
     rc::Rc,
     sync::{Arc, Mutex},
@@ -44,7 +43,7 @@ impl WasmerProdExecutor {
             let vm_hooks = self.runtime_ref.vm_hooks(instance_state);
 
             WasmerInstance::try_new_instance(
-                Rc::new(RefCell::new(vm_hooks)),
+                Rc::new(vm_hooks),
                 self.runtime_ref.opcode_cost(),
                 wasm_bytes,
                 compilation_options,
