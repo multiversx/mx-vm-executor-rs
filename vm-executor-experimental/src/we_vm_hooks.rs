@@ -41,26 +41,12 @@ where
 
     let wasmer_inner = data.wasmer_inner.upgrade().unwrap();
 
-    let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut store_mut).unwrap();
-
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
         store_mut: &mut store_mut,
-        points_used,
     };
 
     let mut vm_hooks = data.vm_hooks_builder.create_vm_hooks(&mut instance_state);
 
-    let result = f(&mut *vm_hooks);
-
-    std::mem::drop(vm_hooks);
-
-    set_points_used(
-        &wasmer_inner.wasmer_instance,
-        &mut instance_state.store_mut,
-        instance_state.points_used,
-    )
-    .unwrap();
-
-    result
+    f(&mut *vm_hooks)
 }
