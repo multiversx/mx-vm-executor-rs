@@ -28,7 +28,7 @@ pub struct WasmerInstance {
 
 impl WasmerInstance {
     pub fn try_new_instance(
-        vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
+        vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
@@ -74,7 +74,7 @@ impl WasmerInstance {
     }
 
     pub fn try_new_instance_from_cache(
-        vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
+        vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,

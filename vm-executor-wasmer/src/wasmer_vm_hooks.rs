@@ -5,7 +5,7 @@ use wasmer::WasmerEnv;
 
 #[derive(Clone, Debug)]
 pub struct VMHooksWrapper {
-    pub vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
+    pub vm_hooks: Rc<dyn VMHooksLegacy>,
 }
 
 unsafe impl Send for VMHooksWrapper {}
