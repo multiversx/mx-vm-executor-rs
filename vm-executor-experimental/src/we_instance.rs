@@ -32,7 +32,6 @@ pub struct ExperimentalInstance {
 pub struct ExperimentalInstanceInner {
     pub wasmer_instance: wasmer::Instance,
     pub memory_name: String,
-    pub gas_limit: u64,
 }
 
 impl ExperimentalInstanceInner {
@@ -78,7 +77,6 @@ fn prepare_wasmer_instance_inner(
     Ok(ExperimentalInstanceInner {
         wasmer_instance,
         memory_name,
-        gas_limit,
     })
 }
 

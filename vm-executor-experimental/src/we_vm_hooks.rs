@@ -46,7 +46,6 @@ where
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),
         store_mut: &mut store_mut,
-        points_limit: wasmer_inner.gas_limit,
         points_used,
     };
 

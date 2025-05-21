@@ -36,11 +36,6 @@ impl WasmerProdInstanceState {
 }
 
 impl InstanceState for WasmerProdInstanceState {
-    // TODO: delete
-    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
-        Err(anyhow!("get_points_limit not supported, to be deleted").into())
-    }
-
     fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
         self.instance_rc()?
             .set_points_used(points)

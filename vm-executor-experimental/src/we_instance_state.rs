@@ -21,7 +21,6 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
     pub store_mut: &'s mut StoreMut<'s>,
-    pub points_limit: u64,
     pub points_used: u64,
 }
 
@@ -39,10 +38,6 @@ impl ExperimentalInstanceState<'_> {
 }
 
 impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
-    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
-        Ok(self.points_limit)
-    }
-
     fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
         self.points_used = points;
         Ok(())
