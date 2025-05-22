@@ -1,11 +1,12 @@
 use crate::{wasmer_metering::set_points_limit, WasmerInstance};
-use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
     BreakpointValue, BreakpointValueLegacy, ExecutorError, Instance, InstanceCallResult,
     InstanceLegacy,
 };
 
 use std::rc::Rc;
+
+use super::WasmerExecutorError;
 
 #[derive(Clone)]
 pub struct WasmerProdInstance {
@@ -19,7 +20,7 @@ impl WasmerProdInstance {
 }
 
 fn wrap_runtime_error(err: String) -> InstanceCallResult {
-    InstanceCallResult::RuntimeError(anyhow!("wrapped instance error: {err}").into())
+    InstanceCallResult::RuntimeError(WasmerExecutorError::InstanceCall(err).into())
 }
 
 impl Instance for WasmerProdInstance {
@@ -29,7 +30,9 @@ impl Instance for WasmerProdInstance {
         }
 
         if let Err(err) = set_points_limit(&self.inner_instance_ref.wasmer_instance, points_limit) {
-            return wrap_runtime_error(err);
+            return InstanceCallResult::RuntimeError(
+                WasmerExecutorError::SetPointsLimit(err).into(),
+            );
         }
 
         let result = self.inner_instance_ref.call(func_name);
@@ -76,18 +79,18 @@ impl Instance for WasmerProdInstance {
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         self.inner_instance_ref
             .get_points_used()
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {
         self.inner_instance_ref
             .reset()
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
     }
 
     fn cache(&self) -> Result<Vec<u8>, ExecutorError> {
         self.inner_instance_ref
             .cache()
-            .map_err(|err| anyhow!("wrapped instance error: {err}").into())
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
     }
 }

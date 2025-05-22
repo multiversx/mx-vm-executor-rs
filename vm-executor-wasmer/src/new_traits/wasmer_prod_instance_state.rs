@@ -1,11 +1,12 @@
 use crate::WasmerInstance;
-use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
     BreakpointValue, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
     VMHooksEarlyExit,
 };
 
 use std::rc::{Rc, Weak};
+
+use super::WasmerExecutorError;
 
 #[derive(Clone)]
 pub struct WasmerProdInstanceState {
@@ -17,10 +18,10 @@ impl WasmerProdInstanceState {
         WasmerProdInstanceState { inner_instance_ref }
     }
 
-    fn instance_rc(&self) -> anyhow::Result<Rc<WasmerInstance>> {
+    fn instance_rc(&self) -> Result<Rc<WasmerInstance>, ExecutorError> {
         self.inner_instance_ref
             .upgrade()
-            .map_or_else(|| Err(anyhow!("bad wasmer instance pointer")), Ok)
+            .map_or_else(|| Err(WasmerExecutorError::BadInstancePointer.into()), Ok)
     }
 
     pub fn set_breakpoint_value_legacy(&self, value: BreakpointValue) {
@@ -39,13 +40,13 @@ impl InstanceState for WasmerProdInstanceState {
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         self.instance_rc()?
             .get_points_used()
-            .map_err(|err| anyhow!("globals error: {err}").into())
+            .map_err(|err| WasmerExecutorError::GetPointsUsed(err).into())
     }
 
     fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
         self.instance_rc()?
             .set_points_used(points)
-            .map_err(|err| anyhow!("globals error: {err}").into())
+            .map_err(|err| WasmerExecutorError::SetPointsUsed(err).into())
     }
 
     fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
