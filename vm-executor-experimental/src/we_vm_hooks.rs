@@ -1,17 +1,9 @@
-use std::{
-    cell::RefCell,
-    rc::{Rc, Weak},
-};
+use std::rc::Weak;
 
-use multiversx_chain_vm_executor::{
-    BreakpointValue, InstanceState, MemLength, MemPtr, VMHooks, VMHooksDefault, VMHooksEarlyExit,
-};
+use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks, VMHooksEarlyExit};
 use wasmer::FunctionEnvMut;
 
-use crate::{
-    middlewares::{get_points_limit, get_points_used, set_breakpoint_value, set_points_used},
-    ExperimentalInstanceInner, ExperimentalInstanceState, ExperimentalVMHooksBuilder,
-};
+use crate::{ExperimentalInstanceInner, ExperimentalInstanceState, ExperimentalVMHooksBuilder};
 
 pub struct VMHooksWrapper {
     pub vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
@@ -38,8 +30,6 @@ where
     R: Default + 'static,
 {
     let (data, mut store_mut) = env.data_and_store_mut();
-
-    let wasmer_inner = data.wasmer_inner.upgrade().unwrap();
 
     let mut instance_state = ExperimentalInstanceState {
         wasmer_inner: data.wasmer_inner.clone(),

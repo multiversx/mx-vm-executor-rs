@@ -1,5 +1,3 @@
-#![allow(unused)] // TODO: temporary
-
 pub mod middlewares;
 mod we_error;
 mod we_helpers;

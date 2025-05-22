@@ -1,25 +1,18 @@
-#![allow(unused)]
-
 use crate::middlewares::{
     get_breakpoint_value, get_points_used, set_points_limit, Breakpoints, Metering, OpcodeControl,
     OpcodeTracer, ProtectedGlobals,
 };
-use crate::we_instance_state::ExperimentalInstanceState;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use crate::{ExperimentalError, ExperimentalVMHooksBuilder};
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult,
-    InstanceLegacy, InstanceState, OpcodeCost, ServiceError, VMHooksEarlyExit,
+    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult, OpcodeCost,
+    ServiceError, VMHooksEarlyExit,
 };
-use multiversx_chain_vm_executor::{MemLength, MemPtr};
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
-use std::cell::RefCell;
-use std::mem::MaybeUninit;
-use std::ops::Deref;
 use std::{rc::Rc, rc::Weak, sync::Arc};
 use wasmer::sys::{CompilerConfig, Singlepass};
-use wasmer::{imports, AsStoreMut, Extern, Memory, Module, Pages, Store, StoreMut};
+use wasmer::{Extern, Module, Pages, Store};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
@@ -48,7 +41,6 @@ fn prepare_wasmer_instance_inner(
     module: &Module,
     store: &mut Store,
     weak: &Weak<ExperimentalInstanceInner>,
-    gas_limit: u64,
 ) -> Result<ExperimentalInstanceInner, ExecutorError> {
     // Create an empty import object.
     trace!("Generating imports ...");
@@ -99,13 +91,7 @@ impl ExperimentalInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(
-                vm_hooks_builder,
-                &module,
-                &mut store,
-                weak,
-                compilation_options.gas_limit,
-            )
+            prepare_wasmer_instance_inner(vm_hooks_builder, &module, &mut store, weak)
         })?;
 
         Ok(ExperimentalInstance {
@@ -119,17 +105,6 @@ impl ExperimentalInstance {
         value
             .try_into()
             .map_err(|_| ExperimentalError::UnknownBreakpointValue(value).into())
-    }
-}
-
-fn get_memory_ref<'a>(
-    wasmer_instance: &'a wasmer::Instance,
-    memory_name: &'a str,
-) -> Result<&'a wasmer::Memory, String> {
-    let result = wasmer_instance.exports.get_memory(memory_name);
-    match result {
-        Ok(memory) => Ok(memory),
-        Err(err) => Err(err.to_string()),
     }
 }
 

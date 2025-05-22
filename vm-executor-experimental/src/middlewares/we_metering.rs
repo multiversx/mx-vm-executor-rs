@@ -1,4 +1,5 @@
-// use crate::we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+#![allow(unused)] // TODO: until we activate the local count mechanism
+
 use super::{
     get_local_cost, get_opcode_cost, Breakpoints, MiddlewareWithProtectedGlobals,
     BREAKPOINT_VALUE_OUT_OF_GAS,
