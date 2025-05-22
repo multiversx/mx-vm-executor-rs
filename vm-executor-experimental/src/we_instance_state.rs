@@ -1,6 +1,8 @@
 #![allow(unused)]
 
-use crate::middlewares::{get_points_limit, set_breakpoint_value, set_points_used};
+use crate::middlewares::{
+    get_points_limit, get_points_used, set_breakpoint_value, set_points_used,
+};
 use crate::ExperimentalInstanceInner;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use anyhow::anyhow;
@@ -21,9 +23,6 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
     pub store_mut: &'s mut StoreMut<'s>,
-    // pub breakpoint: BreakpointValue,
-    pub points_limit: u64,
-    pub points_used: u64,
 }
 
 impl ExperimentalInstanceState<'_> {
@@ -40,17 +39,16 @@ impl ExperimentalInstanceState<'_> {
 }
 
 impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
-    fn get_points_limit(&self) -> Result<u64, ExecutorError> {
-        Ok(self.points_limit)
+    fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
+        let wasmer_inner = self.get_wasmer_inner()?;
+        let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut self.store_mut)?;
+        Ok(points_used)
     }
 
     fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
-        self.points_used = points;
+        let wasmer_inner = self.get_wasmer_inner()?;
+        set_points_used(&wasmer_inner.wasmer_instance, &mut self.store_mut, points)?;
         Ok(())
-    }
-
-    fn get_points_used(&self) -> Result<u64, ExecutorError> {
-        Ok(self.points_used)
     }
 
     fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {

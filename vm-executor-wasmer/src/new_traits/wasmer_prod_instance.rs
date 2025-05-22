@@ -1,4 +1,4 @@
-use crate::WasmerInstance;
+use crate::{wasmer_metering::set_points_limit, WasmerInstance};
 use anyhow::anyhow;
 use multiversx_chain_vm_executor::{
     BreakpointValue, BreakpointValueLegacy, ExecutorError, Instance, InstanceCallResult,
@@ -23,9 +23,13 @@ fn wrap_runtime_error(err: String) -> InstanceCallResult {
 }
 
 impl Instance for WasmerProdInstance {
-    fn call(&self, func_name: &str) -> InstanceCallResult {
+    fn call(&mut self, func_name: &str, points_limit: u64) -> InstanceCallResult {
         if !self.inner_instance_ref.has_function(func_name) {
             return InstanceCallResult::FunctionNotFound;
+        }
+
+        if let Err(err) = set_points_limit(&self.inner_instance_ref.wasmer_instance, points_limit) {
+            return wrap_runtime_error(err);
         }
 
         let result = self.inner_instance_ref.call(func_name);
@@ -69,7 +73,7 @@ impl Instance for WasmerProdInstance {
         self.inner_instance_ref.get_exported_function_names()
     }
 
-    fn get_points_used(&self) -> Result<u64, ExecutorError> {
+    fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         self.inner_instance_ref
             .get_points_used()
             .map_err(|err| anyhow!("wrapped instance error: {err}").into())

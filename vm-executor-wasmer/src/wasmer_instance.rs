@@ -21,14 +21,14 @@ use wasmer::{Pages, Singlepass};
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
 pub struct WasmerInstance {
-    wasmer_instance: wasmer::Instance,
+    pub(crate) wasmer_instance: wasmer::Instance,
     memory_name: String,
     early_exit_cell: RefCell<Option<VMHooksEarlyExit>>,
 }
 
 impl WasmerInstance {
     pub fn try_new_instance(
-        vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
+        vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
@@ -74,7 +74,7 @@ impl WasmerInstance {
     }
 
     pub fn try_new_instance_from_cache(
-        vm_hooks: Rc<Box<dyn VMHooksLegacy>>,
+        vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptions,
