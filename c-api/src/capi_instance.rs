@@ -52,7 +52,8 @@ pub unsafe extern "C" fn vm_exec_new_instance(
     }
 
     let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
-    let compilation_options: &CompilationOptionsLegacy = &*(options_ptr as *const CompilationOptionsLegacy);
+    let compilation_options: &CompilationOptionsLegacy =
+        &*(options_ptr as *const CompilationOptionsLegacy);
     let instance_result = capi_executor
         .content
         .new_instance(wasm_bytes, compilation_options);
