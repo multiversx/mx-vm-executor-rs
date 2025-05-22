@@ -1,4 +1,4 @@
-use crate::{CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost};
+use crate::{CompilationOptionsLegacy, ExecutorError, InstanceLegacy, OpcodeCost};
 
 use std::ffi::c_void;
 
@@ -13,13 +13,13 @@ pub trait ExecutorLegacy {
     fn new_instance(
         &self,
         wasm_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError>;
 
     /// Creates a new VM executor instance from cache.
     fn new_instance_from_cache(
         &self,
         cache_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError>;
 }

@@ -46,7 +46,7 @@ impl WasmerProdExecutor {
                 Rc::from(vm_hooks),
                 self.runtime_ref.opcode_cost(),
                 wasm_bytes,
-                compilation_options,
+                &compilation_options.to_legacy(),
             )
             .expect("instance init failed")
         });

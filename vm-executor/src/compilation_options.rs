@@ -1,4 +1,4 @@
-pub struct CompilationOptions {
+pub struct CompilationOptionsLegacy {
     pub gas_limit: u64,
     pub unmetered_locals: usize,
     pub max_memory_grow: usize,

@@ -18,6 +18,7 @@ use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
 const MAX_LOCAL_COUNT: u32 = 4000;
+const POINTS_LIMIT_INIT: i64 = 0;
 
 #[derive(Clone, Debug)]
 struct MeteringGlobalIndexes {
@@ -27,7 +28,6 @@ struct MeteringGlobalIndexes {
 
 #[derive(Debug)]
 pub(crate) struct Metering {
-    points_limit: u64,
     unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
@@ -36,13 +36,11 @@ pub(crate) struct Metering {
 
 impl Metering {
     pub(crate) fn new(
-        points_limit: u64,
         unmetered_locals: usize,
         opcode_cost: Arc<OpcodeCost>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
-            points_limit,
             unmetered_locals,
             opcode_cost,
             breakpoints_middleware,
@@ -89,13 +87,11 @@ impl ModuleMiddleware for Metering {
     fn transform_module_info(&self, module_info: &mut ModuleInfo) -> Result<(), MiddlewareError> {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
-        let points_limit = self.points_limit as i64;
-
         *global_indexes = Some(MeteringGlobalIndexes {
             points_limit_global_index: create_global_index(
                 module_info,
                 METERING_POINTS_LIMIT,
-                points_limit,
+                POINTS_LIMIT_INIT,
             ),
             points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
         });
