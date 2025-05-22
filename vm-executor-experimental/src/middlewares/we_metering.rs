@@ -6,7 +6,7 @@ use super::{
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use multiversx_chain_vm_executor::OpcodeCost;
+use multiversx_chain_vm_executor::{ExecutorError, OpcodeCost};
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
@@ -196,7 +196,7 @@ impl FunctionMiddleware for FunctionMetering {
 pub(crate) fn get_points_limit(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-) -> anyhow::Result<u64> {
+) -> Result<u64, ExecutorError> {
     get_global_value_u64(instance, store, METERING_POINTS_LIMIT)
 }
 
@@ -204,23 +204,23 @@ pub(crate) fn set_points_limit(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     limit: u64,
-) -> anyhow::Result<()> {
+) -> Result<(), ExecutorError> {
     set_global_value_u64(instance, store, METERING_POINTS_LIMIT, limit)
+}
+
+pub(crate) fn get_points_used(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+) -> Result<u64, ExecutorError> {
+    get_global_value_u64(instance, store, METERING_POINTS_USED)
 }
 
 pub(crate) fn set_points_used(
     instance: &Instance,
     store: &mut impl AsStoreMut,
     points: u64,
-) -> anyhow::Result<()> {
+) -> Result<(), ExecutorError> {
     set_global_value_u64(instance, store, METERING_POINTS_USED, points)
-}
-
-pub(crate) fn get_points_used(
-    instance: &Instance,
-    store: &mut impl AsStoreMut,
-) -> anyhow::Result<u64> {
-    get_global_value_u64(instance, store, METERING_POINTS_USED)
 }
 
 fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {

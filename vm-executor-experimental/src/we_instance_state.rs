@@ -3,9 +3,8 @@
 use crate::middlewares::{
     get_points_limit, get_points_used, set_breakpoint_value, set_points_used,
 };
-use crate::ExperimentalInstanceInner;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
-use anyhow::anyhow;
+use crate::{ExperimentalError, ExperimentalInstanceInner};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, InstanceState, ServiceError,
@@ -31,10 +30,10 @@ impl ExperimentalInstanceState<'_> {
         wasmer_inner.get_memory_ref().unwrap().view(&self.store_mut)
     }
 
-    fn get_wasmer_inner(&self) -> Result<Rc<ExperimentalInstanceInner>, anyhow::Error> {
+    fn get_wasmer_inner(&self) -> Result<Rc<ExperimentalInstanceInner>, ExecutorError> {
         self.wasmer_inner
             .upgrade()
-            .ok_or_else(|| anyhow!("uninitialized wasmer_inner weak pointer"))
+            .ok_or_else(|| ExperimentalError::BadInstanceInnerPointer.into())
     }
 }
 

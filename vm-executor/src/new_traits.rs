@@ -6,7 +6,7 @@ mod vm_hooks_early_exit;
 mod vm_hooks_legacy_adapter;
 mod vm_hooks_new;
 
-pub use breakpoint_value_new::BreakpointValue;
+pub use breakpoint_value_new::{BreakpointValue, UnknownBreakpointValueError};
 pub use executor_new::Executor;
 pub use instance_new::{Instance, InstanceCallResult};
 pub use instance_state::InstanceState;

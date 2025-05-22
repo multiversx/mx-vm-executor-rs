@@ -26,15 +26,17 @@ impl BreakpointValue {
     }
 }
 
+pub struct UnknownBreakpointValueError;
+
 impl TryFrom<u64> for BreakpointValue {
-    type Error = String;
+    type Error = UnknownBreakpointValueError;
 
     fn try_from(value: u64) -> Result<Self, Self::Error> {
         match value {
             0 => Ok(BreakpointValue::None),
             4 => Ok(BreakpointValue::OutOfGas),
             5 => Ok(BreakpointValue::MemoryLimit),
-            _ => Err("unknown breakpoint".to_string()),
+            _ => Err(UnknownBreakpointValueError),
         }
     }
 }

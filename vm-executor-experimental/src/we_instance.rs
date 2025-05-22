@@ -5,9 +5,8 @@ use crate::middlewares::{
     OpcodeTracer, ProtectedGlobals,
 };
 use crate::we_instance_state::ExperimentalInstanceState;
-use crate::ExperimentalVMHooksBuilder;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
-use anyhow::anyhow;
+use crate::{ExperimentalError, ExperimentalVMHooksBuilder};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult,
@@ -119,7 +118,7 @@ impl ExperimentalInstance {
         let value = get_breakpoint_value(&self.inner.wasmer_instance, &mut self.wasmer_store)?;
         value
             .try_into()
-            .map_err(|err| anyhow!("error decoding breakpoint value: {err}").into())
+            .map_err(|_| ExperimentalError::UnknownBreakpointValue(value).into())
     }
 }
 
@@ -236,7 +235,7 @@ impl Instance for ExperimentalInstance {
             &mut self.wasmer_store,
             points_limit,
         ) {
-            return InstanceCallResult::RuntimeError(err.into());
+            return InstanceCallResult::RuntimeError(err);
         }
 
         match func.call(&mut self.wasmer_store, &[]) {
@@ -257,7 +256,7 @@ impl Instance for ExperimentalInstance {
                             InstanceCallResult::Breakpoint(breakpoint)
                         } else {
                             InstanceCallResult::RuntimeError(
-                                anyhow!("runtime error {other_error}").into(),
+                                ExperimentalError::InstanceCall(other_error).into(),
                             )
                         }
                     }
@@ -304,7 +303,6 @@ impl Instance for ExperimentalInstance {
 
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         get_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store)
-            .map_err(|err| err.into())
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {
