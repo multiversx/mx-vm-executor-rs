@@ -6,8 +6,8 @@ mod we_opcode_trace;
 mod we_protected_globals;
 mod we_protected_globals_trait;
 
-pub use we_breakpoints::*;
-pub use we_metering::*;
+pub(crate) use we_breakpoints::*;
+pub(crate) use we_metering::*;
 pub use we_metering_helpers::*;
 pub use we_opcode_control::OpcodeControl;
 pub use we_opcode_trace::OpcodeTracer;

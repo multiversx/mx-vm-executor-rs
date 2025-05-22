@@ -1,13 +1,12 @@
 use std::sync::Mutex;
 
+use multiversx_chain_vm_executor::ExecutorError;
 use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
 use wasmer::wasmparser::Operator;
 use wasmer::{AsStoreMut, Instance, LocalFunctionIndex};
 use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
-use crate::we_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
-};
+use crate::we_helpers::{create_global_index, get_global_value_u64, is_control_flow_operator};
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -131,17 +130,9 @@ impl FunctionMiddleware for FunctionBreakpoints {
     }
 }
 
-pub(crate) fn set_breakpoint_value(
-    instance: &Instance,
-    store: &mut impl AsStoreMut,
-    value: u64,
-) -> anyhow::Result<()> {
-    set_global_value_u64(instance, store, BREAKPOINT_VALUE, value)
-}
-
 pub(crate) fn get_breakpoint_value(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-) -> anyhow::Result<u64> {
+) -> Result<u64, ExecutorError> {
     get_global_value_u64(instance, store, BREAKPOINT_VALUE)
 }

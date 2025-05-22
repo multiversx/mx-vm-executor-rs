@@ -5,6 +5,8 @@ use wasmer::{
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
+use crate::ExperimentalError;
+
 pub(crate) fn create_global_index(
     module_info: &mut ModuleInfo,
     key: &str,
@@ -43,24 +45,32 @@ pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
     )
 }
 
-pub(crate) fn set_global_value_u64(
-    instance: &Instance,
-    store: &mut impl AsStoreMut,
-    global_name: &str,
-    value: u64,
-) -> anyhow::Result<()> {
-    let global = instance.exports.get_global(global_name)?;
-    Ok(global.set(store, value.into())?)
-}
-
 pub(crate) fn get_global_value_u64(
     instance: &Instance,
     store: &mut impl AsStoreMut,
-    global_name: &str,
-) -> anyhow::Result<u64> {
-    let global = instance.exports.get_global(global_name)?;
+    global_name: &'static str,
+) -> Result<u64, ExecutorError> {
+    let global = instance
+        .exports
+        .get_global(global_name)
+        .map_err(|err| ExperimentalError::GlobalAccess(global_name, err))?;
     let value = global.get(store);
     value
         .try_into()
-        .map_err(|err| anyhow::anyhow!("error parsing global value: {err}"))
+        .map_err(|err| ExperimentalError::ParseGlobalValue(global_name, err).into())
+}
+
+pub(crate) fn set_global_value_u64(
+    instance: &Instance,
+    store: &mut impl AsStoreMut,
+    global_name: &'static str,
+    value: u64,
+) -> Result<(), ExecutorError> {
+    let global = instance
+        .exports
+        .get_global(global_name)
+        .map_err(|err| ExperimentalError::GlobalAccess(global_name, err))?;
+    global
+        .set(store, value.into())
+        .map_err(|err| ExperimentalError::SetGlobalValue(global_name, err).into())
 }

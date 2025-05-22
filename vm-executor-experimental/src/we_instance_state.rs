@@ -1,24 +1,11 @@
-#![allow(unused)]
-
-use crate::middlewares::{
-    get_points_limit, get_points_used, set_breakpoint_value, set_points_used,
-};
-use crate::ExperimentalInstanceInner;
-use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
-use anyhow::anyhow;
-use log::trace;
-use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, InstanceLegacy, InstanceState, ServiceError,
-};
+use crate::middlewares::{get_points_used, set_points_used};
+use crate::{ExperimentalError, ExperimentalInstanceInner};
+use multiversx_chain_vm_executor::{ExecutorError, InstanceState};
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
 
-use std::cell::RefCell;
-use std::ops::{Add, Deref};
+use std::rc::Rc;
 use std::rc::Weak;
-use std::{rc::Rc, sync::Arc};
-use wasmer::{imports, AsStoreMut, Extern, MemoryView, Module, Pages, Store, StoreMut};
-
-const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
+use wasmer::{MemoryView, StoreMut};
 
 pub struct ExperimentalInstanceState<'s> {
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
@@ -31,10 +18,10 @@ impl ExperimentalInstanceState<'_> {
         wasmer_inner.get_memory_ref().unwrap().view(&self.store_mut)
     }
 
-    fn get_wasmer_inner(&self) -> Result<Rc<ExperimentalInstanceInner>, anyhow::Error> {
+    fn get_wasmer_inner(&self) -> Result<Rc<ExperimentalInstanceInner>, ExecutorError> {
         self.wasmer_inner
             .upgrade()
-            .ok_or_else(|| anyhow!("uninitialized wasmer_inner weak pointer"))
+            .ok_or_else(|| ExperimentalError::BadInstanceInnerPointer.into())
     }
 }
 
@@ -66,7 +53,7 @@ impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
         let memory_view = self.get_memory_view();
         let len = mem_length as usize;
         let mut result = Vec::with_capacity(len);
-        memory_view.read_uninit(mem_ptr as u64, result.spare_capacity_mut());
+        memory_view.read_uninit(mem_ptr as u64, result.spare_capacity_mut())?;
         unsafe {
             result.set_len(len);
         }

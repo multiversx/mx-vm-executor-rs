@@ -1,8 +1,8 @@
-use crate::{ExperimentalInstance, ExperimentalInstanceState, ExperimentalVMHooksBuilder};
+use crate::{ExperimentalInstance, ExperimentalVMHooksBuilder};
 use multiversx_chain_vm_executor::{
-    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, VMHooks,
+    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost,
 };
-use std::{error::Error, fmt, sync::Arc};
+use std::{fmt, sync::Arc};
 
 pub trait ExperimentalExecutorRuntimeRef: Send + Sync {
     fn vm_hooks_builder(&self) -> Box<dyn ExperimentalVMHooksBuilder>;
