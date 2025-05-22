@@ -7,7 +7,7 @@ use crate::{
 };
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{CompilationOptions, InstanceLegacy};
+use multiversx_chain_vm_executor::{CompilationOptionsLegacy, InstanceLegacy};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
@@ -52,7 +52,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
     }
 
     let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
-    let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
+    let compilation_options: &CompilationOptionsLegacy = &*(options_ptr as *const CompilationOptionsLegacy);
     let instance_result = capi_executor
         .content
         .new_instance(wasm_bytes, compilation_options);

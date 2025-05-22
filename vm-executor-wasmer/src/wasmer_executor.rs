@@ -1,7 +1,7 @@
 use crate::WasmerInstance;
 use log::trace;
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost, ServiceError,
+    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost, ServiceError,
     VMHooksLegacy,
 };
 use std::cell::RefCell;
@@ -73,7 +73,7 @@ impl ExecutorLegacy for WasmerExecutor {
     fn new_instance(
         &self,
         wasm_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
         let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance(
@@ -88,7 +88,7 @@ impl ExecutorLegacy for WasmerExecutor {
     fn new_instance_from_cache(
         &self,
         cache_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
         let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance_from_cache(

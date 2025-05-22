@@ -1,10 +1,10 @@
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorService, InstanceLegacy, VMHooksLegacyDefault,
+    CompilationOptionsLegacy, ExecutorService, InstanceLegacy, VMHooksLegacyDefault,
 };
 use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
 use wasmer::wat2wasm;
 
-const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
+const DUMMY_COMPILATION_OPTIONS: CompilationOptionsLegacy = CompilationOptionsLegacy {
     gas_limit: 0,
     unmetered_locals: 0,
     max_memory_grow: 0,

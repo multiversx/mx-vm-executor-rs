@@ -6,7 +6,7 @@ use crate::{
 };
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValueLegacy, CompilationOptions, ExecutorError, InstanceLegacy, OpcodeCost,
+    BreakpointValueLegacy, CompilationOptionsLegacy, ExecutorError, InstanceLegacy, OpcodeCost,
     ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use multiversx_chain_vm_executor::{MemLength, MemPtr};
@@ -31,7 +31,7 @@ impl WasmerInstance {
         vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         wasm_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
@@ -77,7 +77,7 @@ impl WasmerInstance {
         vm_hooks: Rc<dyn VMHooksLegacy>,
         opcode_cost: Arc<Mutex<OpcodeCost>>,
         cache_bytes: &[u8],
-        compilation_options: &CompilationOptions,
+        compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
@@ -183,7 +183,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
 
 fn push_middlewares(
     compiler: &mut Singlepass,
-    compilation_options: &CompilationOptions,
+    compilation_options: &CompilationOptionsLegacy,
     opcode_cost: Arc<Mutex<OpcodeCost>>,
 ) {
     // Create breakpoints middleware
