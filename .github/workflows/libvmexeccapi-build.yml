@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             artifact_name: libvmexeccapi.so
             make_target: capi-linux-amd64
           - os: macos-13
@@ -29,7 +29,7 @@ jobs:
       - name: Install rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: "1.77"
+          toolchain: "1.83"
           
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,9 +38,9 @@ jobs:
         run: make ${{ matrix.make_target }}
       
       - name: Save artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: libs
+          name: lib-${{ matrix.make_target }}
           path: |
             target/release/*.so
             target/release/*.dylib

@@ -1,4 +1,4 @@
-use crate::{Executor, VMHooks};
+use crate::{ExecutorLegacy, VMHooksLegacy};
 
 pub type ExecutorError = Box<dyn std::error::Error>;
 
@@ -14,6 +14,6 @@ pub trait ExecutorService: ExecutorLastError {
     /// Creates a new VM executor.
     fn new_executor(
         &self,
-        vm_hooks_builder: Box<dyn VMHooks>,
-    ) -> Result<Box<dyn Executor>, ExecutorError>;
+        vm_hooks_builder: Box<dyn VMHooksLegacy>,
+    ) -> Result<Box<dyn ExecutorLegacy>, ExecutorError>;
 }

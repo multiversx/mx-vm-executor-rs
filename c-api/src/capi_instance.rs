@@ -5,9 +5,9 @@ use crate::{
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
-use meta::capi_safe_unwind;
 use libc::{c_char, c_int};
-use multiversx_chain_vm_executor::{CompilationOptions, Instance};
+use meta::capi_safe_unwind;
+use multiversx_chain_vm_executor::{CompilationOptionsLegacy, InstanceLegacy};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
@@ -24,7 +24,7 @@ pub struct vm_exec_instance_t;
 pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
-    pub(crate) content: Box<dyn Instance>,
+    pub(crate) content: Box<dyn InstanceLegacy>,
 }
 
 /// Creates a new VM executor instance.
@@ -52,7 +52,8 @@ pub unsafe extern "C" fn vm_exec_new_instance(
     }
 
     let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
-    let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
+    let compilation_options: &CompilationOptionsLegacy =
+        &*(options_ptr as *const CompilationOptionsLegacy);
     let instance_result = capi_executor
         .content
         .new_instance(wasm_bytes, compilation_options);

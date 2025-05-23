@@ -1,22 +1,9 @@
-use crate::{BreakpointValue, ExecutorError};
+use crate::{BreakpointValueLegacy, ExecutorError, MemLength, MemPtr};
 
-pub struct CompilationOptions {
-    pub gas_limit: u64,
-    pub unmetered_locals: usize,
-    pub max_memory_grow: usize,
-    pub max_memory_grow_delta: usize,
-    pub opcode_trace: bool,
-    pub metering: bool,
-    pub runtime_breakpoints: bool,
-}
-
-/// The argument type for dealing with executor memory pointers.
-pub type MemPtr = isize;
-
-/// The argument type for dealing with lengths of slices of the executor memory.
-pub type MemLength = isize;
-
-pub trait Instance {
+/// The old instance trait, used both:
+/// - from the "outside": configuring & calling the instance;
+/// - from the "inside": by VMHooks, to update progress.
+pub trait InstanceLegacy {
     /// Calls an exported function of a WebAssembly instance by `name`.
     fn call(&self, func_name: &str) -> Result<(), String>;
 
@@ -54,10 +41,10 @@ pub trait Instance {
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError>;
 
     /// Sets the runtime breakpoint value for the given instance.
-    fn set_breakpoint_value(&self, value: BreakpointValue) -> Result<(), String>;
+    fn set_breakpoint_value(&self, value: BreakpointValueLegacy) -> Result<(), String>;
 
     /// Returns the runtime breakpoint value from the given instance.
-    fn get_breakpoint_value(&self) -> Result<BreakpointValue, String>;
+    fn get_breakpoint_value(&self) -> Result<BreakpointValueLegacy, String>;
 
     /// Resets an instance, cleaning memories and globals.
     fn reset(&self) -> Result<(), String>;

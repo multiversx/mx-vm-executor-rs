@@ -4,134 +4,265 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-#[derive(Clone, Debug, Default)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(default)]
 pub struct OpcodeCost {
+    #[serde(rename = "Block", default)]
     pub opcode_block: u32,
+    #[serde(rename = "Br", default)]
     pub opcode_br: u32,
+    #[serde(rename = "BrIf", default)]
     pub opcode_brif: u32,
+    #[serde(rename = "BrTable", default)]
     pub opcode_brtable: u32,
+    #[serde(rename = "Call", default)]
     pub opcode_call: u32,
+    #[serde(rename = "CallIndirect", default)]
     pub opcode_callindirect: u32,
+    #[serde(rename = "Catch", default)]
     pub opcode_catch: u32,
+    #[serde(rename = "CatchAll", default)]
     pub opcode_catchall: u32,
+    #[serde(rename = "Delegate", default)]
     pub opcode_delegate: u32,
+    #[serde(rename = "Drop", default)]
     pub opcode_drop: u32,
+    #[serde(rename = "Else", default)]
     pub opcode_else: u32,
+    #[serde(rename = "End", default)]
     pub opcode_end: u32,
+    #[serde(rename = "GlobalGet", default)]
     pub opcode_globalget: u32,
+    #[serde(rename = "GlobalSet", default)]
     pub opcode_globalset: u32,
+    #[serde(rename = "I32Add", default)]
     pub opcode_i32add: u32,
+    #[serde(rename = "I32And", default)]
     pub opcode_i32and: u32,
+    #[serde(rename = "I32Clz", default)]
     pub opcode_i32clz: u32,
+    #[serde(rename = "I32Const", default)]
     pub opcode_i32const: u32,
+    #[serde(rename = "I32Ctz", default)]
     pub opcode_i32ctz: u32,
+    #[serde(rename = "I32DivS", default)]
     pub opcode_i32divs: u32,
+    #[serde(rename = "I32DivU", default)]
     pub opcode_i32divu: u32,
+    #[serde(rename = "I32Eq", default)]
     pub opcode_i32eq: u32,
+    #[serde(rename = "I32Eqz", default)]
     pub opcode_i32eqz: u32,
+    #[serde(rename = "I32Extend16S", default)]
     pub opcode_i32extend16s: u32,
+    #[serde(rename = "I32Extend8S", default)]
     pub opcode_i32extend8s: u32,
+    #[serde(rename = "I32GeS", default)]
     pub opcode_i32ges: u32,
+    #[serde(rename = "I32GeU", default)]
     pub opcode_i32geu: u32,
+    #[serde(rename = "I32GtS", default)]
     pub opcode_i32gts: u32,
+    #[serde(rename = "I32GtU", default)]
     pub opcode_i32gtu: u32,
+    #[serde(rename = "I32LeS", default)]
     pub opcode_i32les: u32,
+    #[serde(rename = "I32LeU", default)]
     pub opcode_i32leu: u32,
+    #[serde(rename = "I32Load", default)]
     pub opcode_i32load: u32,
+    #[serde(rename = "I32Load16S", default)]
     pub opcode_i32load16s: u32,
+    #[serde(rename = "I32Load16U", default)]
     pub opcode_i32load16u: u32,
+    #[serde(rename = "I32Load8S", default)]
     pub opcode_i32load8s: u32,
+    #[serde(rename = "I32Load8U", default)]
     pub opcode_i32load8u: u32,
+    #[serde(rename = "I32LtS", default)]
     pub opcode_i32lts: u32,
+    #[serde(rename = "I32LtU", default)]
     pub opcode_i32ltu: u32,
+    #[serde(rename = "I32Mul", default)]
     pub opcode_i32mul: u32,
+    #[serde(rename = "I32Ne", default)]
     pub opcode_i32ne: u32,
+    #[serde(rename = "I32Or", default)]
     pub opcode_i32or: u32,
+    #[serde(rename = "I32Popcnt", default)]
     pub opcode_i32popcnt: u32,
+    #[serde(rename = "I32RemS", default)]
     pub opcode_i32rems: u32,
+    #[serde(rename = "I32RemU", default)]
     pub opcode_i32remu: u32,
+    #[serde(rename = "I32Rotl", default)]
     pub opcode_i32rotl: u32,
+    #[serde(rename = "I32Rotr", default)]
     pub opcode_i32rotr: u32,
+    #[serde(rename = "I32Shl", default)]
     pub opcode_i32shl: u32,
+    #[serde(rename = "I32ShrS", default)]
     pub opcode_i32shrs: u32,
+    #[serde(rename = "I32ShrU", default)]
     pub opcode_i32shru: u32,
+    #[serde(rename = "I32Store", default)]
     pub opcode_i32store: u32,
+    #[serde(rename = "I32Store16", default)]
     pub opcode_i32store16: u32,
+    #[serde(rename = "I32Store8", default)]
     pub opcode_i32store8: u32,
+    #[serde(rename = "I32Sub", default)]
     pub opcode_i32sub: u32,
+    #[serde(rename = "I32WrapI64", default)]
     pub opcode_i32wrapi64: u32,
+    #[serde(rename = "I32Xor", default)]
     pub opcode_i32xor: u32,
+    #[serde(rename = "I64Add", default)]
     pub opcode_i64add: u32,
+    #[serde(rename = "I64And", default)]
     pub opcode_i64and: u32,
+    #[serde(rename = "I64Clz", default)]
     pub opcode_i64clz: u32,
+    #[serde(rename = "I64Const", default)]
     pub opcode_i64const: u32,
+    #[serde(rename = "I64Ctz", default)]
     pub opcode_i64ctz: u32,
+    #[serde(rename = "I64DivS", default)]
     pub opcode_i64divs: u32,
+    #[serde(rename = "I64DivU", default)]
     pub opcode_i64divu: u32,
+    #[serde(rename = "I64Eq", default)]
     pub opcode_i64eq: u32,
+    #[serde(rename = "I64Eqz", default)]
     pub opcode_i64eqz: u32,
+    #[serde(rename = "I64Extend16S", default)]
     pub opcode_i64extend16s: u32,
+    #[serde(rename = "I64Extend32S", default)]
     pub opcode_i64extend32s: u32,
+    #[serde(rename = "I64Extend8S", default)]
     pub opcode_i64extend8s: u32,
+    #[serde(rename = "I64ExtendI32S", default)]
     pub opcode_i64extendi32s: u32,
+    #[serde(rename = "I64ExtendI32U", default)]
     pub opcode_i64extendi32u: u32,
+    #[serde(rename = "I64GeS", default)]
     pub opcode_i64ges: u32,
+    #[serde(rename = "I64GeU", default)]
     pub opcode_i64geu: u32,
+    #[serde(rename = "I64GtS", default)]
     pub opcode_i64gts: u32,
+    #[serde(rename = "I64GtU", default)]
     pub opcode_i64gtu: u32,
+    #[serde(rename = "I64LeS", default)]
     pub opcode_i64les: u32,
+    #[serde(rename = "I64LeU", default)]
     pub opcode_i64leu: u32,
+    #[serde(rename = "I64Load", default)]
     pub opcode_i64load: u32,
+    #[serde(rename = "I64Load16S", default)]
     pub opcode_i64load16s: u32,
+    #[serde(rename = "I64Load16U", default)]
     pub opcode_i64load16u: u32,
+    #[serde(rename = "I64Load32S", default)]
     pub opcode_i64load32s: u32,
+    #[serde(rename = "I64Load32U", default)]
     pub opcode_i64load32u: u32,
+    #[serde(rename = "I64Load8S", default)]
     pub opcode_i64load8s: u32,
+    #[serde(rename = "I64Load8U", default)]
     pub opcode_i64load8u: u32,
+    #[serde(rename = "I64LtS", default)]
     pub opcode_i64lts: u32,
+    #[serde(rename = "I64LtU", default)]
     pub opcode_i64ltu: u32,
+    #[serde(rename = "I64Mul", default)]
     pub opcode_i64mul: u32,
+    #[serde(rename = "I64Ne", default)]
     pub opcode_i64ne: u32,
+    #[serde(rename = "I64Or", default)]
     pub opcode_i64or: u32,
+    #[serde(rename = "I64Popcnt", default)]
     pub opcode_i64popcnt: u32,
+    #[serde(rename = "I64RemS", default)]
     pub opcode_i64rems: u32,
+    #[serde(rename = "I64RemU", default)]
     pub opcode_i64remu: u32,
+    #[serde(rename = "I64Rotl", default)]
     pub opcode_i64rotl: u32,
+    #[serde(rename = "I64Rotr", default)]
     pub opcode_i64rotr: u32,
+    #[serde(rename = "I64Shl", default)]
     pub opcode_i64shl: u32,
+    #[serde(rename = "I64ShrS", default)]
     pub opcode_i64shrs: u32,
+    #[serde(rename = "I64ShrU", default)]
     pub opcode_i64shru: u32,
+    #[serde(rename = "I64Store", default)]
     pub opcode_i64store: u32,
+    #[serde(rename = "I64Store16", default)]
     pub opcode_i64store16: u32,
+    #[serde(rename = "I64Store32", default)]
     pub opcode_i64store32: u32,
+    #[serde(rename = "I64Store8", default)]
     pub opcode_i64store8: u32,
+    #[serde(rename = "I64Sub", default)]
     pub opcode_i64sub: u32,
+    #[serde(rename = "I64Xor", default)]
     pub opcode_i64xor: u32,
+    #[serde(rename = "If", default)]
     pub opcode_if: u32,
+    #[serde(rename = "LocalGet", default)]
     pub opcode_localget: u32,
+    #[serde(rename = "LocalSet", default)]
     pub opcode_localset: u32,
+    #[serde(rename = "LocalTee", default)]
     pub opcode_localtee: u32,
+    #[serde(rename = "LocalAllocate", default)]
     pub opcode_localallocate: u32,
+    #[serde(rename = "Loop", default)]
     pub opcode_loop: u32,
+    #[serde(rename = "MemoryGrow", default)]
     pub opcode_memorygrow: u32,
+    #[serde(rename = "MemorySize", default)]
     pub opcode_memorysize: u32,
+    #[serde(rename = "Nop", default)]
     pub opcode_nop: u32,
+    #[serde(rename = "RefFunc", default)]
     pub opcode_reffunc: u32,
+    #[serde(rename = "RefIsNull", default)]
     pub opcode_refisnull: u32,
+    #[serde(rename = "RefNull", default)]
     pub opcode_refnull: u32,
+    #[serde(rename = "Rethrow", default)]
     pub opcode_rethrow: u32,
+    #[serde(rename = "Return", default)]
     pub opcode_return: u32,
+    #[serde(rename = "ReturnCall", default)]
     pub opcode_returncall: u32,
+    #[serde(rename = "ReturnCallIndirect", default)]
     pub opcode_returncallindirect: u32,
+    #[serde(rename = "Select", default)]
     pub opcode_select: u32,
+    #[serde(rename = "TableGet", default)]
     pub opcode_tableget: u32,
+    #[serde(rename = "TableGrow", default)]
     pub opcode_tablegrow: u32,
+    #[serde(rename = "TableInit", default)]
     pub opcode_tableinit: u32,
+    #[serde(rename = "TableSet", default)]
     pub opcode_tableset: u32,
+    #[serde(rename = "TableSize", default)]
     pub opcode_tablesize: u32,
+    #[serde(rename = "Throw", default)]
     pub opcode_throw: u32,
+    #[serde(rename = "Try", default)]
     pub opcode_try: u32,
+    #[serde(rename = "TypedSelect", default)]
     pub opcode_typedselect: u32,
+    #[serde(rename = "Unreachable", default)]
     pub opcode_unreachable: u32,
+    #[serde(rename = "Unwind", default)]
     pub opcode_unwind: u32,
 }
