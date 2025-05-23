@@ -2,6 +2,7 @@
 name = "multiversx-chain-vm-executor-wasmer"
 version = "0.4.0"
 edition = "2021"
+publish = false # cannot publish while still working with unpublished wasmer fork
 
 authors = ["MultiversX <contact@multiversx.com>"]
 license = "GPL-3.0-only"

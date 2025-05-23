@@ -2,6 +2,13 @@
 
 This file contains a centralizes a trace of all published crate versions, with their changes in short.
 
+## [multiversx-chain-vm-executor 0.4.0] - 2025-05-23
+- Rust VM support:
+    - New set of traits to work with the Rust VM;
+    - Renamed old traits as `*Legacy`.
+- Wasmer crate gets an additional adapter to the new interfaces (unreleased).
+- New wasmer experimental integration crate, with Wasmer 6.
+
 ## [multiversx-chain-vm-executor 0.3.0] - 2024-11-14
 - Spica release.
 - EI v1.4 new hooks:
