@@ -16,9 +16,20 @@ categories = ["cryptography::cryptocurrencies"]
 
 [lib]
 
+[features]
+default = ["multiversx-chain-vm-executor"]
+
 [dependencies.multiversx-chain-vm-executor]
 version = "0.4.0"
 path = "../vm-executor"
+optional = true
+
+## Optional dependency to published interfaces crate,
+## to help with usage as a git-based dependency/
+[dependencies.multiversx-chain-vm-executor-published]
+package = "multiversx-chain-vm-executor"
+version = "0.4.0"
+optional = true
 
 [dependencies]
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df", default-features = false, features = [

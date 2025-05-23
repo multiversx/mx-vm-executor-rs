@@ -1,4 +1,4 @@
-use multiversx_chain_vm_executor::{
+use multiversx_chain_vm_executor_wasmer::executor_interface::{
     CompilationOptionsLegacy, ExecutorService, InstanceLegacy, VMHooksLegacyDefault,
 };
 use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
