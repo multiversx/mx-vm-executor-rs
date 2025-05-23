@@ -411,7 +411,7 @@ vm_exec_result_t vm_exec_instance_from_cache(vm_exec_executor_t *executor_ptr,
  *
  * C API function, works with raw object pointers.
  */
-uint64_t vm_exec_instance_get_breakpoint_value(vm_exec_instance_t *instance_ptr);
+uint64_t vm_exec_instance_get_breakpoint_value(const vm_exec_instance_t *instance_ptr);
 
 /**
  * Returns the number of points(gas) used by the given instance.
@@ -492,7 +492,7 @@ vm_exec_result_t vm_exec_instance_reset(vm_exec_instance_t *instance_ptr);
  *
  * C API function, works with raw object pointers.
  */
-vm_exec_result_t vm_exec_instance_set_breakpoint_value(vm_exec_instance_t *instance_ptr,
+vm_exec_result_t vm_exec_instance_set_breakpoint_value(const vm_exec_instance_t *instance_ptr,
                                                        uint64_t value);
 
 /**
@@ -543,7 +543,7 @@ int vm_exec_last_error_length(void);
  * error occurs. Potential errors are:
  *
  *  * The buffer is a null pointer,
- *  * The buffer is too smal to hold the error message.
+ *  * The buffer is too small to hold the error message.
  *
  * Note: The error message always has a trailing null character.
  *

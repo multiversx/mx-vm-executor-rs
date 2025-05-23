@@ -1,13 +1,22 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
-publish = false # will also be published, but it is not yet ready for that
+
+authors = ["MultiversX <contact@multiversx.com>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+repository = "https://github.com/multiversx/mx-vm-executor-rs"
+homepage = "https://multiversx.com/"
+documentation = "https://docs.multiversx.com/"
+description = "MultiversX VM Wasmer adapter (production)"
+keywords = ["multiversx", "blockchain", "VM"]
+categories = ["cryptography::cryptocurrencies"]
 
 [lib]
 
 [dependencies.multiversx-chain-vm-executor]
-version = "0.3.0"
+version = "0.4.0"
 path = "../vm-executor"
 
 [dependencies]

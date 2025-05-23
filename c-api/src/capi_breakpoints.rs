@@ -18,11 +18,11 @@ use crate::vm_exec_result_t;
 #[no_mangle]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *const vm_exec_instance_t,
     value: u64,
 ) -> vm_exec_result_t {
-    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
-    let result = set_breakpoint_value_u64(capi_instance.content.as_mut(), value);
+    let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
+    let result = set_breakpoint_value_u64(capi_instance.content.as_ref(), value);
     match result {
         Ok(()) => vm_exec_result_t::VM_EXEC_OK,
         Err(message) => {
@@ -41,9 +41,10 @@ pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
 #[no_mangle]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *const vm_exec_instance_t,
 ) -> u64 {
-    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
+    let capi_instance =
+        cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
     let result = capi_instance.content.get_breakpoint_value();
     match result {
         Ok(breakpoint_value) => breakpoint_value.as_u64(),
@@ -54,6 +55,6 @@ pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
     }
 }
 
-fn set_breakpoint_value_u64(instance: &mut dyn InstanceLegacy, value: u64) -> Result<(), String> {
+fn set_breakpoint_value_u64(instance: &dyn InstanceLegacy, value: u64) -> Result<(), String> {
     instance.set_breakpoint_value(value.try_into()?)
 }

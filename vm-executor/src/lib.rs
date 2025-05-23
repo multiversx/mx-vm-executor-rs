@@ -20,9 +20,6 @@ pub use service_error::ServiceError;
 pub use service_trait::*;
 pub use vm_hooks::{VMHooksLegacy, VMHooksLegacyDefault};
 
-/// Temporary. TODO: delete.
-pub type VMHooksError = VMHooksEarlyExit;
-
 /// The argument type for dealing with executor memory pointers.
 pub type MemPtr = isize;
 
