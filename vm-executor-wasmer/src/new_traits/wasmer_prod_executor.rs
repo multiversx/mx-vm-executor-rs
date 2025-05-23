@@ -1,8 +1,8 @@
-use crate::WasmerInstance;
-use multiversx_chain_vm_executor::{
+use crate::executor_interface::{
     check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost,
     VMHooksLegacy,
 };
+use crate::WasmerInstance;
 use std::{
     fmt,
     rc::Rc,

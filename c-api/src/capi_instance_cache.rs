@@ -67,7 +67,8 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
     }
 
     let cache_bytes: &[u8] = slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize);
-    let compilation_options: &CompilationOptionsLegacy = &*(options_ptr as *const CompilationOptionsLegacy);
+    let compilation_options: &CompilationOptionsLegacy =
+        &*(options_ptr as *const CompilationOptionsLegacy);
     let instance_result = capi_executor
         .content
         .new_instance_from_cache(cache_bytes, compilation_options);

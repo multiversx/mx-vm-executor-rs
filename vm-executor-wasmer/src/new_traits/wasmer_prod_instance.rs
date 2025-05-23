@@ -1,8 +1,8 @@
-use crate::{wasmer_metering::set_points_limit, WasmerInstance};
-use multiversx_chain_vm_executor::{
+use crate::executor_interface::{
     BreakpointValue, BreakpointValueLegacy, ExecutorError, Instance, InstanceCallResult,
     InstanceLegacy,
 };
+use crate::{wasmer_metering::set_points_limit, WasmerInstance};
 
 use std::rc::Rc;
 

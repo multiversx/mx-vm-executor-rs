@@ -1,3 +1,4 @@
+use crate::executor_interface::OpcodeCost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
@@ -5,7 +6,6 @@ use crate::wasmer_helpers::{
 };
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
-use multiversx_chain_vm_executor::OpcodeCost;
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::Operator;

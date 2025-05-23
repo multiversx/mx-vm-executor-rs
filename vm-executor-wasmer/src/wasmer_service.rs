@@ -1,7 +1,7 @@
-use log::trace;
-use multiversx_chain_vm_executor::{
+use crate::executor_interface::{
     ExecutorError, ExecutorLastError, ExecutorLegacy, ExecutorService, VMHooksLegacy,
 };
+use log::trace;
 
 use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
