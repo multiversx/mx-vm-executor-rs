@@ -1,7 +1,7 @@
-use log::trace;
-use multiversx_chain_vm_executor::{
-    Executor, ExecutorError, ExecutorLastError, ExecutorService, VMHooks,
+use crate::executor_interface::{
+    ExecutorError, ExecutorLastError, ExecutorLegacy, ExecutorService, VMHooksLegacy,
 };
+use log::trace;
 
 use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
@@ -39,8 +39,8 @@ impl ExecutorLastError for BasicExecutorService {
 impl ExecutorService for BasicExecutorService {
     fn new_executor(
         &self,
-        vm_hooks_builder: Box<dyn VMHooks>,
-    ) -> Result<Box<dyn Executor>, ExecutorError> {
+        vm_hooks_builder: Box<dyn VMHooksLegacy>,
+    ) -> Result<Box<dyn ExecutorLegacy>, ExecutorError> {
         trace!("Initializing WasmerExecutor ...");
         Ok(Box::new(WasmerExecutor::new(vm_hooks_builder)))
     }

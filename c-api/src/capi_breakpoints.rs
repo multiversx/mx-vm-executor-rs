@@ -1,5 +1,5 @@
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::Instance;
+use multiversx_chain_vm_executor::InstanceLegacy;
 
 use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
 use crate::service_singleton::with_service;
@@ -55,6 +55,6 @@ pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
     }
 }
 
-fn set_breakpoint_value_u64(instance: &dyn Instance, value: u64) -> Result<(), String> {
+fn set_breakpoint_value_u64(instance: &dyn InstanceLegacy, value: u64) -> Result<(), String> {
     instance.set_breakpoint_value(value.try_into()?)
 }

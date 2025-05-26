@@ -1,7 +1,7 @@
 use std::slice;
 
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::CompilationOptions;
+use multiversx_chain_vm_executor::CompilationOptionsLegacy;
 
 use crate::{
     capi_executor::{vm_exec_executor_t, CapiExecutor},
@@ -67,7 +67,8 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
     }
 
     let cache_bytes: &[u8] = slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize);
-    let compilation_options: &CompilationOptions = &*(options_ptr as *const CompilationOptions);
+    let compilation_options: &CompilationOptionsLegacy =
+        &*(options_ptr as *const CompilationOptionsLegacy);
     let instance_result = capi_executor
         .content
         .new_instance_from_cache(cache_bytes, compilation_options);
