@@ -14,6 +14,7 @@ pub fn capi_safe_unwind(attr: TokenStream, item: TokenStream) -> TokenStream {
     quote! {
         #(#attributes)*
         #vis #signature {
+            crate::capi_logger::set_panic_handler();
             let result = std::panic::catch_unwind(|| #body);
             match result {
                 Ok(result) => result,
