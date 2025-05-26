@@ -8,6 +8,7 @@ use std::ffi::c_void;
 
 #[repr(C)]
 #[derive(Clone)]
+#[allow(non_camel_case_types)]
 #[rustfmt::skip]
 pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_gas_left_func_ptr: extern "C" fn(context: *mut c_void) -> i64,

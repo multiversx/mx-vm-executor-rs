@@ -4,7 +4,7 @@
 // !!!!!!!!!!!!!!!!!!!!!! AUTO-GENERATED FILE !!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-use multiversx_chain_vm_executor::OpcodeCost;
+use crate::executor_interface::OpcodeCost;
 use wasmer::wasmparser::Operator;
 
 pub fn get_local_cost(opcode_cost: &OpcodeCost) -> u32 {
