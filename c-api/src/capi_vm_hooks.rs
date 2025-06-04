@@ -267,6 +267,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
+    fn get_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn get_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
@@ -291,6 +295,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_prev_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
+    fn get_prev_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_prev_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn get_prev_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
@@ -311,8 +319,8 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_block_round_time_in_milliseconds_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn epoch_start_block_time_stamp(&self) -> i64 {
-        (self.c_func_pointers_ptr.epoch_start_block_time_stamp_func_ptr)(self.vm_hooks_ptr)
+    fn epoch_start_block_time_stamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_time_stamp_ms_func_ptr)(self.vm_hooks_ptr)
     }
 
     fn epoch_start_block_nonce(&self) -> i64 {
