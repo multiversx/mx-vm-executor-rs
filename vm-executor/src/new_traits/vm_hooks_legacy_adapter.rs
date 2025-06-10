@@ -323,8 +323,8 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::get_prev_block_random_seed(inner, pointer))
     }
 
-    fn get_block_round_time_in_milliseconds(&self) -> i64 {
-        self.adapt_vm_hooks(|inner| VMHooks::get_block_round_time_in_milliseconds(inner))
+    fn get_block_round_time_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::get_block_round_time_ms(inner))
     }
 
     fn epoch_start_block_time_stamp_ms(&self) -> i64 {

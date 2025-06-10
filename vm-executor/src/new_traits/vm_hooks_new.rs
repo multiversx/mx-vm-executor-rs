@@ -78,7 +78,7 @@ pub trait VMHooks: core::fmt::Debug {
     fn get_prev_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_epoch(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
-    fn get_block_round_time_in_milliseconds(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn epoch_start_block_time_stamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn epoch_start_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn epoch_start_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
@@ -640,8 +640,8 @@ impl VMHooks for VMHooksDefault {
         Ok(())
     }
 
-    fn get_block_round_time_in_milliseconds(&mut self) -> Result<i64, VMHooksEarlyExit> {
-        println!("Called: get_block_round_time_in_milliseconds");
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_block_round_time_ms");
         Ok(0)
     }
 

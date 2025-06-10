@@ -80,7 +80,7 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub get_prev_block_round_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub get_prev_block_epoch_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub get_prev_block_random_seed_func_ptr: extern "C" fn(context: *mut c_void, pointer: i32),
-    pub get_block_round_time_in_milliseconds_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
+    pub get_block_round_time_ms_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub epoch_start_block_time_stamp_ms_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub epoch_start_block_nonce_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub epoch_start_block_round_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
