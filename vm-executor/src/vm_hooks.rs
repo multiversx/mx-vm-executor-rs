@@ -70,18 +70,20 @@ pub trait VMHooksLegacy: core::fmt::Debug {
     fn write_log(&self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32);
     fn write_event_log(&self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength);
     fn get_block_timestamp(&self) -> i64;
+    fn get_block_timestamp_ms(&self) -> i64;
     fn get_block_nonce(&self) -> i64;
     fn get_block_round(&self) -> i64;
     fn get_block_epoch(&self) -> i64;
     fn get_block_random_seed(&self, pointer: MemPtr);
     fn get_state_root_hash(&self, pointer: MemPtr);
     fn get_prev_block_timestamp(&self) -> i64;
+    fn get_prev_block_timestamp_ms(&self) -> i64;
     fn get_prev_block_nonce(&self) -> i64;
     fn get_prev_block_round(&self) -> i64;
     fn get_prev_block_epoch(&self) -> i64;
     fn get_prev_block_random_seed(&self, pointer: MemPtr);
-    fn get_block_round_time_in_milliseconds(&self) -> i64;
-    fn epoch_start_block_time_stamp(&self) -> i64;
+    fn get_block_round_time_ms(&self) -> i64;
+    fn epoch_start_block_timestamp_ms(&self) -> i64;
     fn epoch_start_block_nonce(&self) -> i64;
     fn epoch_start_block_round(&self) -> i64;
     fn finish(&self, pointer: MemPtr, length: MemLength);
@@ -573,6 +575,11 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
         0
     }
 
+    fn get_block_timestamp_ms(&self) -> i64 {
+        println!("Called: get_block_timestamp_ms");
+        0
+    }
+
     fn get_block_nonce(&self) -> i64 {
         println!("Called: get_block_nonce");
         0
@@ -601,6 +608,11 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
         0
     }
 
+    fn get_prev_block_timestamp_ms(&self) -> i64 {
+        println!("Called: get_prev_block_timestamp_ms");
+        0
+    }
+
     fn get_prev_block_nonce(&self) -> i64 {
         println!("Called: get_prev_block_nonce");
         0
@@ -620,13 +632,13 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
         println!("Called: get_prev_block_random_seed");
     }
 
-    fn get_block_round_time_in_milliseconds(&self) -> i64 {
-        println!("Called: get_block_round_time_in_milliseconds");
+    fn get_block_round_time_ms(&self) -> i64 {
+        println!("Called: get_block_round_time_ms");
         0
     }
 
-    fn epoch_start_block_time_stamp(&self) -> i64 {
-        println!("Called: epoch_start_block_time_stamp");
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        println!("Called: epoch_start_block_timestamp_ms");
         0
     }
 

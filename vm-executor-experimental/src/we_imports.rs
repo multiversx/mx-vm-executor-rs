@@ -297,6 +297,11 @@ fn wasmer_import_get_block_timestamp(env: FunctionEnvMut<VMHooksWrapper>) -> Res
 }
 
 #[rustfmt::skip]
+fn wasmer_import_get_block_timestamp_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.get_block_timestamp_ms())
+}
+
+#[rustfmt::skip]
 fn wasmer_import_get_block_nonce(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
     with_vm_hooks(env, |vh| vh.get_block_nonce())
 }
@@ -327,6 +332,11 @@ fn wasmer_import_get_prev_block_timestamp(env: FunctionEnvMut<VMHooksWrapper>) -
 }
 
 #[rustfmt::skip]
+fn wasmer_import_get_prev_block_timestamp_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.get_prev_block_timestamp_ms())
+}
+
+#[rustfmt::skip]
 fn wasmer_import_get_prev_block_nonce(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
     with_vm_hooks(env, |vh| vh.get_prev_block_nonce())
 }
@@ -347,13 +357,13 @@ fn wasmer_import_get_prev_block_random_seed(env: FunctionEnvMut<VMHooksWrapper>,
 }
 
 #[rustfmt::skip]
-fn wasmer_import_get_block_round_time_in_milliseconds(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
-    with_vm_hooks(env, |vh| vh.get_block_round_time_in_milliseconds())
+fn wasmer_import_get_block_round_time_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.get_block_round_time_ms())
 }
 
 #[rustfmt::skip]
-fn wasmer_import_epoch_start_block_time_stamp(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
-    with_vm_hooks(env, |vh| vh.epoch_start_block_time_stamp())
+fn wasmer_import_epoch_start_block_timestamp_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.epoch_start_block_timestamp_ms())
 }
 
 #[rustfmt::skip]
@@ -1448,18 +1458,20 @@ pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> 
             "writeLog" => Function::new_typed_with_env(store, &function_env, wasmer_import_write_log),
             "writeEventLog" => Function::new_typed_with_env(store, &function_env, wasmer_import_write_event_log),
             "getBlockTimestamp" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_timestamp),
+            "getBlockTimestampMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_timestamp_ms),
             "getBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_nonce),
             "getBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_round),
             "getBlockEpoch" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_epoch),
             "getBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_random_seed),
             "getStateRootHash" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_state_root_hash),
             "getPrevBlockTimestamp" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_timestamp),
+            "getPrevBlockTimestampMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_timestamp_ms),
             "getPrevBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_nonce),
             "getPrevBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_round),
             "getPrevBlockEpoch" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_epoch),
             "getPrevBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_random_seed),
-            "getBlockRoundTimeInMilliseconds" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_round_time_in_milliseconds),
-            "epochStartBlockTimeStamp" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_time_stamp),
+            "getBlockRoundTimeMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_round_time_ms),
+            "epochStartBlockTimestampMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_timestamp_ms),
             "epochStartBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_nonce),
             "epochStartBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_round),
             "finish" => Function::new_typed_with_env(store, &function_env, wasmer_import_finish),
