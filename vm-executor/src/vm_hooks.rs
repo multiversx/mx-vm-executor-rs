@@ -83,7 +83,7 @@ pub trait VMHooksLegacy: core::fmt::Debug {
     fn get_prev_block_epoch(&self) -> i64;
     fn get_prev_block_random_seed(&self, pointer: MemPtr);
     fn get_block_round_time_ms(&self) -> i64;
-    fn epoch_start_block_time_stamp_ms(&self) -> i64;
+    fn epoch_start_block_timestamp_ms(&self) -> i64;
     fn epoch_start_block_nonce(&self) -> i64;
     fn epoch_start_block_round(&self) -> i64;
     fn finish(&self, pointer: MemPtr, length: MemLength);
@@ -637,8 +637,8 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
         0
     }
 
-    fn epoch_start_block_time_stamp_ms(&self) -> i64 {
-        println!("Called: epoch_start_block_time_stamp_ms");
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        println!("Called: epoch_start_block_timestamp_ms");
         0
     }
 

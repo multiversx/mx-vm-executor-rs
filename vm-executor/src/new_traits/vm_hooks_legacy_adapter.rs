@@ -327,8 +327,8 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::get_block_round_time_ms(inner))
     }
 
-    fn epoch_start_block_time_stamp_ms(&self) -> i64 {
-        self.adapt_vm_hooks(|inner| VMHooks::epoch_start_block_time_stamp_ms(inner))
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::epoch_start_block_timestamp_ms(inner))
     }
 
     fn epoch_start_block_nonce(&self) -> i64 {

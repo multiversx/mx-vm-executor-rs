@@ -362,8 +362,8 @@ fn wasmer_import_get_block_round_time_ms(env: FunctionEnvMut<VMHooksWrapper>) ->
 }
 
 #[rustfmt::skip]
-fn wasmer_import_epoch_start_block_time_stamp_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
-    with_vm_hooks(env, |vh| vh.epoch_start_block_time_stamp_ms())
+fn wasmer_import_epoch_start_block_timestamp_ms(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.epoch_start_block_timestamp_ms())
 }
 
 #[rustfmt::skip]
@@ -1471,7 +1471,7 @@ pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> 
             "getPrevBlockEpoch" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_epoch),
             "getPrevBlockRandomSeed" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_prev_block_random_seed),
             "getBlockRoundTimeMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_get_block_round_time_ms),
-            "epochStartBlockTimeStampMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_time_stamp_ms),
+            "epochStartBlockTimestampMs" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_timestamp_ms),
             "epochStartBlockNonce" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_nonce),
             "epochStartBlockRound" => Function::new_typed_with_env(store, &function_env, wasmer_import_epoch_start_block_round),
             "finish" => Function::new_typed_with_env(store, &function_env, wasmer_import_finish),

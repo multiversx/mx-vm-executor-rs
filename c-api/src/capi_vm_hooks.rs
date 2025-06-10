@@ -319,8 +319,8 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_block_round_time_ms_func_ptr)(self.vm_hooks_ptr)
     }
 
-    fn epoch_start_block_time_stamp_ms(&self) -> i64 {
-        (self.c_func_pointers_ptr.epoch_start_block_time_stamp_ms_func_ptr)(self.vm_hooks_ptr)
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
     }
 
     fn epoch_start_block_nonce(&self) -> i64 {
