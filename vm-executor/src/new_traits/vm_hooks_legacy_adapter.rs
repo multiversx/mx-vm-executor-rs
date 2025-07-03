@@ -275,6 +275,10 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::get_block_timestamp(inner))
     }
 
+    fn get_block_timestamp_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::get_block_timestamp_ms(inner))
+    }
+
     fn get_block_nonce(&self) -> i64 {
         self.adapt_vm_hooks(|inner| VMHooks::get_block_nonce(inner))
     }
@@ -299,6 +303,10 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::get_prev_block_timestamp(inner))
     }
 
+    fn get_prev_block_timestamp_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::get_prev_block_timestamp_ms(inner))
+    }
+
     fn get_prev_block_nonce(&self) -> i64 {
         self.adapt_vm_hooks(|inner| VMHooks::get_prev_block_nonce(inner))
     }
@@ -315,12 +323,12 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::get_prev_block_random_seed(inner, pointer))
     }
 
-    fn get_block_round_time_in_milliseconds(&self) -> i64 {
-        self.adapt_vm_hooks(|inner| VMHooks::get_block_round_time_in_milliseconds(inner))
+    fn get_block_round_time_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::get_block_round_time_ms(inner))
     }
 
-    fn epoch_start_block_time_stamp(&self) -> i64 {
-        self.adapt_vm_hooks(|inner| VMHooks::epoch_start_block_time_stamp(inner))
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        self.adapt_vm_hooks(|inner| VMHooks::epoch_start_block_timestamp_ms(inner))
     }
 
     fn epoch_start_block_nonce(&self) -> i64 {

@@ -66,18 +66,20 @@ pub trait VMHooks: core::fmt::Debug {
     fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) -> Result<(), VMHooksEarlyExit>;
     fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) -> Result<(), VMHooksEarlyExit>;
     fn get_block_timestamp(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_epoch(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
     fn get_state_root_hash(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
     fn get_prev_block_timestamp(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_prev_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_epoch(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
-    fn get_block_round_time_in_milliseconds(&mut self) -> Result<i64, VMHooksEarlyExit>;
-    fn epoch_start_block_time_stamp(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn epoch_start_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn epoch_start_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn epoch_start_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn finish(&mut self, pointer: MemPtr, length: MemLength) -> Result<(), VMHooksEarlyExit>;
@@ -578,6 +580,11 @@ impl VMHooks for VMHooksDefault {
         Ok(0)
     }
 
+    fn get_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_block_timestamp_ms");
+        Ok(0)
+    }
+
     fn get_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit> {
         println!("Called: get_block_nonce");
         Ok(0)
@@ -608,6 +615,11 @@ impl VMHooks for VMHooksDefault {
         Ok(0)
     }
 
+    fn get_prev_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_prev_block_timestamp_ms");
+        Ok(0)
+    }
+
     fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit> {
         println!("Called: get_prev_block_nonce");
         Ok(0)
@@ -628,13 +640,13 @@ impl VMHooks for VMHooksDefault {
         Ok(())
     }
 
-    fn get_block_round_time_in_milliseconds(&mut self) -> Result<i64, VMHooksEarlyExit> {
-        println!("Called: get_block_round_time_in_milliseconds");
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_block_round_time_ms");
         Ok(0)
     }
 
-    fn epoch_start_block_time_stamp(&mut self) -> Result<i64, VMHooksEarlyExit> {
-        println!("Called: epoch_start_block_time_stamp");
+    fn epoch_start_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: epoch_start_block_timestamp_ms");
         Ok(0)
     }
 
