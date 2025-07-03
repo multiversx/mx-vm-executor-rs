@@ -1,6 +1,6 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer-experimental"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
 authors = ["MultiversX <contact@multiversx.com>"]
@@ -16,7 +16,7 @@ categories = ["cryptography::cryptocurrencies"]
 [lib]
 
 [dependencies.multiversx-chain-vm-executor]
-version = "0.4.0"
+version = "0.5.0"
 path = "../vm-executor"
 
 [dependencies]

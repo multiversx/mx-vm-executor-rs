@@ -1,6 +1,6 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 publish = false # cannot publish while still working with unpublished wasmer fork
 
@@ -20,7 +20,7 @@ categories = ["cryptography::cryptocurrencies"]
 default = ["multiversx-chain-vm-executor"]
 
 [dependencies.multiversx-chain-vm-executor]
-version = "0.4.0"
+version = "0.5.0"
 path = "../vm-executor"
 optional = true
 
