@@ -1,8 +1,7 @@
 use crate::executor_interface::OpcodeCost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
-    MiddlewareWithProtectedGlobals,
+    create_global_index, get_global_value_u64, is_control_flow_operator, is_supported_bulk_memory_operator, set_global_value_u64, MiddlewareWithProtectedGlobals
 };
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
@@ -17,12 +16,14 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
+const METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP: &str = "metering_bulk_memory_size_operand_backup";
 const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
     points_limit_global_index: GlobalIndex,
     points_used_global_index: GlobalIndex,
+    bulk_memory_size_operand_backup_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
@@ -67,6 +68,15 @@ impl Metering {
             .unwrap()
             .points_used_global_index
     }
+
+    fn get_bulk_memory_size_operand_backup_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .bulk_memory_size_operand_backup_global_index
+    }
 }
 
 unsafe impl Send for Metering {}
@@ -105,6 +115,11 @@ impl ModuleMiddleware for Metering {
                 points_limit,
             ),
             points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
+            bulk_memory_size_operand_backup_global_index: create_global_index(
+                module_info,
+                METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP,
+                0,
+            ),
         });
     }
 }
@@ -114,6 +129,7 @@ impl MiddlewareWithProtectedGlobals for Metering {
         vec![
             self.get_points_limit_global_index().as_u32(),
             self.get_points_used_global_index().as_u32(),
+            self.get_bulk_memory_size_operand_backup_global_index().as_u32(),
         ]
     }
 }
@@ -156,6 +172,39 @@ impl FunctionMetering {
         self.breakpoints_middleware
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_OUT_OF_GAS);
     }
+
+    fn inject_bulk_memory_cost(&self, state: &mut MiddlewareReaderState, cost_per_byte: u32) {
+        // backup the bulk memory size
+        state.extend(&[Operator::GlobalSet {
+            global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+        }]);
+
+        // inject bulk memory cost
+        state.extend(&[
+            // memory size * price
+            Operator::GlobalGet {
+                global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+            },
+            Operator::I64Const {
+                value: cost_per_byte as i64,
+            },
+            Operator::I64Mul,
+
+            // points user += memory size * price
+            Operator::GlobalGet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+            Operator::I64Add,
+            Operator::GlobalSet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+        ]);
+
+        // bring back the bulk memory size
+        state.extend(&[Operator::GlobalGet {
+            global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+        }]);
+    }
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -169,7 +218,14 @@ impl FunctionMiddleware for FunctionMetering {
         // corner cases.
         let option = get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap());
         match option {
-            Some(cost) => self.accumulated_cost += cost as u64,
+            Some(cost) if is_supported_bulk_memory_operator(&operator) => {
+                self.inject_bulk_memory_cost(state, cost);
+                // immediatly insert out of gas check as this operation might be expensive
+                self.inject_out_of_gas_check(state);
+            },
+            Some(cost) => {
+                self.accumulated_cost += cost as u64
+            },
             None => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
