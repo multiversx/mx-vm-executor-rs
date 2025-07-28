@@ -164,6 +164,29 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
     c_int::from(capi_instance.content.has_function(func_name_r))
 }
 
+/// Checks whether SC has an endpoint with given name.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+#[capi_safe_unwind(-1)]
+pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
+    instance_ptr: *mut vm_exec_instance_t,
+    func_name_ptr: *const c_char,
+) -> c_int {
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", -1);
+
+    // unpack the function name
+    return_if_ptr_null!(func_name_ptr, "function name ptr is null", -1);
+    let func_name_c = CStr::from_ptr(func_name_ptr);
+    let func_name_r = func_name_c.to_str().unwrap();
+
+    c_int::from(capi_instance.content.has_imported_function(func_name_r))
+}
+
+
 /// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
 ///
 /// # Safety

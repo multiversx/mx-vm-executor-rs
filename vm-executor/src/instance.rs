@@ -13,6 +13,9 @@ pub trait InstanceLegacy {
     /// Checks whether SC has an endpoint with given name.
     fn has_function(&self, func_name: &str) -> bool;
 
+    /// Checks whether SC has an imported function with given name.
+    fn has_imported_function(&self, func_name: &str) -> bool;
+
     /// Required to be able to extract all SC endpoint names.
     fn get_exported_function_names(&self) -> Vec<String>;
 

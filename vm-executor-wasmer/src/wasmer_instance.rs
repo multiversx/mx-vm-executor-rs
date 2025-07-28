@@ -13,7 +13,7 @@ use log::trace;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
-use wasmer::Universal;
+use wasmer::{ExternType, Universal};
 use wasmer::{CompilerConfig, Extern, Module, Store};
 use wasmer::{Pages, Singlepass};
 
@@ -266,6 +266,19 @@ impl InstanceLegacy for WasmerInstance {
 
     fn has_function(&self, func_name: &str) -> bool {
         self.wasmer_instance.exports.get_function(func_name).is_ok()
+    }
+
+    fn has_imported_function(&self, func_name: &str) -> bool {
+
+        for import in self.wasmer_instance.module().imports() {
+            if let ExternType::Function(_) = import.ty() {
+                if import.name() == func_name {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     fn get_exported_function_names(&self) -> Vec<String> {

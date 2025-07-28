@@ -267,6 +267,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
+    fn get_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn get_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
@@ -291,6 +295,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.get_prev_block_timestamp_func_ptr)(self.vm_hooks_ptr)
     }
 
+    fn get_prev_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_prev_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
     fn get_prev_block_nonce(&self) -> i64 {
         (self.c_func_pointers_ptr.get_prev_block_nonce_func_ptr)(self.vm_hooks_ptr)
     }
@@ -305,6 +313,22 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
 
     fn get_prev_block_random_seed(&self, pointer: MemPtr) {
         (self.c_func_pointers_ptr.get_prev_block_random_seed_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(pointer))
+    }
+
+    fn get_block_round_time_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.get_block_round_time_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_timestamp_ms(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_timestamp_ms_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_nonce(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_nonce_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn epoch_start_block_round(&self) -> i64 {
+        (self.c_func_pointers_ptr.epoch_start_block_round_func_ptr)(self.vm_hooks_ptr)
     }
 
     fn finish(&self, pointer: MemPtr, length: MemLength) {
@@ -415,6 +439,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_get_multi_esdt_call_value_func_ptr)(self.vm_hooks_ptr, multi_call_value_handle)
     }
 
+    fn managed_get_all_transfers_call_value(&self, transfer_call_values_list_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_all_transfers_call_value_func_ptr)(self.vm_hooks_ptr, transfer_call_values_list_handle)
+    }
+
     fn managed_get_back_transfers(&self, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_back_transfers_func_ptr)(self.vm_hooks_ptr, esdt_transfers_value_handle, egld_value_handle)
     }
@@ -425,6 +453,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
 
     fn managed_get_esdt_token_data(&self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_esdt_token_data_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
+    }
+
+    fn managed_get_esdt_token_type(&self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_esdt_token_type_func_ptr)(self.vm_hooks_ptr, address_handle, token_id_handle, nonce, type_handle)
     }
 
     fn managed_async_call(&self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) {
@@ -471,8 +503,16 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.managed_execute_on_dest_context_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
     }
 
+    fn managed_execute_on_dest_context_with_error_return(&self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_execute_on_dest_context_with_error_return_func_ptr)(self.vm_hooks_ptr, gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+    }
+
     fn managed_multi_transfer_esdt_nft_execute(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_multi_transfer_esdt_nft_execute_with_return_func_ptr)(self.vm_hooks_ptr, dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
     }
 
     fn managed_multi_transfer_esdt_nft_execute_by_user(&self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
@@ -501,6 +541,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
 
     fn managed_get_code_metadata(&self, address_handle: i32, response_handle: i32) {
         (self.c_func_pointers_ptr.managed_get_code_metadata_func_ptr)(self.vm_hooks_ptr, address_handle, response_handle)
+    }
+
+    fn managed_get_code_hash(&self, address_handle: i32, code_hash_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_code_hash_func_ptr)(self.vm_hooks_ptr, address_handle, code_hash_handle)
     }
 
     fn managed_is_builtin_function(&self, function_name_handle: i32) -> i32 {
@@ -821,6 +865,22 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
 
     fn mbuffer_from_big_int_signed(&self, m_buffer_handle: i32, big_int_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.mbuffer_from_big_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, big_int_handle)
+    }
+
+    fn mbuffer_to_small_int_unsigned(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_to_small_int_signed(&self, m_buffer_handle: i32) -> i64 {
+        (self.c_func_pointers_ptr.mbuffer_to_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle)
+    }
+
+    fn mbuffer_from_small_int_unsigned(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_unsigned_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
+    }
+
+    fn mbuffer_from_small_int_signed(&self, m_buffer_handle: i32, value: i64) {
+        (self.c_func_pointers_ptr.mbuffer_from_small_int_signed_func_ptr)(self.vm_hooks_ptr, m_buffer_handle, value)
     }
 
     fn mbuffer_to_big_float(&self, m_buffer_handle: i32, big_float_handle: i32) -> i32 {

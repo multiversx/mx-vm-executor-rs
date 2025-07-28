@@ -296,6 +296,11 @@ fn wasmer_import_get_block_timestamp(env: &VMHooksWrapper) -> i64 {
 }
 
 #[rustfmt::skip]
+fn wasmer_import_get_block_timestamp_ms(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.get_block_timestamp_ms()
+}
+
+#[rustfmt::skip]
 fn wasmer_import_get_block_nonce(env: &VMHooksWrapper) -> i64 {
     env.vm_hooks.get_block_nonce()
 }
@@ -326,6 +331,11 @@ fn wasmer_import_get_prev_block_timestamp(env: &VMHooksWrapper) -> i64 {
 }
 
 #[rustfmt::skip]
+fn wasmer_import_get_prev_block_timestamp_ms(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.get_prev_block_timestamp_ms()
+}
+
+#[rustfmt::skip]
 fn wasmer_import_get_prev_block_nonce(env: &VMHooksWrapper) -> i64 {
     env.vm_hooks.get_prev_block_nonce()
 }
@@ -343,6 +353,26 @@ fn wasmer_import_get_prev_block_epoch(env: &VMHooksWrapper) -> i64 {
 #[rustfmt::skip]
 fn wasmer_import_get_prev_block_random_seed(env: &VMHooksWrapper, pointer: i32) {
     env.vm_hooks.get_prev_block_random_seed(env.convert_mem_ptr(pointer))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_get_block_round_time_ms(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.get_block_round_time_ms()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_timestamp_ms(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_timestamp_ms()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_nonce(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_nonce()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_epoch_start_block_round(env: &VMHooksWrapper) -> i64 {
+    env.vm_hooks.epoch_start_block_round()
 }
 
 #[rustfmt::skip]
@@ -481,6 +511,11 @@ fn wasmer_import_managed_get_multi_esdt_call_value(env: &VMHooksWrapper, multi_c
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_get_all_transfers_call_value(env: &VMHooksWrapper, transfer_call_values_list_handle: i32) {
+    env.vm_hooks.managed_get_all_transfers_call_value(transfer_call_values_list_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_get_back_transfers(env: &VMHooksWrapper, esdt_transfers_value_handle: i32, egld_value_handle: i32) {
     env.vm_hooks.managed_get_back_transfers(esdt_transfers_value_handle, egld_value_handle)
 }
@@ -493,6 +528,11 @@ fn wasmer_import_managed_get_esdt_balance(env: &VMHooksWrapper, address_handle: 
 #[rustfmt::skip]
 fn wasmer_import_managed_get_esdt_token_data(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) {
     env.vm_hooks.managed_get_esdt_token_data(address_handle, token_id_handle, nonce, value_handle, properties_handle, hash_handle, name_handle, attributes_handle, creator_handle, royalties_handle, uris_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_esdt_token_type(env: &VMHooksWrapper, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) {
+    env.vm_hooks.managed_get_esdt_token_type(address_handle, token_id_handle, nonce, type_handle)
 }
 
 #[rustfmt::skip]
@@ -551,8 +591,18 @@ fn wasmer_import_managed_execute_on_dest_context(env: &VMHooksWrapper, gas: i64,
 }
 
 #[rustfmt::skip]
+fn wasmer_import_managed_execute_on_dest_context_with_error_return(env: &VMHooksWrapper, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_execute_on_dest_context_with_error_return(gas, address_handle, value_handle, function_handle, arguments_handle, result_handle)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_managed_multi_transfer_esdt_nft_execute(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
     env.vm_hooks.managed_multi_transfer_esdt_nft_execute(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_multi_transfer_esdt_nft_execute_with_return(env: &VMHooksWrapper, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> i32 {
+    env.vm_hooks.managed_multi_transfer_esdt_nft_execute_with_return(dst_handle, token_transfers_handle, gas_limit, function_handle, arguments_handle)
 }
 
 #[rustfmt::skip]
@@ -588,6 +638,11 @@ fn wasmer_import_managed_buffer_to_hex(env: &VMHooksWrapper, source_handle: i32,
 #[rustfmt::skip]
 fn wasmer_import_managed_get_code_metadata(env: &VMHooksWrapper, address_handle: i32, response_handle: i32) {
     env.vm_hooks.managed_get_code_metadata(address_handle, response_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_code_hash(env: &VMHooksWrapper, address_handle: i32, code_hash_handle: i32) {
+    env.vm_hooks.managed_get_code_hash(address_handle, code_hash_handle)
 }
 
 #[rustfmt::skip]
@@ -991,6 +1046,26 @@ fn wasmer_import_mbuffer_from_big_int_signed(env: &VMHooksWrapper, m_buffer_hand
 }
 
 #[rustfmt::skip]
+fn wasmer_import_mbuffer_to_small_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32) -> i64 {
+    env.vm_hooks.mbuffer_to_small_int_unsigned(m_buffer_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_to_small_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32) -> i64 {
+    env.vm_hooks.mbuffer_to_small_int_signed(m_buffer_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_from_small_int_unsigned(env: &VMHooksWrapper, m_buffer_handle: i32, value: i64) {
+    env.vm_hooks.mbuffer_from_small_int_unsigned(m_buffer_handle, value)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_mbuffer_from_small_int_signed(env: &VMHooksWrapper, m_buffer_handle: i32, value: i64) {
+    env.vm_hooks.mbuffer_from_small_int_signed(m_buffer_handle, value)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_mbuffer_to_big_float(env: &VMHooksWrapper, m_buffer_handle: i32, big_float_handle: i32) -> i32 {
     env.vm_hooks.mbuffer_to_big_float(m_buffer_handle, big_float_handle)
 }
@@ -1380,16 +1455,22 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "writeLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_log),
             "writeEventLog" => Function::new_native_with_env(store, env.clone(), wasmer_import_write_event_log),
             "getBlockTimestamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_timestamp),
+            "getBlockTimestampMs" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_timestamp_ms),
             "getBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_nonce),
             "getBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_round),
             "getBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_epoch),
             "getBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_random_seed),
             "getStateRootHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_state_root_hash),
             "getPrevBlockTimestamp" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_timestamp),
+            "getPrevBlockTimestampMs" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_timestamp_ms),
             "getPrevBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_nonce),
             "getPrevBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_round),
             "getPrevBlockEpoch" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_epoch),
             "getPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_prev_block_random_seed),
+            "getBlockRoundTimeMs" => Function::new_native_with_env(store, env.clone(), wasmer_import_get_block_round_time_ms),
+            "epochStartBlockTimestampMs" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_timestamp_ms),
+            "epochStartBlockNonce" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_nonce),
+            "epochStartBlockRound" => Function::new_native_with_env(store, env.clone(), wasmer_import_epoch_start_block_round),
             "finish" => Function::new_native_with_env(store, env.clone(), wasmer_import_finish),
             "executeOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_same_context),
             "executeOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_execute_on_dest_context),
@@ -1417,9 +1498,11 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedGetPrevBlockRandomSeed" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_prev_block_random_seed),
             "managedGetReturnData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_return_data),
             "managedGetMultiESDTCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_multi_esdt_call_value),
+            "managedGetAllTransfersCallValue" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_all_transfers_call_value),
             "managedGetBackTransfers" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_back_transfers),
             "managedGetESDTBalance" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_balance),
             "managedGetESDTTokenData" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_data),
+            "managedGetESDTTokenType" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_esdt_token_type),
             "managedAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_async_call),
             "managedCreateAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_create_async_call),
             "managedGetCallbackClosure" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_callback_closure),
@@ -1431,7 +1514,9 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedExecuteReadOnly" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_read_only),
             "managedExecuteOnSameContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_same_context),
             "managedExecuteOnDestContext" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context),
+            "managedExecuteOnDestContextWithErrorReturn" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_execute_on_dest_context_with_error_return),
             "managedMultiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute),
+            "managedMultiTransferESDTNFTExecuteWithReturn" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_with_return),
             "managedMultiTransferESDTNFTExecuteByUser" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_transfer_esdt_nft_execute_by_user),
             "managedTransferValueExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_transfer_value_execute),
             "managedIsESDTFrozen" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_frozen),
@@ -1439,6 +1524,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedIsESDTPaused" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_esdt_paused),
             "managedBufferToHex" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_buffer_to_hex),
             "managedGetCodeMetadata" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_code_metadata),
+            "managedGetCodeHash" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_code_hash),
             "managedIsBuiltinFunction" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_is_builtin_function),
             "bigFloatNewFromParts" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_parts),
             "bigFloatNewFromFrac" => Function::new_native_with_env(store, env.clone(), wasmer_import_big_float_new_from_frac),
@@ -1519,6 +1605,10 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "mBufferToBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_int_signed),
             "mBufferFromBigIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_unsigned),
             "mBufferFromBigIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_int_signed),
+            "mBufferToSmallIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_small_int_unsigned),
+            "mBufferToSmallIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_small_int_signed),
+            "mBufferFromSmallIntUnsigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_small_int_unsigned),
+            "mBufferFromSmallIntSigned" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_small_int_signed),
             "mBufferToBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_to_big_float),
             "mBufferFromBigFloat" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_from_big_float),
             "mBufferStorageStore" => Function::new_native_with_env(store, env.clone(), wasmer_import_mbuffer_storage_store),

@@ -66,16 +66,22 @@ pub trait VMHooks: core::fmt::Debug {
     fn write_log(&mut self, data_pointer: MemPtr, data_length: MemLength, topic_ptr: MemPtr, num_topics: i32) -> Result<(), VMHooksEarlyExit>;
     fn write_event_log(&mut self, num_topics: i32, topic_lengths_offset: MemPtr, topic_offset: MemPtr, data_offset: MemPtr, data_length: MemLength) -> Result<(), VMHooksEarlyExit>;
     fn get_block_timestamp(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_epoch(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
     fn get_state_root_hash(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
     fn get_prev_block_timestamp(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn get_prev_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_epoch(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit>;
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn epoch_start_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn epoch_start_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit>;
+    fn epoch_start_block_round(&mut self) -> Result<i64, VMHooksEarlyExit>;
     fn finish(&mut self, pointer: MemPtr, length: MemLength) -> Result<(), VMHooksEarlyExit>;
     fn execute_on_same_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksEarlyExit>;
     fn execute_on_dest_context(&mut self, gas_limit: i64, address_offset: MemPtr, value_offset: MemPtr, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksEarlyExit>;
@@ -103,9 +109,11 @@ pub trait VMHooks: core::fmt::Debug {
     fn managed_get_prev_block_random_seed(&mut self, result_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_return_data(&mut self, result_id: i32, result_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_multi_esdt_call_value(&mut self, multi_call_value_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_all_transfers_call_value(&mut self, transfer_call_values_list_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_esdt_balance(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_esdt_token_type(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_create_async_call(&mut self, dest_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64, callback_closure_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_get_callback_closure(&mut self, callback_closure_handle: i32) -> Result<(), VMHooksEarlyExit>;
@@ -117,7 +125,9 @@ pub trait VMHooks: core::fmt::Debug {
     fn managed_execute_read_only(&mut self, gas: i64, address_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_execute_on_same_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_execute_on_dest_context(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_execute_on_dest_context_with_error_return(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_multi_transfer_esdt_nft_execute_by_user(&mut self, user_handle: i32, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_transfer_value_execute(&mut self, dst_handle: i32, value_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_is_esdt_frozen(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64) -> Result<i32, VMHooksEarlyExit>;
@@ -125,6 +135,7 @@ pub trait VMHooks: core::fmt::Debug {
     fn managed_is_esdt_paused(&mut self, token_id_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_buffer_to_hex(&mut self, source_handle: i32, dest_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_code_hash(&mut self, address_handle: i32, code_hash_handle: i32) -> Result<(), VMHooksEarlyExit>;
     fn managed_is_builtin_function(&mut self, function_name_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn big_float_new_from_parts(&mut self, integral_part: i32, fractional_part: i32, exponent: i32) -> Result<i32, VMHooksEarlyExit>;
     fn big_float_new_from_frac(&mut self, numerator: i64, denominator: i64) -> Result<i32, VMHooksEarlyExit>;
@@ -205,6 +216,10 @@ pub trait VMHooks: core::fmt::Debug {
     fn mbuffer_to_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn mbuffer_from_big_int_unsigned(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn mbuffer_to_small_int_unsigned(&mut self, m_buffer_handle: i32) -> Result<i64, VMHooksEarlyExit>;
+    fn mbuffer_to_small_int_signed(&mut self, m_buffer_handle: i32) -> Result<i64, VMHooksEarlyExit>;
+    fn mbuffer_from_small_int_unsigned(&mut self, m_buffer_handle: i32, value: i64) -> Result<(), VMHooksEarlyExit>;
+    fn mbuffer_from_small_int_signed(&mut self, m_buffer_handle: i32, value: i64) -> Result<(), VMHooksEarlyExit>;
     fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn mbuffer_from_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn mbuffer_storage_store(&mut self, key_handle: i32, source_handle: i32) -> Result<i32, VMHooksEarlyExit>;
@@ -565,6 +580,11 @@ impl VMHooks for VMHooksDefault {
         Ok(0)
     }
 
+    fn get_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_block_timestamp_ms");
+        Ok(0)
+    }
+
     fn get_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit> {
         println!("Called: get_block_nonce");
         Ok(0)
@@ -595,6 +615,11 @@ impl VMHooks for VMHooksDefault {
         Ok(0)
     }
 
+    fn get_prev_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_prev_block_timestamp_ms");
+        Ok(0)
+    }
+
     fn get_prev_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit> {
         println!("Called: get_prev_block_nonce");
         Ok(0)
@@ -613,6 +638,26 @@ impl VMHooks for VMHooksDefault {
     fn get_prev_block_random_seed(&mut self, pointer: MemPtr) -> Result<(), VMHooksEarlyExit> {
         println!("Called: get_prev_block_random_seed");
         Ok(())
+    }
+
+    fn get_block_round_time_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: get_block_round_time_ms");
+        Ok(0)
+    }
+
+    fn epoch_start_block_timestamp_ms(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: epoch_start_block_timestamp_ms");
+        Ok(0)
+    }
+
+    fn epoch_start_block_nonce(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: epoch_start_block_nonce");
+        Ok(0)
+    }
+
+    fn epoch_start_block_round(&mut self) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: epoch_start_block_round");
+        Ok(0)
     }
 
     fn finish(&mut self, pointer: MemPtr, length: MemLength) -> Result<(), VMHooksEarlyExit> {
@@ -750,6 +795,11 @@ impl VMHooks for VMHooksDefault {
         Ok(())
     }
 
+    fn managed_get_all_transfers_call_value(&mut self, transfer_call_values_list_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_all_transfers_call_value");
+        Ok(())
+    }
+
     fn managed_get_back_transfers(&mut self, esdt_transfers_value_handle: i32, egld_value_handle: i32) -> Result<(), VMHooksEarlyExit> {
         println!("Called: managed_get_back_transfers");
         Ok(())
@@ -762,6 +812,11 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_esdt_token_data(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, value_handle: i32, properties_handle: i32, hash_handle: i32, name_handle: i32, attributes_handle: i32, creator_handle: i32, royalties_handle: i32, uris_handle: i32) -> Result<(), VMHooksEarlyExit> {
         println!("Called: managed_get_esdt_token_data");
+        Ok(())
+    }
+
+    fn managed_get_esdt_token_type(&mut self, address_handle: i32, token_id_handle: i32, nonce: i64, type_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_esdt_token_type");
         Ok(())
     }
 
@@ -820,8 +875,18 @@ impl VMHooks for VMHooksDefault {
         Ok(0)
     }
 
+    fn managed_execute_on_dest_context_with_error_return(&mut self, gas: i64, address_handle: i32, value_handle: i32, function_handle: i32, arguments_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_execute_on_dest_context_with_error_return");
+        Ok(0)
+    }
+
     fn managed_multi_transfer_esdt_nft_execute(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit> {
         println!("Called: managed_multi_transfer_esdt_nft_execute");
+        Ok(0)
+    }
+
+    fn managed_multi_transfer_esdt_nft_execute_with_return(&mut self, dst_handle: i32, token_transfers_handle: i32, gas_limit: i64, function_handle: i32, arguments_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_multi_transfer_esdt_nft_execute_with_return");
         Ok(0)
     }
 
@@ -857,6 +922,11 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_get_code_metadata(&mut self, address_handle: i32, response_handle: i32) -> Result<(), VMHooksEarlyExit> {
         println!("Called: managed_get_code_metadata");
+        Ok(())
+    }
+
+    fn managed_get_code_hash(&mut self, address_handle: i32, code_hash_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_code_hash");
         Ok(())
     }
 
@@ -1258,6 +1328,26 @@ impl VMHooks for VMHooksDefault {
     fn mbuffer_from_big_int_signed(&mut self, m_buffer_handle: i32, big_int_handle: i32) -> Result<i32, VMHooksEarlyExit> {
         println!("Called: mbuffer_from_big_int_signed");
         Ok(0)
+    }
+
+    fn mbuffer_to_small_int_unsigned(&mut self, m_buffer_handle: i32) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: mbuffer_to_small_int_unsigned");
+        Ok(0)
+    }
+
+    fn mbuffer_to_small_int_signed(&mut self, m_buffer_handle: i32) -> Result<i64, VMHooksEarlyExit> {
+        println!("Called: mbuffer_to_small_int_signed");
+        Ok(0)
+    }
+
+    fn mbuffer_from_small_int_unsigned(&mut self, m_buffer_handle: i32, value: i64) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: mbuffer_from_small_int_unsigned");
+        Ok(())
+    }
+
+    fn mbuffer_from_small_int_signed(&mut self, m_buffer_handle: i32, value: i64) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: mbuffer_from_small_int_signed");
+        Ok(())
     }
 
     fn mbuffer_to_big_float(&mut self, m_buffer_handle: i32, big_float_handle: i32) -> Result<i32, VMHooksEarlyExit> {

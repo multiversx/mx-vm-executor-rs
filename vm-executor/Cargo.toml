@@ -1,6 +1,6 @@
 [package]
 name = "multiversx-chain-vm-executor"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2021"
 
 authors = ["MultiversX <contact@multiversx.com>"]
@@ -17,4 +17,4 @@ categories = ["cryptography::cryptocurrencies"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.7"
+toml = "0.8"
