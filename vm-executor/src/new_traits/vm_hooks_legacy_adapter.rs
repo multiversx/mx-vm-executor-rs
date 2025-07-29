@@ -131,6 +131,10 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
         self.adapt_vm_hooks(|inner| VMHooks::create_async_call(inner, dest_offset, value_offset, data_offset, data_length, success_offset, success_length, error_offset, error_length, gas, extra_gas_for_callback))
     }
 
+    fn create_async_v3_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::create_async_v3_call(inner, dest_offset, value_offset, data_offset, data_length, success_offset, success_length, error_offset, error_length, gas, extra_gas_for_callback))
+    }
+
     fn set_async_context_callback(&self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
         self.adapt_vm_hooks(|inner| VMHooks::set_async_context_callback(inner, callback, callback_length, data, data_length, gas))
     }
