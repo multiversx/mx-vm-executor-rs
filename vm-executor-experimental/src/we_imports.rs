@@ -1396,6 +1396,31 @@ fn wasmer_import_managed_verify_blsaggregated_signature(env: FunctionEnvMut<VMHo
     with_vm_hooks(env, |vh| vh.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle))
 }
 
+#[rustfmt::skip]
+fn wasmer_import_activate_unsafe_mode(env: FunctionEnvMut<VMHooksWrapper>) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.activate_unsafe_mode())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_deactivate_unsafe_mode(env: FunctionEnvMut<VMHooksWrapper>) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.deactivate_unsafe_mode())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_num_errors(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_num_errors())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_error_with_index(env: FunctionEnvMut<VMHooksWrapper>, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_error_with_index(index, error_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_last_error(env: FunctionEnvMut<VMHooksWrapper>, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_last_error(error_handle))
+}
+
 pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> Imports {
     let function_env = FunctionEnv::new(store, vh_wrapper);
 
@@ -1678,6 +1703,11 @@ pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> 
             "managedVerifySecp256r1" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_secp256r1),
             "managedVerifyBLSSignatureShare" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blssignature_share),
             "managedVerifyBLSAggregatedSignature" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blsaggregated_signature),
+            "activateUnsafeMode" => Function::new_typed_with_env(store, &function_env, wasmer_import_activate_unsafe_mode),
+            "deactivateUnsafeMode" => Function::new_typed_with_env(store, &function_env, wasmer_import_deactivate_unsafe_mode),
+            "managedGetNumErrors" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_num_errors),
+            "managedGetErrorWithIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_error_with_index),
+            "managedGetLastError" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_last_error),
 
         }
     }

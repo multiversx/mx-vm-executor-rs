@@ -1395,6 +1395,31 @@ fn wasmer_import_managed_verify_blsaggregated_signature(env: &VMHooksWrapper, ke
     env.vm_hooks.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle)
 }
 
+#[rustfmt::skip]
+fn wasmer_import_activate_unsafe_mode(env: &VMHooksWrapper) {
+    env.vm_hooks.activate_unsafe_mode()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_deactivate_unsafe_mode(env: &VMHooksWrapper) {
+    env.vm_hooks.deactivate_unsafe_mode()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_num_errors(env: &VMHooksWrapper) -> i32 {
+    env.vm_hooks.managed_get_num_errors()
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_error_with_index(env: &VMHooksWrapper, index: i32, error_handle: i32) {
+    env.vm_hooks.managed_get_error_with_index(index, error_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_last_error(env: &VMHooksWrapper, error_handle: i32) {
+    env.vm_hooks.managed_get_last_error(error_handle)
+}
+
 pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObject {
     imports! {
         "env" => {
@@ -1675,6 +1700,11 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedVerifySecp256r1" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_secp256r1),
             "managedVerifyBLSSignatureShare" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blssignature_share),
             "managedVerifyBLSAggregatedSignature" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_blsaggregated_signature),
+            "activateUnsafeMode" => Function::new_native_with_env(store, env.clone(), wasmer_import_activate_unsafe_mode),
+            "deactivateUnsafeMode" => Function::new_native_with_env(store, env.clone(), wasmer_import_deactivate_unsafe_mode),
+            "managedGetNumErrors" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_num_errors),
+            "managedGetErrorWithIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_error_with_index),
+            "managedGetLastError" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_last_error),
 
         }
     }

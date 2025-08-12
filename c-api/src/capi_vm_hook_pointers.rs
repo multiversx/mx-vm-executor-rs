@@ -288,6 +288,11 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_verify_secp256r1_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
     pub managed_verify_blssignature_share_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
     pub managed_verify_blsaggregated_signature_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
+    pub activate_unsafe_mode_func_ptr: extern "C" fn(context: *mut c_void),
+    pub deactivate_unsafe_mode_func_ptr: extern "C" fn(context: *mut c_void),
+    pub managed_get_num_errors_func_ptr: extern "C" fn(context: *mut c_void) -> i32,
+    pub managed_get_error_with_index_func_ptr: extern "C" fn(context: *mut c_void, index: i32, error_handle: i32),
+    pub managed_get_last_error_func_ptr: extern "C" fn(context: *mut c_void, error_handle: i32),
 }
 
 impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {

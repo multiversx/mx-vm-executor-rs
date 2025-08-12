@@ -1146,4 +1146,24 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_blsaggregated_signature_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
+
+    fn activate_unsafe_mode(&self) {
+        (self.c_func_pointers_ptr.activate_unsafe_mode_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        (self.c_func_pointers_ptr.deactivate_unsafe_mode_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        (self.c_func_pointers_ptr.managed_get_num_errors_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_error_with_index_func_ptr)(self.vm_hooks_ptr, index, error_handle)
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_last_error_func_ptr)(self.vm_hooks_ptr, error_handle)
+    }
 }
