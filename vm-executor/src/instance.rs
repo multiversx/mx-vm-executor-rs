@@ -1,4 +1,4 @@
-use crate::{BreakpointValueLegacy, ExecutorError, MemLength, MemPtr};
+use crate::{BreakpointValueLegacy, ExecutorError, MemLength, MemPtr, OpcodeCheckUsed};
 
 /// The old instance trait, used both:
 /// - from the "outside": configuring & calling the instance;
@@ -15,6 +15,9 @@ pub trait InstanceLegacy {
 
     /// Checks whether SC has an imported function with given name.
     fn has_imported_function(&self, func_name: &str) -> bool;
+
+    /// Checks whether the given opcode is used in the instance.
+    fn is_opcode_used(&self, opcode: OpcodeCheckUsed) -> bool;
 
     /// Required to be able to extract all SC endpoint names.
     fn get_exported_function_names(&self) -> Vec<String>;

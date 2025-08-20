@@ -7,7 +7,7 @@ use crate::{
 };
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{CompilationOptionsLegacy, InstanceLegacy};
+use multiversx_chain_vm_executor::{CompilationOptionsLegacy, InstanceLegacy, OpcodeCheckUsed};
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
@@ -186,6 +186,28 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
     c_int::from(capi_instance.content.has_imported_function(func_name_r))
 }
 
+
+/// Checks whether the given opcode is used in the wasm module.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[no_mangle]
+#[capi_safe_unwind(-1)]
+pub unsafe extern "C" fn vm_exec_instance_is_opcode_used(
+    instance_ptr: *mut vm_exec_instance_t,
+    opcode_value: u32,
+) -> c_int {
+    let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", -1);
+
+    let Some(opcode) = OpcodeCheckUsed::from_value(opcode_value) else {
+        with_service(|service| service.update_last_error_str("invalid opcode value".to_string()));
+        return -1;
+    };
+
+    c_int::from(capi_instance.content.is_opcode_used(opcode))
+}
 
 /// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
 ///
