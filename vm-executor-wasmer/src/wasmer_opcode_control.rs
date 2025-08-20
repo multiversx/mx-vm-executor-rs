@@ -207,7 +207,7 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
         let used_opcode = match operator {
-            Operator::MemoryGrow { .. } => Some(OpcodeCheckUsed::MemoryCopy),
+            Operator::MemoryCopy { .. } => Some(OpcodeCheckUsed::MemoryCopy),
             Operator::MemoryFill { .. } => Some(OpcodeCheckUsed::MemoryFill),
             _ => None,
         };
