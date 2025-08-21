@@ -286,6 +286,11 @@ pub trait VMHooks: core::fmt::Debug {
     fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn activate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit>;
+    fn deactivate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_num_errors(&mut self) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_get_error_with_index(&mut self, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_last_error(&mut self, error_handle: i32) -> Result<(), VMHooksEarlyExit>;
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -1678,5 +1683,30 @@ impl VMHooks for VMHooksDefault {
     fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit> {
         println!("Called: managed_verify_blsaggregated_signature");
         Ok(0)
+    }
+
+    fn activate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: activate_unsafe_mode");
+        Ok(())
+    }
+
+    fn deactivate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: deactivate_unsafe_mode");
+        Ok(())
+    }
+
+    fn managed_get_num_errors(&mut self) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_get_num_errors");
+        Ok(0)
+    }
+
+    fn managed_get_error_with_index(&mut self, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_error_with_index");
+        Ok(())
+    }
+
+    fn managed_get_last_error(&mut self, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_last_error");
+        Ok(())
     }
 }

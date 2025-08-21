@@ -290,6 +290,11 @@ pub trait VMHooksLegacy: core::fmt::Debug {
     fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
     fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
+    fn activate_unsafe_mode(&self);
+    fn deactivate_unsafe_mode(&self);
+    fn managed_get_num_errors(&self) -> i32;
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32);
+    fn managed_get_last_error(&self, error_handle: i32);
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -1584,5 +1589,26 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         println!("Called: managed_verify_blsaggregated_signature");
         0
+    }
+
+    fn activate_unsafe_mode(&self) {
+        println!("Called: activate_unsafe_mode");
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        println!("Called: deactivate_unsafe_mode");
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        println!("Called: managed_get_num_errors");
+        0
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        println!("Called: managed_get_error_with_index");
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        println!("Called: managed_get_last_error");
     }
 }

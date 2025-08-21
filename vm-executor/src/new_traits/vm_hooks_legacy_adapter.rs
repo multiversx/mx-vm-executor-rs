@@ -1154,4 +1154,24 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         self.adapt_vm_hooks(|inner| VMHooks::managed_verify_blsaggregated_signature(inner, key_handle, message_handle, sig_handle))
     }
+
+    fn activate_unsafe_mode(&self) {
+        self.adapt_vm_hooks(|inner| VMHooks::activate_unsafe_mode(inner))
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        self.adapt_vm_hooks(|inner| VMHooks::deactivate_unsafe_mode(inner))
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_num_errors(inner))
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_error_with_index(inner, index, error_handle))
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_last_error(inner, error_handle))
+    }
 }
