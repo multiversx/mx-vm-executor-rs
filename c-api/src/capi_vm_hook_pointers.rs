@@ -293,6 +293,13 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_get_num_errors_func_ptr: extern "C" fn(context: *mut c_void) -> i32,
     pub managed_get_error_with_index_func_ptr: extern "C" fn(context: *mut c_void, index: i32, error_handle: i32),
     pub managed_get_last_error_func_ptr: extern "C" fn(context: *mut c_void, error_handle: i32),
+    pub managed_verify_groth16_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32,
+    pub managed_verify_plonk_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32,
+    pub managed_add_ec_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32,
+    pub managed_mul_ec_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32,
+    pub managed_multi_exp_ec_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32,
+    pub managed_map_to_curve_ec_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32,
+    pub managed_pairing_checks_ec_func_ptr: extern "C" fn(context: *mut c_void, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32,
 }
 
 impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {
