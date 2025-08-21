@@ -1420,6 +1420,41 @@ fn wasmer_import_managed_get_last_error(env: &VMHooksWrapper, error_handle: i32)
     env.vm_hooks.managed_get_last_error(error_handle)
 }
 
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_groth16(env: &VMHooksWrapper, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+    env.vm_hooks.managed_verify_groth16(curve_id, proof_handle, vk_handle, pub_witness_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_plonk(env: &VMHooksWrapper, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+    env.vm_hooks.managed_verify_plonk(curve_id, proof_handle, vk_handle, pub_witness_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_add_ec(env: &VMHooksWrapper, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_add_ec(curve_id, group_id, point1_handle, point2_handle, result_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_mul_ec(env: &VMHooksWrapper, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_mul_ec(curve_id, group_id, point_handle, scalar_handle, result_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_multi_exp_ec(env: &VMHooksWrapper, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_multi_exp_ec(curve_id, group_id, points_handle, scalars_handle, result_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_to_curve_ec(env: &VMHooksWrapper, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32 {
+    env.vm_hooks.managed_map_to_curve_ec(curve_id, group_id, element_handle, result_handle)
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_pairing_checks_ec(env: &VMHooksWrapper, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32 {
+    env.vm_hooks.managed_pairing_checks_ec(curve_id, points_g1_handle, points_g2_handle)
+}
+
 pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObject {
     imports! {
         "env" => {
@@ -1705,6 +1740,13 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "managedGetNumErrors" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_num_errors),
             "managedGetErrorWithIndex" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_error_with_index),
             "managedGetLastError" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_get_last_error),
+            "managedVerifyGroth16" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_groth16),
+            "managedVerifyPlonk" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_verify_plonk),
+            "managedAddEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_add_ec),
+            "managedMulEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_mul_ec),
+            "managedMultiExpEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_multi_exp_ec),
+            "managedMapToCurveEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_map_to_curve_ec),
+            "managedPairingChecksEC" => Function::new_native_with_env(store, env.clone(), wasmer_import_managed_pairing_checks_ec),
 
         }
     }
