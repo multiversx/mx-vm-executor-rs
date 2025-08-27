@@ -15,8 +15,8 @@ use std::cell::RefCell;
 use std::collections::HashSet;
 use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
-use wasmer::{ExternType, Universal};
 use wasmer::{CompilerConfig, Extern, Module, Store};
+use wasmer::{ExternType, Universal};
 use wasmer::{Pages, Singlepass};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
@@ -41,7 +41,12 @@ impl WasmerInstance {
         let used_opcodes = Arc::new(Mutex::new(HashSet::new()));
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, opcode_cost, used_opcodes.clone());
+        push_middlewares(
+            &mut compiler,
+            compilation_options,
+            opcode_cost,
+            used_opcodes.clone(),
+        );
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -90,7 +95,12 @@ impl WasmerInstance {
         let used_opcodes = Arc::new(Mutex::new(HashSet::new()));
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, opcode_cost, used_opcodes.clone());
+        push_middlewares(
+            &mut compiler,
+            compilation_options,
+            opcode_cost,
+            used_opcodes.clone(),
+        );
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -280,7 +290,6 @@ impl InstanceLegacy for WasmerInstance {
     }
 
     fn has_imported_function(&self, func_name: &str) -> bool {
-
         for import in self.wasmer_instance.module().imports() {
             if let ExternType::Function(_) = import.ty() {
                 if import.name() == func_name {
@@ -296,7 +305,7 @@ impl InstanceLegacy for WasmerInstance {
         let Ok(used_opcodes) = self.used_opcodes.lock() else {
             return false;
         };
-        
+
         used_opcodes.contains(&opcode)
     }
 

@@ -1,9 +1,10 @@
 use crate::executor_interface::OpcodeCost;
+use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, is_supported_bulk_memory_operator, set_global_value_u64, MiddlewareWithProtectedGlobals
+    create_global_index, get_global_value_u64, is_control_flow_operator,
+    is_supported_bulk_memory_operator, set_global_value_u64, MiddlewareWithProtectedGlobals,
 };
-use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
@@ -129,7 +130,8 @@ impl MiddlewareWithProtectedGlobals for Metering {
         vec![
             self.get_points_limit_global_index().as_u32(),
             self.get_points_used_global_index().as_u32(),
-            self.get_bulk_memory_size_operand_backup_global_index().as_u32(),
+            self.get_bulk_memory_size_operand_backup_global_index()
+                .as_u32(),
         ]
     }
 }
@@ -176,20 +178,25 @@ impl FunctionMetering {
     fn inject_bulk_memory_cost(&self, state: &mut MiddlewareReaderState, cost_per_byte: u32) {
         // backup the bulk memory size
         state.extend(&[Operator::GlobalSet {
-            global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
         }]);
 
         // inject bulk memory cost
         state.extend(&[
             // memory size * price
             Operator::GlobalGet {
-                global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+                global_index: self
+                    .global_indexes
+                    .bulk_memory_size_operand_backup_global_index
+                    .as_u32(),
             },
             Operator::I64Const {
                 value: cost_per_byte as i64,
             },
             Operator::I64Mul,
-
             // points user += memory size * price
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),
@@ -202,7 +209,10 @@ impl FunctionMetering {
 
         // bring back the bulk memory size
         state.extend(&[Operator::GlobalGet {
-            global_index: self.global_indexes.bulk_memory_size_operand_backup_global_index.as_u32(),
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
         }]);
     }
 }
@@ -222,10 +232,8 @@ impl FunctionMiddleware for FunctionMetering {
                 self.inject_bulk_memory_cost(state, cost);
                 // immediatly insert out of gas check as this operation might be expensive
                 self.inject_out_of_gas_check(state);
-            },
-            Some(cost) => {
-                self.accumulated_cost += cost as u64
-            },
+            }
+            Some(cost) => self.accumulated_cost += cost as u64,
             None => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
@@ -252,7 +260,7 @@ impl FunctionMiddleware for FunctionMetering {
         let unmetered_locals = self.unmetered_locals as u32;
         if count > unmetered_locals {
             let metered_locals = count - unmetered_locals;
-            let local_cost = get_local_cost(&self.opcode_cost.lock().unwrap());
+            let local_cost = self.opcode_cost.lock().unwrap().opcode_localallocate;
             let metered_locals_cost = metered_locals * local_cost;
             self.accumulated_cost += metered_locals_cost as u64;
         }

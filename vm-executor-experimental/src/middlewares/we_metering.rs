@@ -1,8 +1,7 @@
 #![allow(unused)] // TODO: until we activate the local count mechanism
 
 use super::{
-    get_local_cost, get_opcode_cost, Breakpoints, MiddlewareWithProtectedGlobals,
-    BREAKPOINT_VALUE_OUT_OF_GAS,
+    get_opcode_cost, Breakpoints, MiddlewareWithProtectedGlobals, BREAKPOINT_VALUE_OUT_OF_GAS,
 };
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
@@ -182,7 +181,7 @@ impl FunctionMiddleware for FunctionMetering {
     //     let unmetered_locals = self.unmetered_locals as u32;
     //     if count > unmetered_locals {
     //         let metered_locals = count - unmetered_locals;
-    //         let local_cost = get_local_cost(&self.opcode_cost.lock().unwrap());
+    //         let local_cost = self.opcode_cost.lock().unwrap().opcode_localallocate;
     //         let metered_locals_cost = metered_locals * local_cost;
     //         self.accumulated_cost += metered_locals_cost as u64;
     //     }

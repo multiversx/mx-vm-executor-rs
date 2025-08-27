@@ -186,7 +186,6 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
     c_int::from(capi_instance.content.has_imported_function(func_name_r))
 }
 
-
 /// Checks whether the given opcode is used in the wasm module.
 ///
 /// # Safety

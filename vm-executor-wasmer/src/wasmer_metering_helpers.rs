@@ -7,10 +7,6 @@
 use crate::executor_interface::OpcodeCost;
 use wasmer::wasmparser::Operator;
 
-pub fn get_local_cost(opcode_cost: &OpcodeCost) -> u32 {
-    opcode_cost.opcode_localallocate
-}
-
 pub fn get_opcode_cost(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
     match op {
         Operator::Block { .. } => Some(opcode_cost.opcode_block),
