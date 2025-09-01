@@ -1,5 +1,5 @@
 use crate::executor_interface::{
-    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost,
+    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig,
     VMHooksLegacy,
 };
 use crate::WasmerInstance;
@@ -14,7 +14,7 @@ use super::{WasmerProdInstance, WasmerProdInstanceState};
 pub trait WasmerProdRuntimeRef: Send + Sync {
     fn vm_hooks(&self, instance_state: WasmerProdInstanceState) -> Box<dyn VMHooksLegacy>;
 
-    fn opcode_cost(&self) -> Arc<Mutex<OpcodeCost>>;
+    fn opcode_config(&self) -> Arc<Mutex<OpcodeConfig>>;
 }
 
 /// Executor implementation that produces wasmer instances with correctly injected VM hooks from runtime.
@@ -44,7 +44,7 @@ impl WasmerProdExecutor {
 
             WasmerInstance::try_new_instance(
                 Rc::from(vm_hooks),
-                self.runtime_ref.opcode_cost(),
+                self.runtime_ref.opcode_config(),
                 wasm_bytes,
                 &compilation_options.to_legacy(),
             )

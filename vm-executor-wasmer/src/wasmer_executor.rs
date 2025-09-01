@@ -1,9 +1,10 @@
 use crate::executor_interface::{
-    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost,
-    ServiceError, VMHooksLegacy,
+    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, ServiceError,
+    VMHooksLegacy,
 };
 use crate::WasmerInstance;
 use log::trace;
+use multiversx_chain_vm_executor::OpcodeConfig;
 use std::cell::RefCell;
 use std::ffi::c_void;
 use std::rc::Rc;
@@ -19,14 +20,14 @@ pub fn force_sighandler_reinstall() {
 
 pub struct WasmerExecutorData {
     vm_hooks: Rc<dyn VMHooksLegacy>,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
 }
 
 impl WasmerExecutorData {
     pub fn new(vm_hooks: Box<dyn VMHooksLegacy>) -> Self {
         Self {
             vm_hooks: Rc::from(vm_hooks),
-            opcode_cost: Arc::new(Mutex::new(OpcodeCost::default())),
+            opcode_config: Arc::new(Mutex::new(OpcodeConfig::default())),
         }
     }
 
@@ -41,9 +42,19 @@ impl WasmerExecutorData {
         }
     }
 
-    pub fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        self.opcode_cost.lock().unwrap().clone_from(opcode_cost);
-        Ok(())
+    pub fn set_opcode_config(&mut self, opcode_config: OpcodeConfig) -> Result<(), ExecutorError> {
+        match self.opcode_config.lock() {
+            Ok(mut opcode_config_ref) => {
+                *opcode_config_ref = opcode_config;
+                Ok(())
+            }
+            Err(err) => {
+                trace!("Failed to acquire lock for setting opcode config: {}", err);
+                Err(Box::new(ServiceError::new(
+                    "Failed to acquire lock for setting opcode config",
+                )))
+            }
+        }
     }
 }
 
@@ -65,9 +76,9 @@ impl ExecutorLegacy for WasmerExecutor {
         self.data.borrow_mut().set_vm_hooks_ptr(vm_hooks_ptr)
     }
 
-    fn set_opcode_cost(&mut self, opcode_cost: &OpcodeCost) -> Result<(), ExecutorError> {
-        trace!("Setting opcode cost...");
-        self.data.borrow_mut().set_opcode_cost(opcode_cost)
+    fn set_opcode_config(&mut self, opcode_config: OpcodeConfig) -> Result<(), ExecutorError> {
+        trace!("Setting opcode config...");
+        self.data.borrow_mut().set_opcode_config(opcode_config)
     }
 
     fn new_instance(
@@ -78,7 +89,7 @@ impl ExecutorLegacy for WasmerExecutor {
         let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance(
             data.vm_hooks.clone(),
-            data.opcode_cost.clone(),
+            data.opcode_config.clone(),
             wasm_bytes,
             compilation_options,
         )?;
@@ -93,7 +104,7 @@ impl ExecutorLegacy for WasmerExecutor {
         let data = self.data.borrow();
         let instance = WasmerInstance::try_new_instance_from_cache(
             data.vm_hooks.clone(),
-            data.opcode_cost.clone(),
+            data.opcode_config.clone(),
             cache_bytes,
             compilation_options,
         )?;

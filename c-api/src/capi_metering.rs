@@ -3,7 +3,7 @@ use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
 use crate::service_singleton::with_service;
 use crate::vm_exec_result_t;
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::OpcodeCost;
+use multiversx_chain_vm_executor::{OpcodeConfig, OpcodeCost, OpcodeVersion};
 
 #[allow(non_camel_case_types)]
 #[repr(C)]
@@ -21,14 +21,30 @@ pub struct vm_exec_opcode_cost_t;
 #[allow(clippy::cast_ptr_alignment)]
 #[no_mangle]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
-pub unsafe extern "C" fn vm_exec_set_opcode_costs(
+pub unsafe extern "C" fn vm_exec_set_opcode_config(
     executor_ptr: *mut vm_exec_executor_t,
+    opcode_vesion_code: i32,
     opcode_cost_ptr: *const vm_exec_opcode_cost_t,
 ) -> vm_exec_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
-    let opcode_costs: &OpcodeCost = &*(opcode_cost_ptr as *const OpcodeCost);
 
-    let result = capi_executor.content.set_opcode_cost(opcode_costs);
+    let Some(opcode_version) = OpcodeVersion::from_i32(opcode_vesion_code) else {
+        with_service(|service| {
+            service.update_last_error_str(format!(
+                "invalid opcode version code: {}",
+                opcode_vesion_code
+            ))
+        });
+        return vm_exec_result_t::VM_EXEC_ERROR;
+    };
+
+    let opcode_costs_ref: &OpcodeCost = &*(opcode_cost_ptr as *const OpcodeCost);
+    let opcode_config = OpcodeConfig {
+        opcode_version,
+        opcode_cost: opcode_costs_ref.clone(),
+    };
+
+    let result = capi_executor.content.set_opcode_config(opcode_config);
     match result {
         Ok(()) => vm_exec_result_t::VM_EXEC_OK,
         Err(message) => {

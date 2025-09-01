@@ -1,6 +1,6 @@
 use crate::executor_interface::{
     BreakpointValueLegacy, CompilationOptionsLegacy, ExecutorError, InstanceLegacy, MemLength,
-    MemPtr, OpcodeCost, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
+    MemPtr, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
@@ -9,7 +9,7 @@ use crate::{
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper,
 };
 use log::trace;
-use multiversx_chain_vm_executor::OpcodeCheckUsed;
+use multiversx_chain_vm_executor::{OpcodeCheckUsed, OpcodeConfig};
 
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -31,7 +31,7 @@ pub struct WasmerInstance {
 impl WasmerInstance {
     pub fn try_new_instance(
         vm_hooks: Rc<dyn VMHooksLegacy>,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
@@ -44,7 +44,7 @@ impl WasmerInstance {
         push_middlewares(
             &mut compiler,
             compilation_options,
-            opcode_cost,
+            opcode_config,
             used_opcodes.clone(),
         );
 
@@ -85,7 +85,7 @@ impl WasmerInstance {
 
     pub fn try_new_instance_from_cache(
         vm_hooks: Rc<dyn VMHooksLegacy>,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
@@ -98,7 +98,7 @@ impl WasmerInstance {
         push_middlewares(
             &mut compiler,
             compilation_options,
-            opcode_cost,
+            opcode_config,
             used_opcodes.clone(),
         );
 
@@ -202,7 +202,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
 fn push_middlewares(
     compiler: &mut Singlepass,
     compilation_options: &CompilationOptionsLegacy,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
     used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
 ) {
     // Create breakpoints middleware
@@ -221,7 +221,7 @@ fn push_middlewares(
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         compilation_options.unmetered_locals,
-        opcode_cost,
+        opcode_config,
         breakpoints_middleware.clone(),
     ));
 

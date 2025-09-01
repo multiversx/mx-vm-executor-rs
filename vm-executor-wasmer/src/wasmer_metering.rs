@@ -1,4 +1,3 @@
-use crate::executor_interface::OpcodeCost;
 use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
 use crate::wasmer_helpers::{
@@ -6,6 +5,7 @@ use crate::wasmer_helpers::{
     is_supported_bulk_memory_operator, set_global_value_u64, MiddlewareWithProtectedGlobals,
 };
 use loupe::{MemoryUsage, MemoryUsageTracker};
+use multiversx_chain_vm_executor::OpcodeConfig;
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::wasmparser::Operator;
@@ -31,7 +31,7 @@ struct MeteringGlobalIndexes {
 pub(crate) struct Metering {
     points_limit: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
@@ -40,13 +40,13 @@ impl Metering {
     pub(crate) fn new(
         points_limit: u64,
         unmetered_locals: usize,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             points_limit,
             unmetered_locals,
-            opcode_cost,
+            opcode_config,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
         }
@@ -98,7 +98,7 @@ impl ModuleMiddleware for Metering {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             unmetered_locals: self.unmetered_locals,
-            opcode_cost: self.opcode_cost.clone(),
+            opcode_config: self.opcode_config.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
@@ -140,7 +140,7 @@ impl MiddlewareWithProtectedGlobals for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
@@ -226,7 +226,7 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap());
+        let option = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
         match option {
             Some(cost) if is_supported_bulk_memory_operator(&operator) => {
                 self.inject_bulk_memory_cost(state, cost);
@@ -260,7 +260,12 @@ impl FunctionMiddleware for FunctionMetering {
         let unmetered_locals = self.unmetered_locals as u32;
         if count > unmetered_locals {
             let metered_locals = count - unmetered_locals;
-            let local_cost = self.opcode_cost.lock().unwrap().opcode_localallocate;
+            let local_cost = self
+                .opcode_config
+                .lock()
+                .unwrap()
+                .opcode_cost
+                .opcode_localallocate;
             let metered_locals_cost = metered_locals * local_cost;
             self.accumulated_cost += metered_locals_cost as u64;
         }

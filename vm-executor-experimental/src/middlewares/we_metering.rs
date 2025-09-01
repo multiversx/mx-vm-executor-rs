@@ -6,7 +6,7 @@ use super::{
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use multiversx_chain_vm_executor::{ExecutorError, OpcodeCost};
+use multiversx_chain_vm_executor::{ExecutorError, OpcodeConfig, OpcodeCost};
 use std::mem;
 use std::sync::{Arc, Mutex};
 use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
@@ -28,7 +28,7 @@ struct MeteringGlobalIndexes {
 #[derive(Debug)]
 pub(crate) struct Metering {
     unmetered_locals: usize,
-    opcode_cost: Arc<OpcodeCost>,
+    opcode_config: Arc<OpcodeConfig>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
@@ -36,12 +36,12 @@ pub(crate) struct Metering {
 impl Metering {
     pub(crate) fn new(
         unmetered_locals: usize,
-        opcode_cost: Arc<OpcodeCost>,
+        opcode_config: Arc<OpcodeConfig>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             unmetered_locals,
-            opcode_cost,
+            opcode_config,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
         }
@@ -77,7 +77,7 @@ impl ModuleMiddleware for Metering {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             unmetered_locals: self.unmetered_locals,
-            opcode_cost: self.opcode_cost.clone(),
+            opcode_config: self.opcode_config.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
@@ -103,7 +103,7 @@ impl ModuleMiddleware for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<OpcodeCost>,
+    opcode_config: Arc<OpcodeConfig>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
@@ -148,7 +148,7 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_cost);
+        let option = get_opcode_cost(&operator, &self.opcode_config);
         match option {
             Some(cost) => self.accumulated_cost += cost as u64,
             None => {
