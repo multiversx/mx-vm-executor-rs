@@ -9,10 +9,9 @@ use crate::{
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper,
 };
 use log::trace;
-use multiversx_chain_vm_executor::{OpcodeCheckUsed, OpcodeConfig};
+use multiversx_chain_vm_executor::OpcodeConfig;
 
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
 use wasmer::{CompilerConfig, Extern, Module, Store};
@@ -25,7 +24,6 @@ pub struct WasmerInstance {
     pub(crate) wasmer_instance: wasmer::Instance,
     memory_name: String,
     early_exit_cell: RefCell<Option<VMHooksEarlyExit>>,
-    used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
 }
 
 impl WasmerInstance {
@@ -38,15 +36,8 @@ impl WasmerInstance {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
-        let used_opcodes = Arc::new(Mutex::new(HashSet::new()));
-
         // Push middlewares
-        push_middlewares(
-            &mut compiler,
-            compilation_options,
-            opcode_config,
-            used_opcodes.clone(),
-        );
+        push_middlewares(&mut compiler, compilation_options, opcode_config);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -79,7 +70,6 @@ impl WasmerInstance {
             wasmer_instance,
             memory_name,
             early_exit_cell: RefCell::new(None),
-            used_opcodes,
         })
     }
 
@@ -92,15 +82,8 @@ impl WasmerInstance {
         // Use Singlepass compiler with the default settings
         let mut compiler = Singlepass::default();
 
-        let used_opcodes = Arc::new(Mutex::new(HashSet::new()));
-
         // Push middlewares
-        push_middlewares(
-            &mut compiler,
-            compilation_options,
-            opcode_config,
-            used_opcodes.clone(),
-        );
+        push_middlewares(&mut compiler, compilation_options, opcode_config);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -136,7 +119,6 @@ impl WasmerInstance {
             wasmer_instance,
             memory_name,
             early_exit_cell: RefCell::new(None),
-            used_opcodes,
         })
     }
 
@@ -203,7 +185,6 @@ fn push_middlewares(
     compiler: &mut Singlepass,
     compilation_options: &CompilationOptionsLegacy,
     opcode_config: Arc<Mutex<OpcodeConfig>>,
-    used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
 ) {
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
@@ -214,7 +195,6 @@ fn push_middlewares(
         compilation_options.max_memory_grow,
         compilation_options.max_memory_grow_delta,
         breakpoints_middleware.clone(),
-        used_opcodes,
     ));
 
     // Create metering middleware
@@ -299,14 +279,6 @@ impl InstanceLegacy for WasmerInstance {
         }
 
         false
-    }
-
-    fn is_opcode_used(&self, opcode: OpcodeCheckUsed) -> bool {
-        let Ok(used_opcodes) = self.used_opcodes.lock() else {
-            return false;
-        };
-
-        used_opcodes.contains(&opcode)
     }
 
     fn get_exported_function_names(&self) -> Vec<String> {

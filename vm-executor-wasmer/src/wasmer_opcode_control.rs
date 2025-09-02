@@ -1,11 +1,9 @@
 use std::{
-    collections::HashSet,
     mem,
     sync::{Arc, Mutex},
 };
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
-use multiversx_chain_vm_executor::OpcodeCheckUsed;
 use wasmer::{
     wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
     MiddlewareReaderState, ModuleMiddleware,
@@ -34,7 +32,6 @@ pub(crate) struct OpcodeControl {
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<OpcodeControlGlobalIndexes>>,
-    used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
 }
 
 impl OpcodeControl {
@@ -43,7 +40,6 @@ impl OpcodeControl {
         max_memory_grow: usize,
         max_memory_grow_delta: usize,
         breakpoints_middleware: Arc<Breakpoints>,
-        used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
     ) -> Self {
         Self {
             total_memory_grow_count: Arc::new(Mutex::new(0)),
@@ -52,7 +48,6 @@ impl OpcodeControl {
             max_memory_grow_delta,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
-            used_opcodes,
         }
     }
 
@@ -97,7 +92,6 @@ impl ModuleMiddleware for OpcodeControl {
             max_memory_grow_delta: self.max_memory_grow_delta,
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
-            used_opcodes: self.used_opcodes.clone(),
         })
     }
 
@@ -136,7 +130,6 @@ struct FunctionOpcodeControl {
     max_memory_grow_delta: usize,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: OpcodeControlGlobalIndexes,
-    used_opcodes: Arc<Mutex<HashSet<OpcodeCheckUsed>>>,
 }
 
 impl FunctionOpcodeControl {
@@ -208,20 +201,6 @@ impl FunctionMiddleware for FunctionOpcodeControl {
         operator: Operator<'b>,
         state: &mut MiddlewareReaderState<'b>,
     ) -> Result<(), MiddlewareError> {
-        let used_opcode = match operator {
-            Operator::MemoryCopy { .. } => Some(OpcodeCheckUsed::MemoryCopy),
-            Operator::MemoryFill { .. } => Some(OpcodeCheckUsed::MemoryFill),
-            _ => None,
-        };
-
-        if let Some(used_opcode) = used_opcode {
-            let mut used_opcodes = self
-                .used_opcodes
-                .lock()
-                .map_err(|_| MiddlewareError::new("UsedOpcodes", "failed to lock used_opcodes"))?;
-            used_opcodes.insert(used_opcode);
-        }
-
         if matches!(operator, Operator::MemoryGrow { .. }) {
             let mut grow_count = self
                 .total_memory_grow_count
