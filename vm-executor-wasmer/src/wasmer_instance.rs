@@ -1,6 +1,6 @@
 use crate::executor_interface::{
     BreakpointValueLegacy, CompilationOptionsLegacy, ExecutorError, InstanceLegacy, MemLength,
-    MemPtr, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
+    MemPtr, OpcodeConfig, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
@@ -9,7 +9,6 @@ use crate::{
     wasmer_opcode_control::OpcodeControl, wasmer_vm_hooks::VMHooksWrapper,
 };
 use log::trace;
-use multiversx_chain_vm_executor::OpcodeConfig;
 
 use std::cell::RefCell;
 use std::sync::Mutex;
