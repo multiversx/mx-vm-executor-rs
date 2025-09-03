@@ -14,7 +14,7 @@ pub fn get_opcode_cost(op: &Operator, opcode_config: &OpcodeConfig) -> Option<u3
     }
 }
 
-pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
+fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
     match op {
         Operator::Block { .. } => Some(opcode_cost.opcode_block),
         Operator::Br { .. } => Some(opcode_cost.opcode_br),
@@ -147,7 +147,7 @@ pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32
     }
 }
 
-pub fn get_opcode_cost_v2(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
+fn get_opcode_cost_v2(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
     match op {
         Operator::Block { .. } => Some(opcode_cost.opcode_block),
         Operator::Br { .. } => Some(opcode_cost.opcode_br),

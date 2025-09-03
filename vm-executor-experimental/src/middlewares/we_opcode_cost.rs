@@ -14,7 +14,7 @@ pub fn get_opcode_cost(op: &Operator, opcode_config: &OpcodeConfig) -> Option<u3
     }
 }
 
-pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
+fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
     match op {
         Operator::Block { .. } => Some(opcode_cost.opcode_block),
         Operator::Br { .. } => Some(opcode_cost.opcode_br),
@@ -124,8 +124,6 @@ pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32
         Operator::Loop { .. } => Some(opcode_cost.opcode_loop),
         Operator::MemoryGrow { .. } => Some(opcode_cost.opcode_memorygrow),
         Operator::MemorySize { .. } => Some(opcode_cost.opcode_memorysize),
-        Operator::MemoryCopy { .. } => Some(opcode_cost.opcode_memorycopy),
-        Operator::MemoryFill { .. } => Some(opcode_cost.opcode_memoryfill),
         Operator::Nop { .. } => Some(opcode_cost.opcode_nop),
         Operator::RefFunc { .. } => Some(opcode_cost.opcode_reffunc),
         Operator::RefIsNull { .. } => Some(opcode_cost.opcode_refisnull),
@@ -144,12 +142,12 @@ pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32
         Operator::Try { .. } => Some(opcode_cost.opcode_try),
         Operator::TypedSelect { .. } => Some(opcode_cost.opcode_typedselect),
         Operator::Unreachable { .. } => Some(opcode_cost.opcode_unreachable),
-        // Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind),
+        // Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind), // unwind no longer available in Wasmer 6 
         _ => None,
     }
 }
 
-pub fn get_opcode_cost_v2(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
+fn get_opcode_cost_v2(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
     match op {
         Operator::Block { .. } => Some(opcode_cost.opcode_block),
         Operator::Br { .. } => Some(opcode_cost.opcode_br),
