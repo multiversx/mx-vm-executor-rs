@@ -124,8 +124,6 @@ pub fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32
         Operator::Loop { .. } => Some(opcode_cost.opcode_loop),
         Operator::MemoryGrow { .. } => Some(opcode_cost.opcode_memorygrow),
         Operator::MemorySize { .. } => Some(opcode_cost.opcode_memorysize),
-        Operator::MemoryCopy { .. } => Some(opcode_cost.opcode_memorycopy),
-        Operator::MemoryFill { .. } => Some(opcode_cost.opcode_memoryfill),
         Operator::Nop { .. } => Some(opcode_cost.opcode_nop),
         Operator::RefFunc { .. } => Some(opcode_cost.opcode_reffunc),
         Operator::RefIsNull { .. } => Some(opcode_cost.opcode_refisnull),

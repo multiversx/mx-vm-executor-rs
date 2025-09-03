@@ -1,10 +1,9 @@
 use crate::executor_interface::{
-    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, ServiceError,
-    VMHooksLegacy,
+    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeConfig,
+    ServiceError, VMHooksLegacy,
 };
 use crate::WasmerInstance;
 use log::trace;
-use multiversx_chain_vm_executor::OpcodeConfig;
 use std::cell::RefCell;
 use std::ffi::c_void;
 use std::rc::Rc;
