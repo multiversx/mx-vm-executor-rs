@@ -15,8 +15,9 @@ multiversx-chain-vm-executor-wasmer = { path = "../vm-executor-wasmer" }
 lazy_static = "1.4"
 libc = { version = "^0.2", default-features = false }
 
+chrono = "0.4.23"
 env_logger = "0.8.4"
-log = "0.4.14"
+log = "0.4"
 
 [build-dependencies]
 cbindgen = "0.9"
