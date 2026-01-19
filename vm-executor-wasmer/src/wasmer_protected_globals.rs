@@ -2,8 +2,8 @@ use std::{mem, sync::Arc};
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
+    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware, wasmparser::Operator,
 };
 use wasmer_types::ModuleInfo;
 

@@ -15,7 +15,7 @@ pub fn set_panic_handler() {
 }
 
 /// Sets the log level.
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub extern "C" fn vm_exec_set_log_level(value: u64) -> vm_exec_result_t {
     let result = u64_to_log_level(value);

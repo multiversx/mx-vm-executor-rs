@@ -1,8 +1,8 @@
-use crate::executor_interface::{
-    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost,
-    VMHooksLegacy,
-};
 use crate::WasmerInstance;
+use crate::executor_interface::{
+    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, VMHooksLegacy,
+    check_missing_wasm,
+};
 use std::{
     fmt,
     rc::Rc,
