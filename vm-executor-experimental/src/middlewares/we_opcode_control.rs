@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use wasmer::{
+    LocalFunctionIndex,
     sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware},
     wasmparser::Operator,
-    LocalFunctionIndex,
 };
 use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
@@ -13,7 +13,7 @@ use crate::{
     // MiddlewareWithProtectedGlobals,
 };
 
-use super::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT};
+use super::{BREAKPOINT_VALUE_MEMORY_LIMIT, Breakpoints};
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
 const OPCODE_CONTROL_OPERAND_BACKUP: &str = "opcode_control_operand_backup";

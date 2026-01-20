@@ -5,14 +5,14 @@ use std::{
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
+    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware, wasmparser::Operator,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
-    wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    wasmer_helpers::{create_global_index, MiddlewareWithProtectedGlobals},
+    wasmer_breakpoints::{BREAKPOINT_VALUE_MEMORY_LIMIT, Breakpoints},
+    wasmer_helpers::{MiddlewareWithProtectedGlobals, create_global_index},
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";

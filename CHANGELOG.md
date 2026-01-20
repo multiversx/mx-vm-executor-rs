@@ -2,6 +2,12 @@
 
 This file contains a centralizes a trace of all published crate versions, with their changes in short.
 
+## [multiversx-chain-vm-executor 0.5.1] - 2026-01-20
+- Upgraded to Wasmer v6.1.0.
+- Fixed linker issue on Linux for Wasmer 2 (unreleased).
+- Upgraded to edition 2024.
+- Upgraded dependencies.
+
 ## [multiversx-chain-vm-executor 0.5.0] - 2025-07-03
 - Barnard VM hooks.
 

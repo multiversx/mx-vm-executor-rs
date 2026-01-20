@@ -1,9 +1,15 @@
+use crate::wasmer_logger;
+use log::LevelFilter;
 use multiversx_chain_vm_executor::ExecutorService;
 use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
 use std::cell::RefCell;
 
 thread_local! {
-    static SERVICE: RefCell<Box<dyn ExecutorService>> = RefCell::new(Box::new(BasicExecutorService::new()));
+    static SERVICE: RefCell<Box<dyn ExecutorService>> = RefCell::new({
+        // Initialize the logger only once (disable until we sync with node)
+        wasmer_logger::init(LevelFilter::Off);
+        Box::new(BasicExecutorService::new())
+    });
 }
 
 pub fn with_service<R, F: FnOnce(&mut dyn ExecutorService) -> R>(f: F) -> R {

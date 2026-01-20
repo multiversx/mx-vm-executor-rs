@@ -1,9 +1,9 @@
 use crate::middlewares::{
-    get_breakpoint_value, get_points_used, set_points_limit, Breakpoints, Metering, OpcodeControl,
-    OpcodeTracer, ProtectedGlobals,
+    Breakpoints, Metering, OpcodeControl, OpcodeTracer, ProtectedGlobals, get_breakpoint_value,
+    get_points_used, set_points_limit,
 };
-use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use crate::{ExperimentalError, ExperimentalVMHooksBuilder};
+use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult, OpcodeCost,
@@ -109,12 +109,11 @@ impl ExperimentalInstance {
 }
 
 fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
-    let memories = wasmer_instance
+    wasmer_instance
         .exports
         .iter()
         .memories()
-        .collect::<Vec<_>>();
-    memories
+        .collect::<Vec<_>>()
 }
 
 fn validate_memories(memories: &[(&String, &wasmer::Memory)]) -> Result<(), ExecutorError> {
@@ -139,8 +138,7 @@ fn validate_memory(memory: &wasmer::Memory, store: &wasmer::Store) -> Result<(),
     if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
         trace!(
             "Memory size exceeds maximum allowed: {:#?} > {:#?}",
-            max_memory_pages,
-            MAX_MEMORY_PAGES_ALLOWED
+            max_memory_pages, MAX_MEMORY_PAGES_ALLOWED
         );
         return Err(Box::new(ServiceError::new(
             "memory size exceeds maximum allowed",

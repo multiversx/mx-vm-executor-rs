@@ -3,9 +3,7 @@ use crate::executor_interface::{
 };
 use log::trace;
 
-use crate::wasmer_logger as WasmerLogger;
 use crate::WasmerExecutor;
-use log::LevelFilter;
 
 #[derive(Default)]
 pub struct BasicExecutorService {
@@ -14,15 +12,9 @@ pub struct BasicExecutorService {
 
 impl BasicExecutorService {
     pub fn new() -> Self {
-        Self::init();
         Self {
             last_error: String::new(),
         }
-    }
-
-    fn init() {
-        // Initialize the logger only once (disable until we sync with node)
-        WasmerLogger::init(LevelFilter::Off);
     }
 }
 

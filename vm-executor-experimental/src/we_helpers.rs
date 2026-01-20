@@ -1,7 +1,7 @@
 use multiversx_chain_vm_executor::ExecutorError;
 use wasmer::{
-    wasmparser::Operator, AsStoreMut, ExportIndex, GlobalInit, GlobalType, Instance, Mutability,
-    Type,
+    AsStoreMut, ExportIndex, GlobalInit, GlobalType, Instance, Mutability, Type,
+    wasmparser::Operator,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 

@@ -10,8 +10,8 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::wasmer_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
-    MiddlewareWithProtectedGlobals,
+    MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
+    is_control_flow_operator, set_global_value_u64,
 };
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";

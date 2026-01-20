@@ -16,7 +16,7 @@ macro_rules! cast_input_ptr {
             with_service(|service| service.update_last_error_str($err_msg.to_string()));
             return $err_return_val;
         } else {
-            &mut *($ptr_var as *mut $expected_ty)
+            unsafe { &mut *($ptr_var as *mut $expected_ty) }
         }
     };
     ($ptr_var:ident, $expected_ty:ty, $err_msg:expr) => {
@@ -35,7 +35,7 @@ macro_rules! cast_input_const_ptr {
             with_service(|service| service.update_last_error_str($err_msg.to_string()));
             return $err_return_val;
         } else {
-            &*($ptr_var as *const $expected_ty)
+            unsafe { &*($ptr_var as *const $expected_ty) }
         }
     };
     ($ptr_var:ident, $expected_ty:ty, $err_msg:expr) => {

@@ -13,7 +13,7 @@ pub use breakpoint_value::*;
 pub use compilation_options::CompilationOptionsLegacy;
 pub use executor::ExecutorLegacy;
 pub use instance::InstanceLegacy;
-pub use missing_wasm::{check_missing_wasm, MissingWasmError};
+pub use missing_wasm::{MissingWasmError, check_missing_wasm};
 pub use new_traits::*;
 pub use opcode_cost::OpcodeCost;
 pub use service_error::ServiceError;

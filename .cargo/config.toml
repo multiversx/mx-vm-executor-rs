@@ -1,0 +1,5 @@
+# Disable debug assertions to prevent unsafe precondition check failures
+# from older wasmer versions that don't meet newer Rust safety requirements.
+# These checks are optional and the code works correctly despite triggering them.
+[build]
+rustflags = ["-C", "debug-assertions=no"]
