@@ -139,12 +139,11 @@ impl WasmerInstance {
 }
 
 fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
-    let memories = wasmer_instance
+    wasmer_instance
         .exports
         .iter()
         .memories()
-        .collect::<Vec<_>>();
-    memories
+        .collect::<Vec<_>>()
 }
 
 fn validate_memories(memories: &[(&String, &wasmer::Memory)]) -> Result<(), ExecutorError> {
@@ -169,8 +168,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
     if max_memory_pages > MAX_MEMORY_PAGES_ALLOWED {
         trace!(
             "Memory size exceeds maximum allowed: {:#?} > {:#?}",
-            max_memory_pages,
-            MAX_MEMORY_PAGES_ALLOWED
+            max_memory_pages, MAX_MEMORY_PAGES_ALLOWED
         );
         return Err(Box::new(ServiceError::new(
             "memory size exceeds maximum allowed",
@@ -270,10 +268,10 @@ impl InstanceLegacy for WasmerInstance {
 
     fn has_imported_function(&self, func_name: &str) -> bool {
         for import in self.wasmer_instance.module().imports() {
-            if let ExternType::Function(_) = import.ty() {
-                if import.name() == func_name {
-                    return true;
-                }
+            if let ExternType::Function(_) = import.ty()
+                && import.name() == func_name
+            {
+                return true;
             }
         }
 

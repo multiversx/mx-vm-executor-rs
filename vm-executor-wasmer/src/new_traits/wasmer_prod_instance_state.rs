@@ -1,8 +1,8 @@
+use crate::WasmerInstance;
 use crate::executor_interface::{
     BreakpointValue, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
     VMHooksEarlyExit,
 };
-use crate::WasmerInstance;
 
 use std::rc::{Rc, Weak};
 
