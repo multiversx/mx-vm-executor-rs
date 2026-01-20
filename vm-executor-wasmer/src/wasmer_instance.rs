@@ -13,8 +13,8 @@ use log::trace;
 use std::cell::RefCell;
 use std::sync::Mutex;
 use std::{rc::Rc, sync::Arc};
-use wasmer::{ExternType, Universal};
 use wasmer::{CompilerConfig, Extern, Module, Store};
+use wasmer::{ExternType, Universal};
 use wasmer::{Pages, Singlepass};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
@@ -269,7 +269,6 @@ impl InstanceLegacy for WasmerInstance {
     }
 
     fn has_imported_function(&self, func_name: &str) -> bool {
-
         for import in self.wasmer_instance.module().imports() {
             if let ExternType::Function(_) = import.ty() {
                 if import.name() == func_name {

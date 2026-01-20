@@ -186,7 +186,6 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
     c_int::from(capi_instance.content.has_imported_function(func_name_r))
 }
 
-
 /// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
 ///
 /// # Safety
