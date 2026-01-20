@@ -32,15 +32,15 @@ version = "0.5.0"
 optional = true
 
 [dependencies]
-wasmer = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df", default-features = false, features = [
+wasmer = { git = "https://github.com/multiversx/wasmer", rev = "1684f8e87d0a257843194ab9837ef9185b723d49", default-features = false, features = [
     "singlepass",
     "sys",
     "universal",
     "wat",
 ] }
 
-wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
-wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "090ad17927fd1cbecb253a7b123d21e453fa13df" }
+wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "1684f8e87d0a257843194ab9837ef9185b723d49" }
+wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "1684f8e87d0a257843194ab9837ef9185b723d49" }
 
 log = "0.4"
 loupe = "0.1.3"
