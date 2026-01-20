@@ -139,12 +139,11 @@ impl WasmerInstance {
 }
 
 fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
-    let memories = wasmer_instance
+    wasmer_instance
         .exports
         .iter()
         .memories()
-        .collect::<Vec<_>>();
-    memories
+        .collect::<Vec<_>>()
 }
 
 fn validate_memories(memories: &[(&String, &wasmer::Memory)]) -> Result<(), ExecutorError> {
@@ -269,10 +268,10 @@ impl InstanceLegacy for WasmerInstance {
 
     fn has_imported_function(&self, func_name: &str) -> bool {
         for import in self.wasmer_instance.module().imports() {
-            if let ExternType::Function(_) = import.ty() {
-                if import.name() == func_name {
-                    return true;
-                }
+            if let ExternType::Function(_) = import.ty()
+                && import.name() == func_name
+            {
+                return true;
             }
         }
 

@@ -109,12 +109,11 @@ impl ExperimentalInstance {
 }
 
 fn get_memories(wasmer_instance: &wasmer::Instance) -> Vec<(&String, &wasmer::Memory)> {
-    let memories = wasmer_instance
+    wasmer_instance
         .exports
         .iter()
         .memories()
-        .collect::<Vec<_>>();
-    memories
+        .collect::<Vec<_>>()
 }
 
 fn validate_memories(memories: &[(&String, &wasmer::Memory)]) -> Result<(), ExecutorError> {
