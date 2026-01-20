@@ -8,3 +8,6 @@ members = [
     "vm-executor-experimental",
     "vm-executor-wasmer",
 ]
+
+[patch.crates-io]
+multiversx-chain-vm-executor = { path = "vm-executor" }

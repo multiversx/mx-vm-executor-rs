@@ -17,8 +17,4 @@ pub use wasmer_instance::*;
 pub use wasmer_metering_helpers::*;
 pub use wasmer_service::*;
 
-#[cfg(feature = "multiversx-chain-vm-executor")]
 pub use multiversx_chain_vm_executor as executor_interface;
-
-#[cfg(feature = "multiversx-chain-vm-executor-published")]
-pub use multiversx_chain_vm_executor_published as executor_interface;
