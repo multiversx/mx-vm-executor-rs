@@ -7,9 +7,9 @@
 #![allow(clippy::too_many_arguments)]
 
 use multiversx_chain_vm_executor::VMHooksEarlyExit;
-use wasmer::{imports, Function, FunctionEnv, FunctionEnvMut, Imports, Store};
+use wasmer::{Function, FunctionEnv, FunctionEnvMut, Imports, Store, imports};
 
-use crate::we_vm_hooks::{convert_mem_length, convert_mem_ptr, with_vm_hooks, VMHooksWrapper};
+use crate::we_vm_hooks::{VMHooksWrapper, convert_mem_length, convert_mem_ptr, with_vm_hooks};
 
 #[rustfmt::skip]
 fn wasmer_import_get_gas_left(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i64, VMHooksEarlyExit> {
@@ -1396,6 +1396,66 @@ fn wasmer_import_managed_verify_blsaggregated_signature(env: FunctionEnvMut<VMHo
     with_vm_hooks(env, |vh| vh.managed_verify_blsaggregated_signature(key_handle, message_handle, sig_handle))
 }
 
+#[rustfmt::skip]
+fn wasmer_import_activate_unsafe_mode(env: FunctionEnvMut<VMHooksWrapper>) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.activate_unsafe_mode())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_deactivate_unsafe_mode(env: FunctionEnvMut<VMHooksWrapper>) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.deactivate_unsafe_mode())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_num_errors(env: FunctionEnvMut<VMHooksWrapper>) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_num_errors())
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_error_with_index(env: FunctionEnvMut<VMHooksWrapper>, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_error_with_index(index, error_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_get_last_error(env: FunctionEnvMut<VMHooksWrapper>, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_get_last_error(error_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_groth16(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_verify_groth16(curve_id, proof_handle, vk_handle, pub_witness_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_verify_plonk(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_verify_plonk(curve_id, proof_handle, vk_handle, pub_witness_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_add_ec(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_add_ec(curve_id, group_id, point1_handle, point2_handle, result_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_mul_ec(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_mul_ec(curve_id, group_id, point_handle, scalar_handle, result_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_multi_exp_ec(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_multi_exp_ec(curve_id, group_id, points_handle, scalars_handle, result_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_map_to_curve_ec(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_map_to_curve_ec(curve_id, group_id, element_handle, result_handle))
+}
+
+#[rustfmt::skip]
+fn wasmer_import_managed_pairing_checks_ec(env: FunctionEnvMut<VMHooksWrapper>, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.managed_pairing_checks_ec(curve_id, points_g1_handle, points_g2_handle))
+}
+
 pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> Imports {
     let function_env = FunctionEnv::new(store, vh_wrapper);
 
@@ -1678,6 +1738,18 @@ pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> 
             "managedVerifySecp256r1" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_secp256r1),
             "managedVerifyBLSSignatureShare" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blssignature_share),
             "managedVerifyBLSAggregatedSignature" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_blsaggregated_signature),
+            "activateUnsafeMode" => Function::new_typed_with_env(store, &function_env, wasmer_import_activate_unsafe_mode),
+            "deactivateUnsafeMode" => Function::new_typed_with_env(store, &function_env, wasmer_import_deactivate_unsafe_mode),
+            "managedGetNumErrors" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_num_errors),
+            "managedGetErrorWithIndex" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_error_with_index),
+            "managedGetLastError" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_get_last_error),
+            "managedVerifyGroth16" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_groth16),
+            "managedVerifyPlonk" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_verify_plonk),
+            "managedAddEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_add_ec),
+            "managedMulEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_mul_ec),
+            "managedMultiExpEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_multi_exp_ec),
+            "managedMapToCurveEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_map_to_curve_ec),
+            "managedPairingChecksEC" => Function::new_typed_with_env(store, &function_env, wasmer_import_managed_pairing_checks_ec),
 
         }
     }

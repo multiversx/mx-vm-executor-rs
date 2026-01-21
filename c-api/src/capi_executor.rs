@@ -23,7 +23,7 @@ pub struct CapiExecutor {
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_new_executor(
     executor: *mut *mut vm_exec_executor_t,
@@ -32,8 +32,8 @@ pub unsafe extern "C" fn vm_exec_new_executor(
     return_if_ptr_null!(vm_hook_pointers_ptr_ptr, "VM hooks ptr is null");
 
     // unpacking the vm hooks object pointer
-    let vm_hook_pointers_ptr = *vm_hook_pointers_ptr_ptr;
-    let vm_hook_pointers = (*vm_hook_pointers_ptr).clone();
+    let vm_hook_pointers_ptr = unsafe { *vm_hook_pointers_ptr_ptr };
+    let vm_hook_pointers = unsafe { (*vm_hook_pointers_ptr).clone() };
 
     // create executor
     let executor_result =
@@ -43,7 +43,9 @@ pub unsafe extern "C" fn vm_exec_new_executor(
             let capi_executor = CapiExecutor {
                 content: executor_box,
             };
-            *executor = Box::into_raw(Box::new(capi_executor)) as *mut vm_exec_executor_t;
+            unsafe {
+                *executor = Box::into_raw(Box::new(capi_executor)) as *mut vm_exec_executor_t;
+            }
             vm_exec_result_t::VM_EXEC_OK
         }
         Err(message) => {
@@ -58,7 +60,7 @@ pub unsafe extern "C" fn vm_exec_new_executor(
 /// # Safety
 ///
 /// C API function, works with raw object pointers.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_force_sighandler_reinstall() {
     force_sighandler_reinstall();
 }
@@ -76,7 +78,7 @@ pub unsafe extern "C" fn vm_force_sighandler_reinstall() {
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
     executor_ptr: *mut vm_exec_executor_t,
@@ -107,10 +109,10 @@ pub unsafe extern "C" fn vm_exec_executor_set_vm_hooks_ptr(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_exec_executor_destroy(executor_ptr: *mut vm_exec_executor_t) {
     if !executor_ptr.is_null() {
-        let executor = Box::from_raw(executor_ptr as *mut CapiExecutor);
+        let executor = unsafe { Box::from_raw(executor_ptr as *mut CapiExecutor) };
         drop(executor)
     }
 }

@@ -1,6 +1,6 @@
 use crate::{ExperimentalInstance, ExperimentalVMHooksBuilder};
 use multiversx_chain_vm_executor::{
-    check_missing_wasm, CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig,
+    CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig, check_missing_wasm,
 };
 use std::{fmt, sync::Arc};
 

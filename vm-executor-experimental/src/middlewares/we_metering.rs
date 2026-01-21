@@ -1,7 +1,7 @@
 #![allow(unused)] // TODO: until we activate the local count mechanism
 
 use super::{
-    get_opcode_cost, Breakpoints, MiddlewareWithProtectedGlobals, BREAKPOINT_VALUE_OUT_OF_GAS,
+    BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, MiddlewareWithProtectedGlobals, get_opcode_cost,
 };
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
@@ -155,7 +155,7 @@ impl FunctionMiddleware for FunctionMetering {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
                     format!("Unsupported operator: {operator:?}"),
-                ))
+                ));
             }
         }
 

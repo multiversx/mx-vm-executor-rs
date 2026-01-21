@@ -3,7 +3,7 @@
 use meta::capi_safe_unwind;
 
 use crate::{
-    capi_instance::{vm_exec_instance_t, CapiInstance},
+    capi_instance::{CapiInstance, vm_exec_instance_t},
     service_singleton::with_service,
     vm_exec_result_t,
 };
@@ -17,7 +17,7 @@ use std::ptr;
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
     instance_ptr: *mut vm_exec_instance_t,
@@ -45,7 +45,7 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(ptr::null_mut())]
 pub unsafe extern "C" fn vm_exec_instance_memory_data(
     instance_ptr: *mut vm_exec_instance_t,
@@ -77,7 +77,7 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_memory_grow(
     instance_ptr: *mut vm_exec_instance_t,

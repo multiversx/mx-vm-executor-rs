@@ -4,8 +4,8 @@ use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::CompilationOptionsLegacy;
 
 use crate::{
-    capi_executor::{vm_exec_executor_t, CapiExecutor},
-    capi_instance::{vm_exec_compilation_options_t, vm_exec_instance_t, CapiInstance},
+    capi_executor::{CapiExecutor, vm_exec_executor_t},
+    capi_instance::{CapiInstance, vm_exec_compilation_options_t, vm_exec_instance_t},
     service_singleton::with_service,
     vm_exec_result_t,
 };
@@ -16,7 +16,7 @@ use crate::{
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_cache(
     instance_ptr: *const vm_exec_instance_t,
@@ -28,8 +28,10 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
     let result = capi_instance.content.cache();
     match result {
         Ok(bytes) => {
-            *cache_bytes_ptr = bytes.as_ptr();
-            *cache_bytes_len = bytes.len() as u32;
+            unsafe {
+                *cache_bytes_ptr = bytes.as_ptr();
+                *cache_bytes_len = bytes.len() as u32;
+            }
             std::mem::forget(bytes);
             vm_exec_result_t::VM_EXEC_OK
         }
@@ -48,7 +50,7 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment, unused_variables)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_from_cache(
     executor_ptr: *mut vm_exec_executor_t,
@@ -66,9 +68,10 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
-    let cache_bytes: &[u8] = slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize);
+    let cache_bytes: &[u8] =
+        unsafe { slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize) };
     let compilation_options: &CompilationOptionsLegacy =
-        &*(options_ptr as *const CompilationOptionsLegacy);
+        unsafe { &*(options_ptr as *const CompilationOptionsLegacy) };
     let instance_result = capi_executor
         .content
         .new_instance_from_cache(cache_bytes, compilation_options);
@@ -77,7 +80,10 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
             let capi_instance = CapiInstance {
                 content: instance_box,
             };
-            *instance_ptr_ptr = Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+            unsafe {
+                *instance_ptr_ptr =
+                    Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+            }
             vm_exec_result_t::VM_EXEC_OK
         }
         Err(message) => {

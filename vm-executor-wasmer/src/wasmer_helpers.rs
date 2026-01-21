@@ -1,5 +1,5 @@
 use wasmer::{
-    wasmparser::Operator, ExportIndex, GlobalInit, GlobalType, Instance, Mutability, Type,
+    ExportIndex, GlobalInit, GlobalType, Instance, Mutability, Type, wasmparser::Operator,
 };
 use wasmer_types::{GlobalIndex, ModuleInfo};
 

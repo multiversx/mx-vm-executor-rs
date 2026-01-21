@@ -142,7 +142,7 @@ fn get_opcode_cost_v1(op: &Operator, opcode_cost: &OpcodeCost) -> Option<u32> {
         Operator::Try { .. } => Some(opcode_cost.opcode_try),
         Operator::TypedSelect { .. } => Some(opcode_cost.opcode_typedselect),
         Operator::Unreachable { .. } => Some(opcode_cost.opcode_unreachable),
-        // Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind), // unwind no longer available in Wasmer 6 
+        // Operator::Unwind { .. } => Some(opcode_cost.opcode_unwind), // unwind no longer available in Wasmer 6
         _ => None,
     }
 }
