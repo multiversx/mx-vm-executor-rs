@@ -1,7 +1,7 @@
+use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
 use multiversx_chain_vm_executor_wasmer::executor_interface::{
     CompilationOptionsLegacy, ExecutorService, InstanceLegacy, VMHooksLegacyDefault,
 };
-use multiversx_chain_vm_executor_wasmer::BasicExecutorService;
 use wasmer::wat2wasm;
 
 const DUMMY_COMPILATION_OPTIONS: CompilationOptionsLegacy = CompilationOptionsLegacy {

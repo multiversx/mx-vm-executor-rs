@@ -1,7 +1,7 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
-    capi_executor::{vm_exec_executor_t, CapiExecutor},
+    capi_executor::{CapiExecutor, vm_exec_executor_t},
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
@@ -35,7 +35,7 @@ pub struct CapiInstance {
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_new_instance(
     executor_ptr: *mut vm_exec_executor_t,
@@ -51,9 +51,10 @@ pub unsafe extern "C" fn vm_exec_new_instance(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
-    let wasm_bytes: &[u8] = slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize);
+    let wasm_bytes: &[u8] =
+        unsafe { slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize) };
     let compilation_options: &CompilationOptionsLegacy =
-        &*(options_ptr as *const CompilationOptionsLegacy);
+        unsafe { &*(options_ptr as *const CompilationOptionsLegacy) };
     let instance_result = capi_executor
         .content
         .new_instance(wasm_bytes, compilation_options);
@@ -62,7 +63,10 @@ pub unsafe extern "C" fn vm_exec_new_instance(
             let capi_instance = CapiInstance {
                 content: instance_box,
             };
-            *instance_ptr_ptr = Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+            unsafe {
+                *instance_ptr_ptr =
+                    Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+            }
             vm_exec_result_t::VM_EXEC_OK
         }
         Err(message) => {
@@ -90,7 +94,7 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_call(
     instance_ptr: *mut vm_exec_instance_t,
@@ -103,7 +107,7 @@ pub unsafe extern "C" fn vm_exec_instance_call(
         with_service(|service| service.update_last_error_str("name ptr is null".to_string()));
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
-    let func_name_c = CStr::from_ptr(func_name_ptr);
+    let func_name_c = unsafe { CStr::from_ptr(func_name_ptr) };
     let func_name_r = func_name_c.to_str().unwrap();
 
     let result = capi_instance.content.call(func_name_r);
@@ -124,7 +128,7 @@ pub unsafe extern "C" fn vm_exec_instance_call(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_check_signatures(
     instance_ptr: *mut vm_exec_instance_t,
@@ -148,7 +152,7 @@ pub unsafe extern "C" fn vm_check_signatures(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(-1)]
 pub unsafe extern "C" fn vm_exec_instance_has_function(
     instance_ptr: *mut vm_exec_instance_t,
@@ -158,7 +162,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
 
     // unpack the function name
     return_if_ptr_null!(func_name_ptr, "function name ptr is null", -1);
-    let func_name_c = CStr::from_ptr(func_name_ptr);
+    let func_name_c = unsafe { CStr::from_ptr(func_name_ptr) };
     let func_name_r = func_name_c.to_str().unwrap();
 
     c_int::from(capi_instance.content.has_function(func_name_r))
@@ -170,7 +174,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(-1)]
 pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
     instance_ptr: *mut vm_exec_instance_t,
@@ -180,12 +184,11 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
 
     // unpack the function name
     return_if_ptr_null!(func_name_ptr, "function name ptr is null", -1);
-    let func_name_c = CStr::from_ptr(func_name_ptr);
+    let func_name_c = unsafe { CStr::from_ptr(func_name_ptr) };
     let func_name_r = func_name_c.to_str().unwrap();
 
     c_int::from(capi_instance.content.has_imported_function(func_name_r))
 }
-
 
 /// Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
 ///
@@ -193,7 +196,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exported_function_names_length(
     instance_ptr: *mut vm_exec_instance_t,
@@ -221,7 +224,7 @@ pub unsafe extern "C" fn vm_exported_function_names_length(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exported_function_names(
     instance_ptr: *mut vm_exec_instance_t,
@@ -232,7 +235,7 @@ pub unsafe extern "C" fn vm_exported_function_names(
 
     let func_names = capi_instance.content.get_exported_function_names();
     let concat = func_names.join("|");
-    string_copy(concat, dest_buffer, dest_buffer_len)
+    unsafe { string_copy(concat, dest_buffer, dest_buffer_len) }
 }
 
 /// Frees memory for the given `vm_exec_instance_t`.
@@ -246,10 +249,10 @@ pub unsafe extern "C" fn vm_exported_function_names(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_exec_instance_destroy(instance_ptr: *mut vm_exec_instance_t) {
     if !instance_ptr.is_null() {
-        let instance = Box::from_raw(instance_ptr as *mut CapiInstance);
+        let instance = unsafe { Box::from_raw(instance_ptr as *mut CapiInstance) };
         drop(instance);
     }
 }
@@ -260,7 +263,7 @@ pub unsafe extern "C" fn vm_exec_instance_destroy(instance_ptr: *mut vm_exec_ins
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_reset(
     instance_ptr: *mut vm_exec_instance_t,

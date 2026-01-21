@@ -1,7 +1,7 @@
 [package]
 name = "multiversx-chain-vm-executor-wasmer-experimental"
-version = "0.5.0"
-edition = "2021"
+version = "0.5.1"
+edition = "2024"
 
 authors = ["MultiversX <contact@multiversx.com>"]
 license = "GPL-3.0-only"
@@ -16,19 +16,18 @@ categories = ["cryptography::cryptocurrencies"]
 [lib]
 
 [dependencies.multiversx-chain-vm-executor]
-version = "0.5.0"
+version = "0.5.1"
 path = "../vm-executor"
 
 [dependencies]
-wasmer = { version = "6.0", default-features = false, features = [
+wasmer = { version = "6.1", default-features = false, features = [
     "singlepass",
     "sys",
     "wat",
 ] }
-wasmer-types = "6.0"
+wasmer-types = "6.1"
 
-chrono = "0.4.23"
-log = "0.4.17"
+log = "0.4"
 loupe = "0.1.3"
 rc-new-cyclic-fallible = "1.0.0"
 thiserror = "2.0"

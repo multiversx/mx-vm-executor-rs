@@ -9,7 +9,7 @@ use crate::{service_singleton::with_service, string_copy, string_length};
 ///
 /// This can be used to dynamically allocate a buffer with the correct number of
 /// bytes needed to store a message.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn vm_exec_last_error_length() -> c_int {
     string_length(get_last_error_string())
 }
@@ -32,12 +32,12 @@ pub extern "C" fn vm_exec_last_error_length() -> c_int {
 /// # Safety
 ///
 /// C API function, works with raw object pointers.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_exec_last_error_message(
     dest_buffer: *mut c_char,
     dest_buffer_len: c_int,
 ) -> c_int {
-    string_copy(get_last_error_string(), dest_buffer, dest_buffer_len)
+    unsafe { string_copy(get_last_error_string(), dest_buffer, dest_buffer_len) }
 }
 
 fn get_last_error_string() -> String {

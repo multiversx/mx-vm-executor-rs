@@ -2,8 +2,8 @@ use std::{mem, sync::Arc};
 
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use wasmer::{
-    wasmparser::Operator, FunctionMiddleware, LocalFunctionIndex, MiddlewareError,
-    MiddlewareReaderState, ModuleMiddleware,
+    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware, wasmparser::Operator,
 };
 use wasmer_types::ModuleInfo;
 
@@ -62,13 +62,15 @@ impl FunctionProtectedGlobals {
         &self,
         operator: &Operator,
     ) -> Result<(), MiddlewareError> {
-        if let Operator::GlobalSet { global_index } = *operator {
-            if self.protected_globals.contains(&global_index) {
-                return Err(MiddlewareError::new(
-                    "protected_globals_middleware",
-                    "protected globals invalid access",
-                ));
-            }
+        let Operator::GlobalSet { global_index } = *operator else {
+            return Ok(());
+        };
+
+        if self.protected_globals.contains(&global_index) {
+            return Err(MiddlewareError::new(
+                "protected_globals_middleware",
+                "protected globals invalid access",
+            ));
         }
 
         Ok(())
