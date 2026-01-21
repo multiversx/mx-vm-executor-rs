@@ -1,8 +1,8 @@
 use crate::executor_interface::OpcodeCost;
-use crate::wasmer_breakpoints::{Breakpoints, BREAKPOINT_VALUE_OUT_OF_GAS};
+use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
-    MiddlewareWithProtectedGlobals,
+    MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
+    is_control_flow_operator, set_global_value_u64,
 };
 use crate::{get_local_cost, get_opcode_cost};
 use loupe::{MemoryUsage, MemoryUsageTracker};
@@ -174,7 +174,7 @@ impl FunctionMiddleware for FunctionMetering {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
                     format!("Unsupported operator: {operator:?}"),
-                ))
+                ));
             }
         }
 

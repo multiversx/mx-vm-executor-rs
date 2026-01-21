@@ -1,5 +1,5 @@
-use crate::capi_executor::{vm_exec_executor_t, CapiExecutor};
-use crate::capi_instance::{vm_exec_instance_t, CapiInstance};
+use crate::capi_executor::{CapiExecutor, vm_exec_executor_t};
+use crate::capi_instance::{CapiInstance, vm_exec_instance_t};
 use crate::service_singleton::with_service;
 use crate::vm_exec_result_t;
 use meta::capi_safe_unwind;
@@ -19,14 +19,14 @@ pub struct vm_exec_opcode_cost_t;
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_set_opcode_costs(
     executor_ptr: *mut vm_exec_executor_t,
     opcode_cost_ptr: *const vm_exec_opcode_cost_t,
 ) -> vm_exec_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
-    let opcode_costs: &OpcodeCost = &*(opcode_cost_ptr as *const OpcodeCost);
+    let opcode_costs: &OpcodeCost = unsafe { &*(opcode_cost_ptr as *const OpcodeCost) };
 
     let result = capi_executor.content.set_opcode_cost(opcode_costs);
     match result {
@@ -48,7 +48,7 @@ pub unsafe extern "C" fn vm_exec_set_opcode_costs(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
     instance_ptr: *const vm_exec_instance_t,
@@ -75,7 +75,7 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_points_used(
     instance_ptr: *const vm_exec_instance_t,
@@ -98,7 +98,7 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
 ///
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_get_points_used(
     instance_ptr: *const vm_exec_instance_t,

@@ -8,3 +8,9 @@ members = [
     "vm-executor-experimental",
     "vm-executor-wasmer",
 ]
+
+[patch.crates-io]
+# Overrides the `multiversx-chain-vm-executor` dependency to use the local path,
+# for local builds and CI. Required by multiversx-chain-vm-executor-wasmer, which
+# cannot set the path directly without breaking external consumers.
+multiversx-chain-vm-executor = { path = "vm-executor" }

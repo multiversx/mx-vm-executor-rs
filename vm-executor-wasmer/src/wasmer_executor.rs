@@ -1,8 +1,8 @@
+use crate::WasmerInstance;
 use crate::executor_interface::{
     CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, InstanceLegacy, OpcodeCost,
     ServiceError, VMHooksLegacy,
 };
-use crate::WasmerInstance;
 use log::trace;
 use std::cell::RefCell;
 use std::ffi::c_void;
