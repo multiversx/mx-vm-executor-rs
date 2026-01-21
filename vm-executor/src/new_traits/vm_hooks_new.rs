@@ -30,6 +30,7 @@ pub trait VMHooks: core::fmt::Debug {
     fn transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, token_id_offset: MemPtr, token_id_len: MemLength, value_offset: MemPtr, nonce: i64, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksEarlyExit>;
     fn multi_transfer_esdt_nft_execute(&mut self, dest_offset: MemPtr, num_token_transfers: i32, token_transfers_args_length_offset: MemPtr, token_transfer_data_offset: MemPtr, gas_limit: i64, function_offset: MemPtr, function_length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<i32, VMHooksEarlyExit>;
     fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksEarlyExit>;
+    fn create_async_v3_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksEarlyExit>;
     fn set_async_context_callback(&mut self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> Result<i32, VMHooksEarlyExit>;
     fn upgrade_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, code_offset: MemPtr, code_metadata_offset: MemPtr, length: MemLength, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksEarlyExit>;
     fn upgrade_from_source_contract(&mut self, dest_offset: MemPtr, gas_limit: i64, value_offset: MemPtr, source_contract_address_offset: MemPtr, code_metadata_offset: MemPtr, num_arguments: i32, arguments_length_offset: MemPtr, data_offset: MemPtr) -> Result<(), VMHooksEarlyExit>;
@@ -409,6 +410,11 @@ impl VMHooks for VMHooksDefault {
 
     fn create_async_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksEarlyExit> {
         println!("Called: create_async_call");
+        Ok(0)
+    }
+
+    fn create_async_v3_call(&mut self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: create_async_v3_call");
         Ok(0)
     }
 

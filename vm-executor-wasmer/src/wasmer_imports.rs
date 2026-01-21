@@ -116,6 +116,11 @@ fn wasmer_import_create_async_call(env: &VMHooksWrapper, dest_offset: i32, value
 }
 
 #[rustfmt::skip]
+fn wasmer_import_create_async_v3_call(env: &VMHooksWrapper, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> i32 {
+    env.vm_hooks.create_async_v3_call(env.convert_mem_ptr(dest_offset), env.convert_mem_ptr(value_offset), env.convert_mem_ptr(data_offset), env.convert_mem_length(data_length), env.convert_mem_ptr(success_offset), env.convert_mem_length(success_length), env.convert_mem_ptr(error_offset), env.convert_mem_length(error_length), gas, extra_gas_for_callback)
+}
+
+#[rustfmt::skip]
 fn wasmer_import_set_async_context_callback(env: &VMHooksWrapper, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> i32 {
     env.vm_hooks.set_async_context_callback(env.convert_mem_ptr(callback), env.convert_mem_length(callback_length), env.convert_mem_ptr(data), env.convert_mem_length(data_length), gas)
 }
@@ -1479,6 +1484,7 @@ pub fn generate_import_object(store: &Store, env: &VMHooksWrapper) -> ImportObje
             "transferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_transfer_esdt_nft_execute),
             "multiTransferESDTNFTExecute" => Function::new_native_with_env(store, env.clone(), wasmer_import_multi_transfer_esdt_nft_execute),
             "createAsyncCall" => Function::new_native_with_env(store, env.clone(), wasmer_import_create_async_call),
+            "createAsyncV3Call" => Function::new_native_with_env(store, env.clone(), wasmer_import_create_async_v3_call),
             "setAsyncContextCallback" => Function::new_native_with_env(store, env.clone(), wasmer_import_set_async_context_callback),
             "upgradeContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_upgrade_contract),
             "upgradeFromSourceContract" => Function::new_native_with_env(store, env.clone(), wasmer_import_upgrade_from_source_contract),
