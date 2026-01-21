@@ -20,6 +20,7 @@ version = "0.5.1"
 path = "../vm-executor"
 
 [dependencies]
+home = "=0.5.1" # downgrading, >= 0.5.2 requires rustc 1.88, which is causing linker problems on Linux
 wasmer = { version = "6.1", default-features = false, features = [
     "singlepass",
     "sys",

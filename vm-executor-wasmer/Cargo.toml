@@ -20,6 +20,7 @@ categories = ["cryptography::cryptocurrencies"]
 version = "0.5.1"
 
 [dependencies]
+home = "=0.5.1" # downgrading, >= 0.5.2 requires rustc 1.88, which is causing linker problems on Linux
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "73f2111abf85700dec4f11fb23ece01abc2065e3", default-features = false, features = [
     "singlepass",
     "sys",

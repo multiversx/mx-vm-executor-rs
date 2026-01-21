@@ -8,16 +8,19 @@ on:
 
 jobs:
   rust_test:
-    name: Rust tests
+    name: Rust tests - Rust ${{ matrix.toolchain }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        toolchain: ["1.85", "1.92"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           default: true
-          toolchain: "1.92"
+          toolchain: ${{ matrix.toolchain }}
       - name: Run rust tests
-        run: cargo +1.92 test --release
+        run: cargo +${{ matrix.toolchain }} test --release
   clippy_check:
     permissions: write-all
     name: Clippy linter check
