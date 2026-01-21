@@ -290,6 +290,18 @@ pub trait VMHooksLegacy: core::fmt::Debug {
     fn managed_verify_secp256r1(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
     fn managed_verify_blssignature_share(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32;
+    fn activate_unsafe_mode(&self);
+    fn deactivate_unsafe_mode(&self);
+    fn managed_get_num_errors(&self) -> i32;
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32);
+    fn managed_get_last_error(&self, error_handle: i32);
+    fn managed_verify_groth16(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32;
+    fn managed_verify_plonk(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32;
+    fn managed_add_ec(&self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32;
+    fn managed_mul_ec(&self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32;
+    fn managed_multi_exp_ec(&self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32;
+    fn managed_map_to_curve_ec(&self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32;
+    fn managed_pairing_checks_ec(&self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32;
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -1583,6 +1595,62 @@ impl VMHooksLegacy for VMHooksLegacyDefault {
 
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         println!("Called: managed_verify_blsaggregated_signature");
+        0
+    }
+
+    fn activate_unsafe_mode(&self) {
+        println!("Called: activate_unsafe_mode");
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        println!("Called: deactivate_unsafe_mode");
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        println!("Called: managed_get_num_errors");
+        0
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        println!("Called: managed_get_error_with_index");
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        println!("Called: managed_get_last_error");
+    }
+
+    fn managed_verify_groth16(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        println!("Called: managed_verify_groth16");
+        0
+    }
+
+    fn managed_verify_plonk(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        println!("Called: managed_verify_plonk");
+        0
+    }
+
+    fn managed_add_ec(&self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_add_ec");
+        0
+    }
+
+    fn managed_mul_ec(&self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_mul_ec");
+        0
+    }
+
+    fn managed_multi_exp_ec(&self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_multi_exp_ec");
+        0
+    }
+
+    fn managed_map_to_curve_ec(&self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32 {
+        println!("Called: managed_map_to_curve_ec");
+        0
+    }
+
+    fn managed_pairing_checks_ec(&self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32 {
+        println!("Called: managed_pairing_checks_ec");
         0
     }
 }

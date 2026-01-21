@@ -1154,4 +1154,52 @@ impl<VH: VMHooksSetEarlyExit> VMHooksLegacy for VMHooksLegacyAdapter<VH> {
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         self.adapt_vm_hooks(|inner| VMHooks::managed_verify_blsaggregated_signature(inner, key_handle, message_handle, sig_handle))
     }
+
+    fn activate_unsafe_mode(&self) {
+        self.adapt_vm_hooks(|inner| VMHooks::activate_unsafe_mode(inner))
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        self.adapt_vm_hooks(|inner| VMHooks::deactivate_unsafe_mode(inner))
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_num_errors(inner))
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_error_with_index(inner, index, error_handle))
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_get_last_error(inner, error_handle))
+    }
+
+    fn managed_verify_groth16(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_verify_groth16(inner, curve_id, proof_handle, vk_handle, pub_witness_handle))
+    }
+
+    fn managed_verify_plonk(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_verify_plonk(inner, curve_id, proof_handle, vk_handle, pub_witness_handle))
+    }
+
+    fn managed_add_ec(&self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_add_ec(inner, curve_id, group_id, point1_handle, point2_handle, result_handle))
+    }
+
+    fn managed_mul_ec(&self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_mul_ec(inner, curve_id, group_id, point_handle, scalar_handle, result_handle))
+    }
+
+    fn managed_multi_exp_ec(&self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_multi_exp_ec(inner, curve_id, group_id, points_handle, scalars_handle, result_handle))
+    }
+
+    fn managed_map_to_curve_ec(&self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_map_to_curve_ec(inner, curve_id, group_id, element_handle, result_handle))
+    }
+
+    fn managed_pairing_checks_ec(&self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32 {
+        self.adapt_vm_hooks(|inner| VMHooks::managed_pairing_checks_ec(inner, curve_id, points_g1_handle, points_g2_handle))
+    }
 }
