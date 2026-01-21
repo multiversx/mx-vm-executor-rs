@@ -82,3 +82,10 @@ pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
             | Operator::Return
     )
 }
+
+pub(crate) fn is_supported_bulk_memory_operator(operator: &Operator) -> bool {
+    matches!(
+        operator,
+        Operator::MemoryCopy { src: _, dst: _ } | Operator::MemoryFill { mem: _ }
+    )
+}

@@ -33,6 +33,6 @@ wasmer = { git = "https://github.com/multiversx/wasmer", rev = "73f2111abf85700d
 wasmer-vm = { git = "https://github.com/multiversx/wasmer", rev = "73f2111abf85700dec4f11fb23ece01abc2065e3" }
 wasmer-types = { git = "https://github.com/multiversx/wasmer", rev = "73f2111abf85700dec4f11fb23ece01abc2065e3" }
 
-log = "0.4"
+log = { version = "0.4", features = ["std"] }
 loupe = "0.1.3"
 thiserror = "2.0"
