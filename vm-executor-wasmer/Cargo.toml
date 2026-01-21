@@ -16,20 +16,11 @@ categories = ["cryptography::cryptocurrencies"]
 
 [lib]
 
-[features]
-default = ["multiversx-chain-vm-executor"]
-
 [dependencies.multiversx-chain-vm-executor]
+# Not setting the path = "../vm-executor" here, because it would break
+# external consumers, which import it via gir revision. The path is overridden
+# in the workspace Cargo.toml via [patch.crates-io].
 version = "0.5.1"
-path = "../vm-executor"
-optional = true
-
-## Optional dependency to published interfaces crate,
-## to help with usage as a git-based dependency/
-[dependencies.multiversx-chain-vm-executor-published]
-package = "multiversx-chain-vm-executor"
-version = "0.5.1"
-optional = true
 
 [dependencies]
 wasmer = { git = "https://github.com/multiversx/wasmer", rev = "73f2111abf85700dec4f11fb23ece01abc2065e3", default-features = false, features = [

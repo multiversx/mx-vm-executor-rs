@@ -268,9 +268,7 @@ impl InstanceLegacy for WasmerInstance {
 
     fn has_imported_function(&self, func_name: &str) -> bool {
         for import in self.wasmer_instance.module().imports() {
-            if let ExternType::Function(_) = import.ty()
-                && import.name() == func_name
-            {
+            if is_imported_function(&import, func_name) {
                 return true;
             }
         }
@@ -373,4 +371,8 @@ impl InstanceLegacy for WasmerInstance {
             Err(err) => Err(err.to_string()),
         }
     }
+}
+
+fn is_imported_function(import: &wasmer::ImportType, func_name: &str) -> bool {
+    matches!(import.ty(), ExternType::Function(_)) && import.name() == func_name
 }
