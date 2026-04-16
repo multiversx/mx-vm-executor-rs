@@ -1,8 +1,7 @@
-use multiversx_chain_vm_executor::BreakpointValueLegacy;
-
 use crate::WasmerInstance;
 use crate::executor_interface::{
-    ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr, VMHooksEarlyExit,
+    BreakpointValueLegacy, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
+    VMHooksEarlyExit,
 };
 
 use std::rc::{Rc, Weak};
