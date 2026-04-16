@@ -1,7 +1,8 @@
+use multiversx_chain_vm_executor::BreakpointValueLegacy;
+
 use crate::WasmerInstance;
 use crate::executor_interface::{
-    BreakpointValue, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
-    VMHooksEarlyExit,
+    ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr, VMHooksEarlyExit,
 };
 
 use std::rc::{Rc, Weak};
@@ -24,10 +25,10 @@ impl WasmerProdInstanceState {
             .map_or_else(|| Err(WasmerExecutorError::BadInstancePointer.into()), Ok)
     }
 
-    pub fn set_breakpoint_value_legacy(&self, value: BreakpointValue) {
+    pub fn set_breakpoint_value_legacy(&self, value: BreakpointValueLegacy) {
         self.instance_rc()
             .unwrap()
-            .set_breakpoint_value(value.to_legacy())
+            .set_breakpoint_value(value)
             .expect("set_breakpoint_value_legacy globals error");
     }
 
