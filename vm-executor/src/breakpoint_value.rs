@@ -1,3 +1,10 @@
+
+/// Represents the reason why execution of a WASM instance was interrupted.
+///
+/// Used by the legacy executor interface to communicate breakpoint causes
+/// between the WASM runtime and the high-level VM.
+/// 
+/// TODO: move to wasmer-prod, and hide it from the VM implementation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BreakpointValueLegacy {
     /// Lack of a breakpoint
