@@ -286,6 +286,18 @@ pub trait VMHooks: core::fmt::Debug {
     fn managed_verify_secp256r1(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_verify_blssignature_share(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
     fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn activate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit>;
+    fn deactivate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_num_errors(&mut self) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_get_error_with_index(&mut self, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_get_last_error(&mut self, error_handle: i32) -> Result<(), VMHooksEarlyExit>;
+    fn managed_verify_groth16(&mut self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_verify_plonk(&mut self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_add_ec(&mut self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_mul_ec(&mut self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_multi_exp_ec(&mut self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_map_to_curve_ec(&mut self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit>;
+    fn managed_pairing_checks_ec(&mut self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> Result<i32, VMHooksEarlyExit>;
 }
 
 /// Dummy implementation for VMHooks. Can be used as placeholder, or in tests.
@@ -1677,6 +1689,66 @@ impl VMHooks for VMHooksDefault {
 
     fn managed_verify_blsaggregated_signature(&mut self, key_handle: i32, message_handle: i32, sig_handle: i32) -> Result<i32, VMHooksEarlyExit> {
         println!("Called: managed_verify_blsaggregated_signature");
+        Ok(0)
+    }
+
+    fn activate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: activate_unsafe_mode");
+        Ok(())
+    }
+
+    fn deactivate_unsafe_mode(&mut self) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: deactivate_unsafe_mode");
+        Ok(())
+    }
+
+    fn managed_get_num_errors(&mut self) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_get_num_errors");
+        Ok(0)
+    }
+
+    fn managed_get_error_with_index(&mut self, index: i32, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_error_with_index");
+        Ok(())
+    }
+
+    fn managed_get_last_error(&mut self, error_handle: i32) -> Result<(), VMHooksEarlyExit> {
+        println!("Called: managed_get_last_error");
+        Ok(())
+    }
+
+    fn managed_verify_groth16(&mut self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_verify_groth16");
+        Ok(0)
+    }
+
+    fn managed_verify_plonk(&mut self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_verify_plonk");
+        Ok(0)
+    }
+
+    fn managed_add_ec(&mut self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_add_ec");
+        Ok(0)
+    }
+
+    fn managed_mul_ec(&mut self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_mul_ec");
+        Ok(0)
+    }
+
+    fn managed_multi_exp_ec(&mut self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_multi_exp_ec");
+        Ok(0)
+    }
+
+    fn managed_map_to_curve_ec(&mut self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_map_to_curve_ec");
+        Ok(0)
+    }
+
+    fn managed_pairing_checks_ec(&mut self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> Result<i32, VMHooksEarlyExit> {
+        println!("Called: managed_pairing_checks_ec");
         Ok(0)
     }
 }
