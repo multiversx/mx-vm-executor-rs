@@ -230,7 +230,7 @@ impl FunctionMiddleware for FunctionMetering {
         match option {
             Some(cost) if is_supported_bulk_memory_operator(&operator) => {
                 self.inject_bulk_memory_cost(state, cost);
-                // immediatly insert out of gas check as this operation might be expensive
+                // immediately insert out of gas check as this operation might be expensive
                 self.inject_out_of_gas_check(state);
             }
             Some(cost) => self.accumulated_cost += cost as u64,

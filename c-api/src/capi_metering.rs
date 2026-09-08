@@ -23,16 +23,16 @@ pub struct vm_exec_opcode_cost_t;
 #[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
 pub unsafe extern "C" fn vm_exec_set_opcode_config(
     executor_ptr: *mut vm_exec_executor_t,
-    opcode_vesion_code: i32,
+    opcode_version_code: i32,
     opcode_cost_ptr: *const vm_exec_opcode_cost_t,
 ) -> vm_exec_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
-    let Some(opcode_version) = OpcodeVersion::from_i32(opcode_vesion_code) else {
+    let Some(opcode_version) = OpcodeVersion::from_i32(opcode_version_code) else {
         with_service(|service| {
             service.update_last_error_str(format!(
                 "invalid opcode version code: {}",
-                opcode_vesion_code
+                opcode_version_code
             ))
         });
         return vm_exec_result_t::VM_EXEC_ERROR;

@@ -1261,7 +1261,7 @@ enum vm_exec_result_t vm_exec_instance_memory_grow(struct vm_exec_instance_t *in
  * C API function, works with raw object pointers.
  */
 enum vm_exec_result_t vm_exec_set_opcode_config(struct vm_exec_executor_t *executor_ptr,
-                                                int32_t opcode_vesion_code,
+                                                int32_t opcode_version_code,
                                                 const struct vm_exec_opcode_cost_t *opcode_cost_ptr);
 
 /**
