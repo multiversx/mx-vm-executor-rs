@@ -175,6 +175,21 @@ impl FunctionMetering {
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_OUT_OF_GAS);
     }
 
+    /// Injects `points_used += size * cost_per_byte` ahead of a `memory.copy`/`memory.fill`,
+    /// using `size` as it appears on the stack (the raw, attacker-controlled operand), before
+    /// the real bulk-memory instruction validates it against the actual memory bounds.
+    ///
+    /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
+    /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
+    /// wrap around for a large enough `size`. This is not exploitable under the current setup:
+    /// - `MAX_MEMORY_PAGES_ALLOWED` (in `wasmer_instance.rs`) caps declared memory at 20 pages
+    ///   (1.25 MiB), enforced at instantiation.
+    /// - any `size` large enough to matter for overflow (`size * cost_per_byte` approaching
+    ///   `i64::MAX`) necessarily exceeds that 1.25 MiB bound, so the real `memory.copy`/
+    ///   `memory.fill` that follows this injected code traps on out-of-bounds access and aborts
+    ///   the call immediately — regardless of what `points_used` ended up holding.
+    /// - a `size` that keeps the copy in-bounds is capped at 1,310,720 bytes, so
+    ///   `size * cost_per_byte` tops out around `5.6e15` for a `u32` cost, far below `i64::MAX`.
     fn inject_bulk_memory_cost(&self, state: &mut MiddlewareReaderState, cost_per_byte: u32) {
         // backup the bulk memory size
         state.extend(&[Operator::GlobalSet {
