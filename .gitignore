@@ -11,3 +11,7 @@ Cargo.lock
 
 # Personal scripts
 my-*
+
+# Other
+.vscode
+**/.DS_Store
