@@ -16,6 +16,8 @@ pub enum OpcodeVersion {
     /// Use this for modules that rely on bulk memory operations like
     /// `MemoryCopy` and `MemoryFill`, or when targeting newer runtimes that
     /// support these instructions.
+    ///
+    /// Note: `V2` does **not** add support for `memory.init` and `data.drop`.
     V2,
 }
 impl OpcodeVersion {
