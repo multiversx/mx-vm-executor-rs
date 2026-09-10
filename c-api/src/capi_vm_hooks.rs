@@ -123,6 +123,10 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
         (self.c_func_pointers_ptr.create_async_call_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length), self.convert_mem_ptr(success_offset), self.convert_mem_length(success_length), self.convert_mem_ptr(error_offset), self.convert_mem_length(error_length), gas, extra_gas_for_callback)
     }
 
+    fn create_async_v3_call(&self, dest_offset: MemPtr, value_offset: MemPtr, data_offset: MemPtr, data_length: MemLength, success_offset: MemPtr, success_length: MemLength, error_offset: MemPtr, error_length: MemLength, gas: i64, extra_gas_for_callback: i64) -> i32 {
+        (self.c_func_pointers_ptr.create_async_v3_call_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(dest_offset), self.convert_mem_ptr(value_offset), self.convert_mem_ptr(data_offset), self.convert_mem_length(data_length), self.convert_mem_ptr(success_offset), self.convert_mem_length(success_length), self.convert_mem_ptr(error_offset), self.convert_mem_length(error_length), gas, extra_gas_for_callback)
+    }
+
     fn set_async_context_callback(&self, callback: MemPtr, callback_length: MemLength, data: MemPtr, data_length: MemLength, gas: i64) -> i32 {
         (self.c_func_pointers_ptr.set_async_context_callback_func_ptr)(self.vm_hooks_ptr, self.convert_mem_ptr(callback), self.convert_mem_length(callback_length), self.convert_mem_ptr(data), self.convert_mem_length(data_length), gas)
     }
