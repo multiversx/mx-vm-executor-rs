@@ -79,3 +79,14 @@ fn bulk_memory_bytes_cost_on_top_of_the_base() {
         (MEMORY_FILL_COST + 10 * MEMORY_FILL_PER_BYTE_COST) as u64
     );
 }
+
+/// The injected metering code takes the size operand off the stack and puts it back.
+#[test]
+fn bulk_memory_size_operand_survives_the_injection() {
+    let instance = bulk_memory_instance();
+
+    assert_eq!(
+        points_used_by(instance.as_ref(), "copyLocalTen"),
+        points_used_by(instance.as_ref(), "copyTen")
+    );
+}

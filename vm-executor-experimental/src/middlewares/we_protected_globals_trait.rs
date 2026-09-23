@@ -26,6 +26,8 @@ impl MiddlewareWithProtectedGlobals for Metering {
         vec![
             self.get_points_limit_global_index().as_u32(),
             self.get_points_used_global_index().as_u32(),
+            self.get_bulk_memory_size_operand_backup_global_index()
+                .as_u32(),
         ]
     }
 }
