@@ -15,3 +15,4 @@ my-*
 # Other
 .vscode
 **/.DS_Store
+.claude
