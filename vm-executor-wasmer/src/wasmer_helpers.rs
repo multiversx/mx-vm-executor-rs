@@ -116,14 +116,3 @@ pub(crate) fn is_control_flow_operator(operator: &Operator) -> bool {
             | Operator::Return
     )
 }
-
-/// Returns `true` for the bulk-memory operators supported by this helper.
-///
-/// These are the memory-copy and memory-fill instructions that need explicit
-/// validation or handling in Wasmer middleware.
-pub(crate) fn is_supported_bulk_memory_operator(operator: &Operator) -> bool {
-    matches!(
-        operator,
-        Operator::MemoryCopy { .. } | Operator::MemoryFill { .. }
-    )
-}

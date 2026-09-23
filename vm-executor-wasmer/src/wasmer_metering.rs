@@ -3,8 +3,9 @@ use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
     MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
-    is_control_flow_operator, is_supported_bulk_memory_operator, set_global_value_u64,
+    is_control_flow_operator, set_global_value_u64,
 };
+use crate::wasmer_opcode_cost_type::Cost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
@@ -179,6 +180,9 @@ impl FunctionMetering {
     /// using `size` as it appears on the stack (the raw, attacker-controlled operand), before
     /// the real bulk-memory instruction validates it against the actual memory bounds.
     ///
+    /// This only covers the cost of the bytes. The flat cost of the instruction itself goes
+    /// through the regular accumulator, so that a zero-size copy or fill is never free.
+    ///
     /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
     /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
     /// wrap around for a large enough `size`. This is not exploitable under the current setup:
@@ -241,19 +245,27 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
-        match option {
-            Some(cost) if is_supported_bulk_memory_operator(&operator) => {
-                self.inject_bulk_memory_cost(state, cost);
-                // immediately insert out of gas check as this operation might be expensive
-                self.inject_out_of_gas_check(state);
-            }
-            Some(cost) => self.accumulated_cost += cost as u64,
-            None => {
+        let op_exec_cost = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
+        match op_exec_cost {
+            Cost::Illegal => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
                     format!("Unsupported operator: {operator:?}"),
                 ));
+            }
+            Cost::Base(base) => self.accumulated_cost += base as u64,
+            Cost::BulkMemory { base, per_byte } => {
+                self.accumulated_cost += base as u64;
+
+                // flush what accumulated so far, including the base cost of this operator,
+                // so that the out of gas check below takes all of it into account
+                self.inject_points_used_increment(state);
+                self.accumulated_cost = 0;
+
+                self.inject_bulk_memory_cost(state, per_byte);
+
+                // immediately insert out of gas check as this operation might be expensive
+                self.inject_out_of_gas_check(state);
             }
         }
 

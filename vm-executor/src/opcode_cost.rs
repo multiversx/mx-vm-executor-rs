@@ -229,8 +229,12 @@ pub struct OpcodeCost {
     pub opcode_memorysize: u32,
     #[serde(rename = "MemoryCopy", default)]
     pub opcode_memorycopy: u32,
+    #[serde(rename = "MemoryCopyPerByte", default)]
+    pub opcode_memorycopyperbyte: u32,
     #[serde(rename = "MemoryFill", default)]
     pub opcode_memoryfill: u32,
+    #[serde(rename = "MemoryFillPerByte", default)]
+    pub opcode_memoryfillperbyte: u32,
     #[serde(rename = "Nop", default)]
     pub opcode_nop: u32,
     #[serde(rename = "RefFunc", default)]

@@ -1,7 +1,7 @@
 #![allow(unused)] // TODO: until we activate the local count mechanism
 
 use super::{
-    BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, MiddlewareWithProtectedGlobals, get_opcode_cost,
+    BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, Cost, MiddlewareWithProtectedGlobals, get_opcode_cost,
 };
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
@@ -148,14 +148,18 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_config);
-        match option {
-            Some(cost) => self.accumulated_cost += cost as u64,
-            None => {
+        let op_exec_cost = get_opcode_cost(&operator, &self.opcode_config);
+        match op_exec_cost {
+            Cost::Illegal => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
                     format!("Unsupported operator: {operator:?}"),
                 ));
+            }
+            // TODO: the `per_byte` cost is ignored here, the bulk memory operators are not yet
+            // metered per byte in this executor, unlike in the production one
+            Cost::Base(base) | Cost::BulkMemory { base, .. } => {
+                self.accumulated_cost += base as u64
             }
         }
 
