@@ -183,6 +183,9 @@ impl FunctionMetering {
     /// This only covers the cost of the bytes. The flat cost of the instruction itself goes
     /// through the regular accumulator, so that a zero-size copy or fill is never free.
     ///
+    /// Both operators take `size` as their last operand - `memory.copy` is `[dst, src, size]`,
+    /// `memory.fill` is `[dst, value, size]` - so the same injection works for both.
+    ///
     /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
     /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
     /// wrap around for a large enough `size`. This is not exploitable under the current setup:
@@ -205,7 +208,7 @@ impl FunctionMetering {
 
         // inject bulk memory cost
         state.extend(&[
-            // memory size * price
+            // size * cost_per_byte
             Operator::GlobalGet {
                 global_index: self
                     .global_indexes
@@ -216,7 +219,7 @@ impl FunctionMetering {
                 value: cost_per_byte as i64,
             },
             Operator::I64Mul,
-            // points user += memory size * price
+            // points_used += size * cost_per_byte
             Operator::GlobalGet {
                 global_index: self.global_indexes.points_used_global_index.as_u32(),
             },
