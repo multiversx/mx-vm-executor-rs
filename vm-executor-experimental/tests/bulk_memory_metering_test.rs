@@ -26,7 +26,8 @@ const COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
 /// All opcodes are free, except the bulk memory ones, so that `points_used` after a call
 /// is exactly the cost of the single `memory.copy`/`memory.fill` in the called function.
 ///
-/// A fresh instance per call, since `points_used` only starts at zero.
+/// A fresh instance for every call, since the `Instance` trait offers no way to reset
+/// `points_used` back to zero.
 fn points_used_by(func_name: &str) -> u64 {
     let wasm_bytes = wat2wasm(BULK_MEMORY_WAT).unwrap();
 

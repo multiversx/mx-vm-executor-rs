@@ -28,8 +28,8 @@
       (i32.const 10)    ;; size of memory region in bytes
     )
   )
-  ;; same as $copyTen, but with a size that the compiler cannot see through,
-  ;; to check that the size operand survives the metering injection unchanged
+  ;; same as $copyTen, but with the size coming from a local instead of an
+  ;; immediate constant, to check that the metering injection gives it back unchanged
   (func $copyLocalTen (type $void) (local $size i32)
     (local.set $size (i32.const 10))
     (memory.copy

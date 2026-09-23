@@ -248,8 +248,8 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let op_exec_cost = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
-        match op_exec_cost {
+        let cost = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
+        match cost {
             Cost::Illegal => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
