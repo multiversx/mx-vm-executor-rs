@@ -2,8 +2,8 @@ use crate::executor_interface::OpcodeConfig;
 use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
-    MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
-    is_control_flow_operator, set_global_value_u64,
+    MiddlewareWithProtectedGlobals, create_i32_global_index, create_i64_global_index,
+    get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
 use crate::wasmer_opcode_cost_type::Cost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
@@ -111,13 +111,13 @@ impl ModuleMiddleware for Metering {
         let points_limit = self.points_limit as i64;
 
         *global_indexes = Some(MeteringGlobalIndexes {
-            points_limit_global_index: create_global_index(
+            points_limit_global_index: create_i64_global_index(
                 module_info,
                 METERING_POINTS_LIMIT,
                 points_limit,
             ),
-            points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
-            bulk_memory_size_operand_backup_global_index: create_global_index(
+            points_used_global_index: create_i64_global_index(module_info, METERING_POINTS_USED, 0),
+            bulk_memory_size_operand_backup_global_index: create_i32_global_index(
                 module_info,
                 METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP,
                 0,
@@ -186,6 +186,9 @@ impl FunctionMetering {
     /// Both operators take `size` as their last operand - `memory.copy` is `[dst, src, size]`,
     /// `memory.fill` is `[dst, value, size]` - so the same injection works for both.
     ///
+    /// `size` is an `i32` and so is the global it is parked in, so it makes the round trip
+    /// untouched. Only the multiplication is widened to `i64`, to leave room for the product.
+    ///
     /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
     /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
     /// wrap around for a large enough `size`. This is not exploitable under the current setup:
@@ -215,6 +218,7 @@ impl FunctionMetering {
                     .bulk_memory_size_operand_backup_global_index
                     .as_u32(),
             },
+            Operator::I64ExtendI32U,
             Operator::I64Const {
                 value: cost_per_byte as i64,
             },

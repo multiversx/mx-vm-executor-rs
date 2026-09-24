@@ -4,7 +4,8 @@ use super::{
     BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, Cost, MiddlewareWithProtectedGlobals, get_opcode_cost,
 };
 use crate::we_helpers::{
-    create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
+    create_i32_global_index, create_i64_global_index, get_global_value_u64,
+    is_control_flow_operator, set_global_value_u64,
 };
 use multiversx_chain_vm_executor::{ExecutorError, OpcodeConfig, OpcodeCost};
 use std::mem;
@@ -98,13 +99,13 @@ impl ModuleMiddleware for Metering {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(MeteringGlobalIndexes {
-            points_limit_global_index: create_global_index(
+            points_limit_global_index: create_i64_global_index(
                 module_info,
                 METERING_POINTS_LIMIT,
                 POINTS_LIMIT_INIT,
             ),
-            points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
-            bulk_memory_size_operand_backup_global_index: create_global_index(
+            points_used_global_index: create_i64_global_index(module_info, METERING_POINTS_USED, 0),
+            bulk_memory_size_operand_backup_global_index: create_i32_global_index(
                 module_info,
                 METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP,
                 0,
@@ -164,6 +165,9 @@ impl FunctionMetering {
     /// Both operators take `size` as their last operand - `memory.copy` is `[dst, src, size]`,
     /// `memory.fill` is `[dst, value, size]` - so the same injection works for both.
     ///
+    /// `size` is an `i32` and so is the global it is parked in, so it makes the round trip
+    /// untouched. Only the multiplication is widened to `i64`, to leave room for the product.
+    ///
     /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
     /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
     /// wrap around for a large enough `size`. This is not exploitable under the current setup:
@@ -177,15 +181,12 @@ impl FunctionMetering {
     ///   `size * cost_per_byte` tops out around `5.6e15` for a `u32` cost, far below `i64::MAX`.
     fn inject_bulk_memory_cost(&self, state: &mut MiddlewareReaderState, cost_per_byte: u32) {
         // backup the bulk memory size
-        state.extend(&[
-            Operator::I64ExtendI32U,
-            Operator::GlobalSet {
-                global_index: self
-                    .global_indexes
-                    .bulk_memory_size_operand_backup_global_index
-                    .as_u32(),
-            },
-        ]);
+        state.extend(&[Operator::GlobalSet {
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
+        }]);
 
         // inject bulk memory cost
         state.extend(&[
@@ -196,6 +197,7 @@ impl FunctionMetering {
                     .bulk_memory_size_operand_backup_global_index
                     .as_u32(),
             },
+            Operator::I64ExtendI32U,
             Operator::I64Const {
                 value: cost_per_byte as i64,
             },
@@ -211,15 +213,12 @@ impl FunctionMetering {
         ]);
 
         // bring back the bulk memory size
-        state.extend(&[
-            Operator::GlobalGet {
-                global_index: self
-                    .global_indexes
-                    .bulk_memory_size_operand_backup_global_index
-                    .as_u32(),
-            },
-            Operator::I32WrapI64,
-        ]);
+        state.extend(&[Operator::GlobalGet {
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
+        }]);
     }
 }
 

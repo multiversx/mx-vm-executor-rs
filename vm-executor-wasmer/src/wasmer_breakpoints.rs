@@ -10,7 +10,7 @@ use wasmer::{
 use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::wasmer_helpers::{
-    MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
+    MiddlewareWithProtectedGlobals, create_i64_global_index, get_global_value_u64,
     is_control_flow_operator, set_global_value_u64,
 };
 
@@ -90,7 +90,7 @@ impl ModuleMiddleware for Breakpoints {
         let mut global_index = self.global_index.lock().unwrap();
 
         *global_index = Some(BreakpointsGlobalIndex {
-            breakpoint_value_global_index: create_global_index(
+            breakpoint_value_global_index: create_i64_global_index(
                 module_info,
                 BREAKPOINT_VALUE,
                 BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
