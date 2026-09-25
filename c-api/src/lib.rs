@@ -11,6 +11,7 @@ pub mod capi_instance_cache;
 pub mod capi_logger;
 pub mod capi_memory;
 pub mod capi_metering;
+pub mod capi_opcode_cost;
 pub mod capi_vm_hook_pointers;
 pub mod capi_vm_hooks;
 pub mod service_singleton;

@@ -1,13 +1,10 @@
 use crate::capi_executor::{CapiExecutor, vm_exec_executor_t};
 use crate::capi_instance::{CapiInstance, vm_exec_instance_t};
+use crate::capi_opcode_cost::vm_exec_opcode_cost_t;
 use crate::service_singleton::with_service;
 use crate::vm_exec_result_t;
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{OpcodeConfig, OpcodeCost, OpcodeVersion};
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct vm_exec_opcode_cost_t;
+use multiversx_chain_vm_executor::{OpcodeConfig, OpcodeVersion};
 
 /// Sets the opcode costs for the given executor.
 ///
@@ -38,10 +35,10 @@ pub unsafe extern "C" fn vm_exec_set_opcode_config(
         return vm_exec_result_t::VM_EXEC_ERROR;
     };
 
-    let opcode_costs_ref: &OpcodeCost = unsafe { &*(opcode_cost_ptr as *const OpcodeCost) };
+    let opcode_cost = unsafe { (*opcode_cost_ptr).to_opcode_cost() };
     let opcode_config = OpcodeConfig {
         opcode_version,
-        opcode_cost: opcode_costs_ref.clone(),
+        opcode_cost,
     };
 
     let result = capi_executor.content.set_opcode_config(opcode_config);
