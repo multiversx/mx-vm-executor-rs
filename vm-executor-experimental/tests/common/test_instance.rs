@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use multiversx_chain_vm_executor::{CompilationOptions, Instance, OpcodeCost};
+use multiversx_chain_vm_executor::{CompilationOptions, Instance, OpcodeConfig};
 use multiversx_chain_vm_executor_wasmer_experimental::{
     ExperimentalInstance, ExperimentalVMHooksBuilderDefault,
 };
@@ -19,7 +19,7 @@ pub fn test_instance(wat: &str) -> Box<dyn Instance> {
     Box::new(
         ExperimentalInstance::try_new_instance(
             Box::new(ExperimentalVMHooksBuilderDefault),
-            Arc::new(OpcodeCost::default()),
+            Arc::new(OpcodeConfig::default()),
             &wasm_bytes,
             &DUMMY_COMPILATION_OPTIONS,
         )
