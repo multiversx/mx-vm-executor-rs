@@ -2,7 +2,15 @@
 ///
 /// `V1` is the legacy opcode set that does **not** include support for bulk
 /// memory operations. `V2` extends `V1` by adding bulk memory instructions,
-/// such as `MemoryCopy` and `MemoryFill`.
+/// such as `MemoryCopy` and `MemoryFill`, while dropping these categories
+/// from the whitelist, since no contract built with the current SDK
+/// toolchain can emit any of them:
+///
+/// * legacy exception handling: `Catch`, `CatchAll`, `Delegate`, `Rethrow`,
+///   `Throw`, `Try`
+/// * reference types: `RefFunc`, `RefIsNull`, `RefNull`, `TypedSelect`
+/// * table manipulation: `TableGet`, `TableGrow`, `TableInit`, `TableSet`,
+///   `TableSize`
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OpcodeVersion {
     /// Legacy opcode set without bulk memory support.
@@ -16,6 +24,16 @@ pub enum OpcodeVersion {
     /// Use this for modules that rely on bulk memory operations like
     /// `MemoryCopy` and `MemoryFill`, or when targeting newer runtimes that
     /// support these instructions.
+    ///
+    /// Relative to `V1`, `V2` also drops these categories from the
+    /// whitelist, since no contract built with today's tooling can produce
+    /// them:
+    ///
+    /// * legacy exception handling: `Catch`, `CatchAll`, `Delegate`,
+    ///   `Rethrow`, `Throw`, `Try`
+    /// * reference types: `RefFunc`, `RefIsNull`, `RefNull`, `TypedSelect`
+    /// * table manipulation: `TableGet`, `TableGrow`, `TableInit`,
+    ///   `TableSet`, `TableSize`
     ///
     /// Note: `V2` does **not** add support for `memory.init` and `data.drop`.
     V2,
