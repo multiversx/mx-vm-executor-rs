@@ -1,6 +1,6 @@
 extern crate cbindgen;
 
-use cbindgen::{Builder, Language};
+use cbindgen::{Builder, Language, Style};
 use std::{env, fs, path::PathBuf};
 
 const HEADER_FILE_NAME: &str = "libvmexeccapi";
@@ -19,6 +19,11 @@ fn main() {
     Builder::new()
         .with_crate(crate_dir)
         .with_language(Language::C)
+        // Keep the historical formatting: no line wrapping, `typedef struct { ... } name;`
+        // without a tag. Both differ from the cbindgen defaults and would otherwise rewrite
+        // the whole header on every re-generation.
+        .with_line_length(usize::MAX)
+        .with_style(Style::Type)
         .generate()
         .expect("Unable to generate C bindings")
         .write_to_file(out_wasmer_header_file.as_path());
