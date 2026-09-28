@@ -1,6 +1,6 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
-	ci-local clean
+	ci-local clean check-macos
 
 # cargo and docker already parallelise internally, and a parallel make would
 # have two cargo invocations contend for the same target dir lock.
@@ -23,13 +23,18 @@ capi-linux-arm: capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi_arm.so
 	patchelf --set-soname libvmexeccapi_arm.so target/release/libvmexeccapi_arm.so
 
-capi-osx-amd64: capi
-	@test "$(UNAME_S)" = "Darwin" || { echo "capi-osx-amd64 requires a macOS host (produces a Mach-O .dylib)." >&2; exit 1; }
+# A prerequisite, not an inline check in the recipe: under .NOTPARALLEL, make
+# runs prerequisites in order and stops at the first failure, so listing this
+# before `capi` below rejects a non-macOS host before the (potentially
+# lengthy) cargo build starts, rather than after it.
+check-macos:
+	@test "$(UNAME_S)" = "Darwin" || { echo "This target requires a macOS host (produces a Mach-O .dylib)." >&2; exit 1; }
+
+capi-osx-amd64: check-macos capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
 	install_name_tool -id @rpath/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
-capi-osx-arm: capi
-	@test "$(UNAME_S)" = "Darwin" || { echo "capi-osx-arm requires a macOS host (produces a Mach-O .dylib)." >&2; exit 1; }
+capi-osx-arm: check-macos capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
 	install_name_tool -id @rpath/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
 
