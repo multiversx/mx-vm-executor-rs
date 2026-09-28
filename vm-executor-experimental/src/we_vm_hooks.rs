@@ -36,7 +36,16 @@ where
         store_mut: &mut store_mut,
     };
 
-    let mut vm_hooks = data.vm_hooks_builder.create_vm_hooks(&mut instance_state);
+    // The builder lends the hooks through an `FnMut`, while `f` is an `FnOnce`,
+    // so it gets moved out on the (single) call.
+    let mut f = Some(f);
+    let mut result = None;
 
-    f(&mut *vm_hooks)
+    data.vm_hooks_builder
+        .with_vm_hooks(&mut instance_state, &mut |vm_hooks| {
+            let f = f.take().expect("VM hooks builder called the closure twice");
+            result = Some(f(vm_hooks));
+        });
+
+    result.expect("VM hooks builder did not call the closure")
 }
