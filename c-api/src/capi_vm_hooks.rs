@@ -1146,4 +1146,52 @@ impl multiversx_chain_vm_executor::VMHooksLegacy for CapiVMHooks {
     fn managed_verify_blsaggregated_signature(&self, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32 {
         (self.c_func_pointers_ptr.managed_verify_blsaggregated_signature_func_ptr)(self.vm_hooks_ptr, key_handle, message_handle, sig_handle)
     }
+
+    fn activate_unsafe_mode(&self) {
+        (self.c_func_pointers_ptr.activate_unsafe_mode_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn deactivate_unsafe_mode(&self) {
+        (self.c_func_pointers_ptr.deactivate_unsafe_mode_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn managed_get_num_errors(&self) -> i32 {
+        (self.c_func_pointers_ptr.managed_get_num_errors_func_ptr)(self.vm_hooks_ptr)
+    }
+
+    fn managed_get_error_with_index(&self, index: i32, error_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_error_with_index_func_ptr)(self.vm_hooks_ptr, index, error_handle)
+    }
+
+    fn managed_get_last_error(&self, error_handle: i32) {
+        (self.c_func_pointers_ptr.managed_get_last_error_func_ptr)(self.vm_hooks_ptr, error_handle)
+    }
+
+    fn managed_verify_groth16(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_groth16_func_ptr)(self.vm_hooks_ptr, curve_id, proof_handle, vk_handle, pub_witness_handle)
+    }
+
+    fn managed_verify_plonk(&self, curve_id: i32, proof_handle: i32, vk_handle: i32, pub_witness_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_verify_plonk_func_ptr)(self.vm_hooks_ptr, curve_id, proof_handle, vk_handle, pub_witness_handle)
+    }
+
+    fn managed_add_ec(&self, curve_id: i32, group_id: i32, point1_handle: i32, point2_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_add_ec_func_ptr)(self.vm_hooks_ptr, curve_id, group_id, point1_handle, point2_handle, result_handle)
+    }
+
+    fn managed_mul_ec(&self, curve_id: i32, group_id: i32, point_handle: i32, scalar_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_mul_ec_func_ptr)(self.vm_hooks_ptr, curve_id, group_id, point_handle, scalar_handle, result_handle)
+    }
+
+    fn managed_multi_exp_ec(&self, curve_id: i32, group_id: i32, points_handle: i32, scalars_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_multi_exp_ec_func_ptr)(self.vm_hooks_ptr, curve_id, group_id, points_handle, scalars_handle, result_handle)
+    }
+
+    fn managed_map_to_curve_ec(&self, curve_id: i32, group_id: i32, element_handle: i32, result_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_map_to_curve_ec_func_ptr)(self.vm_hooks_ptr, curve_id, group_id, element_handle, result_handle)
+    }
+
+    fn managed_pairing_checks_ec(&self, curve_id: i32, points_g1_handle: i32, points_g2_handle: i32) -> i32 {
+        (self.c_func_pointers_ptr.managed_pairing_checks_ec_func_ptr)(self.vm_hooks_ptr, curve_id, points_g1_handle, points_g2_handle)
+    }
 }
