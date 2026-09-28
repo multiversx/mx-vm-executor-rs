@@ -29,7 +29,10 @@ jobs:
           context: .
           load: true
           platforms: linux/arm64
-          file: ./Docker/arm64.dockerfile
+          file: ./Docker/linux.dockerfile
+          build-args: |
+            MAKE_TARGET=capi-linux-arm
+            ARTIFACT_NAME=libvmexeccapi_arm.so
           tags: mx-builder
 
       - name: Copy library from Docker image
