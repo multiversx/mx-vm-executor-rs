@@ -23,7 +23,7 @@ fn main() {
         // without a tag. Both differ from the cbindgen defaults and would otherwise rewrite
         // the whole header on every re-generation.
         .with_line_length(usize::MAX)
-        .with_style(Style::Type)
+        .with_style(Style::Both)
         .generate()
         .expect("Unable to generate C bindings")
         .write_to_file(out_wasmer_header_file.as_path());

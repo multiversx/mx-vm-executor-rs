@@ -1,0 +1,16 @@
+# Keep the build context small. CI builds from a fresh checkout, but a local
+# working copy carries a multi-gigabyte target/ dir that would otherwise be
+# uploaded to the daemon on every `docker buildx build`.
+target/
+**/target/
+
+.git/
+.github/
+Docker/
+
+# Matches the .gitignore entries that never belong in a build.
+my-*
+.claude/
+.vscode/
+**/.DS_Store
+**/*.rs.bk
