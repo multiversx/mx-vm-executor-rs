@@ -42,160 +42,33 @@ typedef struct vm_exec_vm_hook_c_func_pointers {
   void (*signal_error_func_ptr)(void *context, int32_t message_offset, int32_t message_length);
   void (*get_external_balance_func_ptr)(void *context, int32_t address_offset, int32_t result_offset);
   int32_t (*get_block_hash_func_ptr)(void *context, int64_t nonce, int32_t result_offset);
-  int32_t (*get_esdt_balance_func_ptr)(void *context,
-                                       int32_t address_offset,
-                                       int32_t token_id_offset,
-                                       int32_t token_id_len,
-                                       int64_t nonce,
-                                       int32_t result_offset);
-  int32_t (*get_esdt_nft_name_length_func_ptr)(void *context,
-                                               int32_t address_offset,
-                                               int32_t token_id_offset,
-                                               int32_t token_id_len,
-                                               int64_t nonce);
-  int32_t (*get_esdt_nft_attribute_length_func_ptr)(void *context,
-                                                    int32_t address_offset,
-                                                    int32_t token_id_offset,
-                                                    int32_t token_id_len,
-                                                    int64_t nonce);
-  int32_t (*get_esdt_nft_uri_length_func_ptr)(void *context,
-                                              int32_t address_offset,
-                                              int32_t token_id_offset,
-                                              int32_t token_id_len,
-                                              int64_t nonce);
-  int32_t (*get_esdt_token_data_func_ptr)(void *context,
-                                          int32_t address_offset,
-                                          int32_t token_id_offset,
-                                          int32_t token_id_len,
-                                          int64_t nonce,
-                                          int32_t value_handle,
-                                          int32_t properties_offset,
-                                          int32_t hash_offset,
-                                          int32_t name_offset,
-                                          int32_t attributes_offset,
-                                          int32_t creator_offset,
-                                          int32_t royalties_handle,
-                                          int32_t uris_offset);
+  int32_t (*get_esdt_balance_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce, int32_t result_offset);
+  int32_t (*get_esdt_nft_name_length_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce);
+  int32_t (*get_esdt_nft_attribute_length_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce);
+  int32_t (*get_esdt_nft_uri_length_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce);
+  int32_t (*get_esdt_token_data_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce, int32_t value_handle, int32_t properties_offset, int32_t hash_offset, int32_t name_offset, int32_t attributes_offset, int32_t creator_offset, int32_t royalties_handle, int32_t uris_offset);
   int64_t (*get_esdt_local_roles_func_ptr)(void *context, int32_t token_id_handle);
   int32_t (*validate_token_identifier_func_ptr)(void *context, int32_t token_id_handle);
-  int32_t (*transfer_value_func_ptr)(void *context,
-                                     int32_t dest_offset,
-                                     int32_t value_offset,
-                                     int32_t data_offset,
-                                     int32_t length);
-  int32_t (*transfer_value_execute_func_ptr)(void *context,
-                                             int32_t dest_offset,
-                                             int32_t value_offset,
-                                             int64_t gas_limit,
-                                             int32_t function_offset,
-                                             int32_t function_length,
-                                             int32_t num_arguments,
-                                             int32_t arguments_length_offset,
-                                             int32_t data_offset);
-  int32_t (*transfer_esdt_execute_func_ptr)(void *context,
-                                            int32_t dest_offset,
-                                            int32_t token_id_offset,
-                                            int32_t token_id_len,
-                                            int32_t value_offset,
-                                            int64_t gas_limit,
-                                            int32_t function_offset,
-                                            int32_t function_length,
-                                            int32_t num_arguments,
-                                            int32_t arguments_length_offset,
-                                            int32_t data_offset);
-  int32_t (*transfer_esdt_nft_execute_func_ptr)(void *context,
-                                                int32_t dest_offset,
-                                                int32_t token_id_offset,
-                                                int32_t token_id_len,
-                                                int32_t value_offset,
-                                                int64_t nonce,
-                                                int64_t gas_limit,
-                                                int32_t function_offset,
-                                                int32_t function_length,
-                                                int32_t num_arguments,
-                                                int32_t arguments_length_offset,
-                                                int32_t data_offset);
-  int32_t (*multi_transfer_esdt_nft_execute_func_ptr)(void *context,
-                                                      int32_t dest_offset,
-                                                      int32_t num_token_transfers,
-                                                      int32_t token_transfers_args_length_offset,
-                                                      int32_t token_transfer_data_offset,
-                                                      int64_t gas_limit,
-                                                      int32_t function_offset,
-                                                      int32_t function_length,
-                                                      int32_t num_arguments,
-                                                      int32_t arguments_length_offset,
-                                                      int32_t data_offset);
-  int32_t (*create_async_call_func_ptr)(void *context,
-                                        int32_t dest_offset,
-                                        int32_t value_offset,
-                                        int32_t data_offset,
-                                        int32_t data_length,
-                                        int32_t success_offset,
-                                        int32_t success_length,
-                                        int32_t error_offset,
-                                        int32_t error_length,
-                                        int64_t gas,
-                                        int64_t extra_gas_for_callback);
-  int32_t (*set_async_context_callback_func_ptr)(void *context,
-                                                 int32_t callback,
-                                                 int32_t callback_length,
-                                                 int32_t data,
-                                                 int32_t data_length,
-                                                 int64_t gas);
-  void (*upgrade_contract_func_ptr)(void *context,
-                                    int32_t dest_offset,
-                                    int64_t gas_limit,
-                                    int32_t value_offset,
-                                    int32_t code_offset,
-                                    int32_t code_metadata_offset,
-                                    int32_t length,
-                                    int32_t num_arguments,
-                                    int32_t arguments_length_offset,
-                                    int32_t data_offset);
-  void (*upgrade_from_source_contract_func_ptr)(void *context,
-                                                int32_t dest_offset,
-                                                int64_t gas_limit,
-                                                int32_t value_offset,
-                                                int32_t source_contract_address_offset,
-                                                int32_t code_metadata_offset,
-                                                int32_t num_arguments,
-                                                int32_t arguments_length_offset,
-                                                int32_t data_offset);
-  void (*delete_contract_func_ptr)(void *context,
-                                   int32_t dest_offset,
-                                   int64_t gas_limit,
-                                   int32_t num_arguments,
-                                   int32_t arguments_length_offset,
-                                   int32_t data_offset);
-  void (*async_call_func_ptr)(void *context,
-                              int32_t dest_offset,
-                              int32_t value_offset,
-                              int32_t data_offset,
-                              int32_t length);
+  int32_t (*transfer_value_func_ptr)(void *context, int32_t dest_offset, int32_t value_offset, int32_t data_offset, int32_t length);
+  int32_t (*transfer_value_execute_func_ptr)(void *context, int32_t dest_offset, int32_t value_offset, int64_t gas_limit, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*transfer_esdt_execute_func_ptr)(void *context, int32_t dest_offset, int32_t token_id_offset, int32_t token_id_len, int32_t value_offset, int64_t gas_limit, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*transfer_esdt_nft_execute_func_ptr)(void *context, int32_t dest_offset, int32_t token_id_offset, int32_t token_id_len, int32_t value_offset, int64_t nonce, int64_t gas_limit, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*multi_transfer_esdt_nft_execute_func_ptr)(void *context, int32_t dest_offset, int32_t num_token_transfers, int32_t token_transfers_args_length_offset, int32_t token_transfer_data_offset, int64_t gas_limit, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*create_async_call_func_ptr)(void *context, int32_t dest_offset, int32_t value_offset, int32_t data_offset, int32_t data_length, int32_t success_offset, int32_t success_length, int32_t error_offset, int32_t error_length, int64_t gas, int64_t extra_gas_for_callback);
+  int32_t (*set_async_context_callback_func_ptr)(void *context, int32_t callback, int32_t callback_length, int32_t data, int32_t data_length, int64_t gas);
+  void (*upgrade_contract_func_ptr)(void *context, int32_t dest_offset, int64_t gas_limit, int32_t value_offset, int32_t code_offset, int32_t code_metadata_offset, int32_t length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  void (*upgrade_from_source_contract_func_ptr)(void *context, int32_t dest_offset, int64_t gas_limit, int32_t value_offset, int32_t source_contract_address_offset, int32_t code_metadata_offset, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  void (*delete_contract_func_ptr)(void *context, int32_t dest_offset, int64_t gas_limit, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  void (*async_call_func_ptr)(void *context, int32_t dest_offset, int32_t value_offset, int32_t data_offset, int32_t length);
   int32_t (*get_argument_length_func_ptr)(void *context, int32_t id);
   int32_t (*get_argument_func_ptr)(void *context, int32_t id, int32_t arg_offset);
   int32_t (*get_function_func_ptr)(void *context, int32_t function_offset);
   int32_t (*get_num_arguments_func_ptr)(void *context);
-  int32_t (*storage_store_func_ptr)(void *context,
-                                    int32_t key_offset,
-                                    int32_t key_length,
-                                    int32_t data_offset,
-                                    int32_t data_length);
+  int32_t (*storage_store_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t data_offset, int32_t data_length);
   int32_t (*storage_load_length_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
-  int32_t (*storage_load_from_address_func_ptr)(void *context,
-                                                int32_t address_offset,
-                                                int32_t key_offset,
-                                                int32_t key_length,
-                                                int32_t data_offset);
-  int32_t (*storage_load_func_ptr)(void *context,
-                                   int32_t key_offset,
-                                   int32_t key_length,
-                                   int32_t data_offset);
-  int32_t (*set_storage_lock_func_ptr)(void *context,
-                                       int32_t key_offset,
-                                       int32_t key_length,
-                                       int64_t lock_timestamp);
+  int32_t (*storage_load_from_address_func_ptr)(void *context, int32_t address_offset, int32_t key_offset, int32_t key_length, int32_t data_offset);
+  int32_t (*storage_load_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t data_offset);
+  int32_t (*set_storage_lock_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int64_t lock_timestamp);
   int64_t (*get_storage_lock_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
   int32_t (*is_storage_locked_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
   int32_t (*clear_storage_lock_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
@@ -205,37 +78,18 @@ typedef struct vm_exec_vm_hook_c_func_pointers {
   int32_t (*get_esdt_value_func_ptr)(void *context, int32_t result_offset);
   int32_t (*get_esdt_value_by_index_func_ptr)(void *context, int32_t result_offset, int32_t index);
   int32_t (*get_esdt_token_name_func_ptr)(void *context, int32_t result_offset);
-  int32_t (*get_esdt_token_name_by_index_func_ptr)(void *context,
-                                                   int32_t result_offset,
-                                                   int32_t index);
+  int32_t (*get_esdt_token_name_by_index_func_ptr)(void *context, int32_t result_offset, int32_t index);
   int64_t (*get_esdt_token_nonce_func_ptr)(void *context);
   int64_t (*get_esdt_token_nonce_by_index_func_ptr)(void *context, int32_t index);
-  int64_t (*get_current_esdt_nft_nonce_func_ptr)(void *context,
-                                                 int32_t address_offset,
-                                                 int32_t token_id_offset,
-                                                 int32_t token_id_len);
+  int64_t (*get_current_esdt_nft_nonce_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len);
   int32_t (*get_esdt_token_type_func_ptr)(void *context);
   int32_t (*get_esdt_token_type_by_index_func_ptr)(void *context, int32_t index);
   int32_t (*get_num_esdt_transfers_func_ptr)(void *context);
-  int32_t (*get_call_value_token_name_func_ptr)(void *context,
-                                                int32_t call_value_offset,
-                                                int32_t token_name_offset);
-  int32_t (*get_call_value_token_name_by_index_func_ptr)(void *context,
-                                                         int32_t call_value_offset,
-                                                         int32_t token_name_offset,
-                                                         int32_t index);
+  int32_t (*get_call_value_token_name_func_ptr)(void *context, int32_t call_value_offset, int32_t token_name_offset);
+  int32_t (*get_call_value_token_name_by_index_func_ptr)(void *context, int32_t call_value_offset, int32_t token_name_offset, int32_t index);
   int32_t (*is_reserved_function_name_func_ptr)(void *context, int32_t name_handle);
-  void (*write_log_func_ptr)(void *context,
-                             int32_t data_pointer,
-                             int32_t data_length,
-                             int32_t topic_ptr,
-                             int32_t num_topics);
-  void (*write_event_log_func_ptr)(void *context,
-                                   int32_t num_topics,
-                                   int32_t topic_lengths_offset,
-                                   int32_t topic_offset,
-                                   int32_t data_offset,
-                                   int32_t data_length);
+  void (*write_log_func_ptr)(void *context, int32_t data_pointer, int32_t data_length, int32_t topic_ptr, int32_t num_topics);
+  void (*write_event_log_func_ptr)(void *context, int32_t num_topics, int32_t topic_lengths_offset, int32_t topic_offset, int32_t data_offset, int32_t data_length);
   int64_t (*get_block_timestamp_func_ptr)(void *context);
   int64_t (*get_block_timestamp_ms_func_ptr)(void *context);
   int64_t (*get_block_nonce_func_ptr)(void *context);
@@ -254,51 +108,11 @@ typedef struct vm_exec_vm_hook_c_func_pointers {
   int64_t (*epoch_start_block_nonce_func_ptr)(void *context);
   int64_t (*epoch_start_block_round_func_ptr)(void *context);
   void (*finish_func_ptr)(void *context, int32_t pointer, int32_t length);
-  int32_t (*execute_on_same_context_func_ptr)(void *context,
-                                              int64_t gas_limit,
-                                              int32_t address_offset,
-                                              int32_t value_offset,
-                                              int32_t function_offset,
-                                              int32_t function_length,
-                                              int32_t num_arguments,
-                                              int32_t arguments_length_offset,
-                                              int32_t data_offset);
-  int32_t (*execute_on_dest_context_func_ptr)(void *context,
-                                              int64_t gas_limit,
-                                              int32_t address_offset,
-                                              int32_t value_offset,
-                                              int32_t function_offset,
-                                              int32_t function_length,
-                                              int32_t num_arguments,
-                                              int32_t arguments_length_offset,
-                                              int32_t data_offset);
-  int32_t (*execute_read_only_func_ptr)(void *context,
-                                        int64_t gas_limit,
-                                        int32_t address_offset,
-                                        int32_t function_offset,
-                                        int32_t function_length,
-                                        int32_t num_arguments,
-                                        int32_t arguments_length_offset,
-                                        int32_t data_offset);
-  int32_t (*create_contract_func_ptr)(void *context,
-                                      int64_t gas_limit,
-                                      int32_t value_offset,
-                                      int32_t code_offset,
-                                      int32_t code_metadata_offset,
-                                      int32_t length,
-                                      int32_t result_offset,
-                                      int32_t num_arguments,
-                                      int32_t arguments_length_offset,
-                                      int32_t data_offset);
-  int32_t (*deploy_from_source_contract_func_ptr)(void *context,
-                                                  int64_t gas_limit,
-                                                  int32_t value_offset,
-                                                  int32_t source_contract_address_offset,
-                                                  int32_t code_metadata_offset,
-                                                  int32_t result_address_offset,
-                                                  int32_t num_arguments,
-                                                  int32_t arguments_length_offset,
-                                                  int32_t data_offset);
+  int32_t (*execute_on_same_context_func_ptr)(void *context, int64_t gas_limit, int32_t address_offset, int32_t value_offset, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*execute_on_dest_context_func_ptr)(void *context, int64_t gas_limit, int32_t address_offset, int32_t value_offset, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*execute_read_only_func_ptr)(void *context, int64_t gas_limit, int32_t address_offset, int32_t function_offset, int32_t function_length, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*create_contract_func_ptr)(void *context, int64_t gas_limit, int32_t value_offset, int32_t code_offset, int32_t code_metadata_offset, int32_t length, int32_t result_offset, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
+  int32_t (*deploy_from_source_contract_func_ptr)(void *context, int64_t gas_limit, int32_t value_offset, int32_t source_contract_address_offset, int32_t code_metadata_offset, int32_t result_address_offset, int32_t num_arguments, int32_t arguments_length_offset, int32_t data_offset);
   int32_t (*get_num_return_data_func_ptr)(void *context);
   int32_t (*get_return_data_size_func_ptr)(void *context, int32_t result_id);
   int32_t (*get_return_data_func_ptr)(void *context, int32_t result_id, int32_t data_offset);
@@ -320,596 +134,183 @@ typedef struct vm_exec_vm_hook_c_func_pointers {
   void (*managed_get_prev_block_random_seed_func_ptr)(void *context, int32_t result_handle);
   void (*managed_get_return_data_func_ptr)(void *context, int32_t result_id, int32_t result_handle);
   void (*managed_get_multi_esdt_call_value_func_ptr)(void *context, int32_t multi_call_value_handle);
-  void (*managed_get_all_transfers_call_value_func_ptr)(void *context,
-                                                        int32_t transfer_call_values_list_handle);
-  void (*managed_get_back_transfers_func_ptr)(void *context,
-                                              int32_t esdt_transfers_value_handle,
-                                              int32_t egld_value_handle);
-  void (*managed_get_esdt_balance_func_ptr)(void *context,
-                                            int32_t address_handle,
-                                            int32_t token_id_handle,
-                                            int64_t nonce,
-                                            int32_t value_handle);
-  void (*managed_get_esdt_token_data_func_ptr)(void *context,
-                                               int32_t address_handle,
-                                               int32_t token_id_handle,
-                                               int64_t nonce,
-                                               int32_t value_handle,
-                                               int32_t properties_handle,
-                                               int32_t hash_handle,
-                                               int32_t name_handle,
-                                               int32_t attributes_handle,
-                                               int32_t creator_handle,
-                                               int32_t royalties_handle,
-                                               int32_t uris_handle);
-  void (*managed_get_esdt_token_type_func_ptr)(void *context,
-                                               int32_t address_handle,
-                                               int32_t token_id_handle,
-                                               int64_t nonce,
-                                               int32_t type_handle);
-  void (*managed_async_call_func_ptr)(void *context,
-                                      int32_t dest_handle,
-                                      int32_t value_handle,
-                                      int32_t function_handle,
-                                      int32_t arguments_handle);
-  int32_t (*managed_create_async_call_func_ptr)(void *context,
-                                                int32_t dest_handle,
-                                                int32_t value_handle,
-                                                int32_t function_handle,
-                                                int32_t arguments_handle,
-                                                int32_t success_offset,
-                                                int32_t success_length,
-                                                int32_t error_offset,
-                                                int32_t error_length,
-                                                int64_t gas,
-                                                int64_t extra_gas_for_callback,
-                                                int32_t callback_closure_handle);
+  void (*managed_get_all_transfers_call_value_func_ptr)(void *context, int32_t transfer_call_values_list_handle);
+  void (*managed_get_back_transfers_func_ptr)(void *context, int32_t esdt_transfers_value_handle, int32_t egld_value_handle);
+  void (*managed_get_esdt_balance_func_ptr)(void *context, int32_t address_handle, int32_t token_id_handle, int64_t nonce, int32_t value_handle);
+  void (*managed_get_esdt_token_data_func_ptr)(void *context, int32_t address_handle, int32_t token_id_handle, int64_t nonce, int32_t value_handle, int32_t properties_handle, int32_t hash_handle, int32_t name_handle, int32_t attributes_handle, int32_t creator_handle, int32_t royalties_handle, int32_t uris_handle);
+  void (*managed_get_esdt_token_type_func_ptr)(void *context, int32_t address_handle, int32_t token_id_handle, int64_t nonce, int32_t type_handle);
+  void (*managed_async_call_func_ptr)(void *context, int32_t dest_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_create_async_call_func_ptr)(void *context, int32_t dest_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t success_offset, int32_t success_length, int32_t error_offset, int32_t error_length, int64_t gas, int64_t extra_gas_for_callback, int32_t callback_closure_handle);
   void (*managed_get_callback_closure_func_ptr)(void *context, int32_t callback_closure_handle);
-  void (*managed_upgrade_from_source_contract_func_ptr)(void *context,
-                                                        int32_t dest_handle,
-                                                        int64_t gas,
-                                                        int32_t value_handle,
-                                                        int32_t address_handle,
-                                                        int32_t code_metadata_handle,
-                                                        int32_t arguments_handle,
-                                                        int32_t result_handle);
-  void (*managed_upgrade_contract_func_ptr)(void *context,
-                                            int32_t dest_handle,
-                                            int64_t gas,
-                                            int32_t value_handle,
-                                            int32_t code_handle,
-                                            int32_t code_metadata_handle,
-                                            int32_t arguments_handle,
-                                            int32_t result_handle);
-  void (*managed_delete_contract_func_ptr)(void *context,
-                                           int32_t dest_handle,
-                                           int64_t gas_limit,
-                                           int32_t arguments_handle);
-  int32_t (*managed_deploy_from_source_contract_func_ptr)(void *context,
-                                                          int64_t gas,
-                                                          int32_t value_handle,
-                                                          int32_t address_handle,
-                                                          int32_t code_metadata_handle,
-                                                          int32_t arguments_handle,
-                                                          int32_t result_address_handle,
-                                                          int32_t result_handle);
-  int32_t (*managed_create_contract_func_ptr)(void *context,
-                                              int64_t gas,
-                                              int32_t value_handle,
-                                              int32_t code_handle,
-                                              int32_t code_metadata_handle,
-                                              int32_t arguments_handle,
-                                              int32_t result_address_handle,
-                                              int32_t result_handle);
-  int32_t (*managed_execute_read_only_func_ptr)(void *context,
-                                                int64_t gas,
-                                                int32_t address_handle,
-                                                int32_t function_handle,
-                                                int32_t arguments_handle,
-                                                int32_t result_handle);
-  int32_t (*managed_execute_on_same_context_func_ptr)(void *context,
-                                                      int64_t gas,
-                                                      int32_t address_handle,
-                                                      int32_t value_handle,
-                                                      int32_t function_handle,
-                                                      int32_t arguments_handle,
-                                                      int32_t result_handle);
-  int32_t (*managed_execute_on_dest_context_func_ptr)(void *context,
-                                                      int64_t gas,
-                                                      int32_t address_handle,
-                                                      int32_t value_handle,
-                                                      int32_t function_handle,
-                                                      int32_t arguments_handle,
-                                                      int32_t result_handle);
-  int32_t (*managed_execute_on_dest_context_with_error_return_func_ptr)(void *context,
-                                                                        int64_t gas,
-                                                                        int32_t address_handle,
-                                                                        int32_t value_handle,
-                                                                        int32_t function_handle,
-                                                                        int32_t arguments_handle,
-                                                                        int32_t result_handle);
-  int32_t (*managed_multi_transfer_esdt_nft_execute_func_ptr)(void *context,
-                                                              int32_t dst_handle,
-                                                              int32_t token_transfers_handle,
-                                                              int64_t gas_limit,
-                                                              int32_t function_handle,
-                                                              int32_t arguments_handle);
-  int32_t (*managed_multi_transfer_esdt_nft_execute_with_return_func_ptr)(void *context,
-                                                                          int32_t dst_handle,
-                                                                          int32_t token_transfers_handle,
-                                                                          int64_t gas_limit,
-                                                                          int32_t function_handle,
-                                                                          int32_t arguments_handle);
-  int32_t (*managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(void *context,
-                                                                      int32_t user_handle,
-                                                                      int32_t dst_handle,
-                                                                      int32_t token_transfers_handle,
-                                                                      int64_t gas_limit,
-                                                                      int32_t function_handle,
-                                                                      int32_t arguments_handle);
-  int32_t (*managed_transfer_value_execute_func_ptr)(void *context,
-                                                     int32_t dst_handle,
-                                                     int32_t value_handle,
-                                                     int64_t gas_limit,
-                                                     int32_t function_handle,
-                                                     int32_t arguments_handle);
-  int32_t (*managed_is_esdt_frozen_func_ptr)(void *context,
-                                             int32_t address_handle,
-                                             int32_t token_id_handle,
-                                             int64_t nonce);
+  void (*managed_upgrade_from_source_contract_func_ptr)(void *context, int32_t dest_handle, int64_t gas, int32_t value_handle, int32_t address_handle, int32_t code_metadata_handle, int32_t arguments_handle, int32_t result_handle);
+  void (*managed_upgrade_contract_func_ptr)(void *context, int32_t dest_handle, int64_t gas, int32_t value_handle, int32_t code_handle, int32_t code_metadata_handle, int32_t arguments_handle, int32_t result_handle);
+  void (*managed_delete_contract_func_ptr)(void *context, int32_t dest_handle, int64_t gas_limit, int32_t arguments_handle);
+  int32_t (*managed_deploy_from_source_contract_func_ptr)(void *context, int64_t gas, int32_t value_handle, int32_t address_handle, int32_t code_metadata_handle, int32_t arguments_handle, int32_t result_address_handle, int32_t result_handle);
+  int32_t (*managed_create_contract_func_ptr)(void *context, int64_t gas, int32_t value_handle, int32_t code_handle, int32_t code_metadata_handle, int32_t arguments_handle, int32_t result_address_handle, int32_t result_handle);
+  int32_t (*managed_execute_read_only_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
+  int32_t (*managed_execute_on_same_context_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
+  int32_t (*managed_execute_on_dest_context_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
+  int32_t (*managed_execute_on_dest_context_with_error_return_func_ptr)(void *context, int64_t gas, int32_t address_handle, int32_t value_handle, int32_t function_handle, int32_t arguments_handle, int32_t result_handle);
+  int32_t (*managed_multi_transfer_esdt_nft_execute_func_ptr)(void *context, int32_t dst_handle, int32_t token_transfers_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_multi_transfer_esdt_nft_execute_with_return_func_ptr)(void *context, int32_t dst_handle, int32_t token_transfers_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_multi_transfer_esdt_nft_execute_by_user_func_ptr)(void *context, int32_t user_handle, int32_t dst_handle, int32_t token_transfers_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_transfer_value_execute_func_ptr)(void *context, int32_t dst_handle, int32_t value_handle, int64_t gas_limit, int32_t function_handle, int32_t arguments_handle);
+  int32_t (*managed_is_esdt_frozen_func_ptr)(void *context, int32_t address_handle, int32_t token_id_handle, int64_t nonce);
   int32_t (*managed_is_esdt_limited_transfer_func_ptr)(void *context, int32_t token_id_handle);
   int32_t (*managed_is_esdt_paused_func_ptr)(void *context, int32_t token_id_handle);
   void (*managed_buffer_to_hex_func_ptr)(void *context, int32_t source_handle, int32_t dest_handle);
-  void (*managed_get_code_metadata_func_ptr)(void *context,
-                                             int32_t address_handle,
-                                             int32_t response_handle);
-  void (*managed_get_code_hash_func_ptr)(void *context,
-                                         int32_t address_handle,
-                                         int32_t code_hash_handle);
+  void (*managed_get_code_metadata_func_ptr)(void *context, int32_t address_handle, int32_t response_handle);
+  void (*managed_get_code_hash_func_ptr)(void *context, int32_t address_handle, int32_t code_hash_handle);
   int32_t (*managed_is_builtin_function_func_ptr)(void *context, int32_t function_name_handle);
-  int32_t (*big_float_new_from_parts_func_ptr)(void *context,
-                                               int32_t integral_part,
-                                               int32_t fractional_part,
-                                               int32_t exponent);
+  int32_t (*big_float_new_from_parts_func_ptr)(void *context, int32_t integral_part, int32_t fractional_part, int32_t exponent);
   int32_t (*big_float_new_from_frac_func_ptr)(void *context, int64_t numerator, int64_t denominator);
   int32_t (*big_float_new_from_sci_func_ptr)(void *context, int64_t significand, int64_t exponent);
-  void (*big_float_add_func_ptr)(void *context,
-                                 int32_t destination_handle,
-                                 int32_t op1_handle,
-                                 int32_t op2_handle);
-  void (*big_float_sub_func_ptr)(void *context,
-                                 int32_t destination_handle,
-                                 int32_t op1_handle,
-                                 int32_t op2_handle);
-  void (*big_float_mul_func_ptr)(void *context,
-                                 int32_t destination_handle,
-                                 int32_t op1_handle,
-                                 int32_t op2_handle);
-  void (*big_float_div_func_ptr)(void *context,
-                                 int32_t destination_handle,
-                                 int32_t op1_handle,
-                                 int32_t op2_handle);
+  void (*big_float_add_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_float_sub_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_float_mul_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_float_div_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
   void (*big_float_neg_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
   void (*big_float_clone_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
   int32_t (*big_float_cmp_func_ptr)(void *context, int32_t op1_handle, int32_t op2_handle);
   void (*big_float_abs_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
   int32_t (*big_float_sign_func_ptr)(void *context, int32_t op_handle);
   void (*big_float_sqrt_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
-  void (*big_float_pow_func_ptr)(void *context,
-                                 int32_t destination_handle,
-                                 int32_t op_handle,
-                                 int32_t exponent);
+  void (*big_float_pow_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle, int32_t exponent);
   void (*big_float_floor_func_ptr)(void *context, int32_t dest_big_int_handle, int32_t op_handle);
   void (*big_float_ceil_func_ptr)(void *context, int32_t dest_big_int_handle, int32_t op_handle);
   void (*big_float_truncate_func_ptr)(void *context, int32_t dest_big_int_handle, int32_t op_handle);
   void (*big_float_set_int64_func_ptr)(void *context, int32_t destination_handle, int64_t value);
   int32_t (*big_float_is_int_func_ptr)(void *context, int32_t op_handle);
-  void (*big_float_set_big_int_func_ptr)(void *context,
-                                         int32_t destination_handle,
-                                         int32_t big_int_handle);
+  void (*big_float_set_big_int_func_ptr)(void *context, int32_t destination_handle, int32_t big_int_handle);
   void (*big_float_get_const_pi_func_ptr)(void *context, int32_t destination_handle);
   void (*big_float_get_const_e_func_ptr)(void *context, int32_t destination_handle);
-  void (*big_int_get_unsigned_argument_func_ptr)(void *context,
-                                                 int32_t id,
-                                                 int32_t destination_handle);
+  void (*big_int_get_unsigned_argument_func_ptr)(void *context, int32_t id, int32_t destination_handle);
   void (*big_int_get_signed_argument_func_ptr)(void *context, int32_t id, int32_t destination_handle);
-  int32_t (*big_int_storage_store_unsigned_func_ptr)(void *context,
-                                                     int32_t key_offset,
-                                                     int32_t key_length,
-                                                     int32_t source_handle);
-  int32_t (*big_int_storage_load_unsigned_func_ptr)(void *context,
-                                                    int32_t key_offset,
-                                                    int32_t key_length,
-                                                    int32_t destination_handle);
+  int32_t (*big_int_storage_store_unsigned_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t source_handle);
+  int32_t (*big_int_storage_load_unsigned_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t destination_handle);
   void (*big_int_get_call_value_func_ptr)(void *context, int32_t destination_handle);
   void (*big_int_get_esdt_call_value_func_ptr)(void *context, int32_t destination);
-  void (*big_int_get_esdt_call_value_by_index_func_ptr)(void *context,
-                                                        int32_t destination_handle,
-                                                        int32_t index);
-  void (*big_int_get_external_balance_func_ptr)(void *context,
-                                                int32_t address_offset,
-                                                int32_t result);
-  void (*big_int_get_esdt_external_balance_func_ptr)(void *context,
-                                                     int32_t address_offset,
-                                                     int32_t token_id_offset,
-                                                     int32_t token_id_len,
-                                                     int64_t nonce,
-                                                     int32_t result_handle);
+  void (*big_int_get_esdt_call_value_by_index_func_ptr)(void *context, int32_t destination_handle, int32_t index);
+  void (*big_int_get_external_balance_func_ptr)(void *context, int32_t address_offset, int32_t result);
+  void (*big_int_get_esdt_external_balance_func_ptr)(void *context, int32_t address_offset, int32_t token_id_offset, int32_t token_id_len, int64_t nonce, int32_t result_handle);
   int32_t (*big_int_new_func_ptr)(void *context, int64_t small_value);
   int32_t (*big_int_unsigned_byte_length_func_ptr)(void *context, int32_t reference_handle);
   int32_t (*big_int_signed_byte_length_func_ptr)(void *context, int32_t reference_handle);
-  int32_t (*big_int_get_unsigned_bytes_func_ptr)(void *context,
-                                                 int32_t reference_handle,
-                                                 int32_t byte_offset);
-  int32_t (*big_int_get_signed_bytes_func_ptr)(void *context,
-                                               int32_t reference_handle,
-                                               int32_t byte_offset);
-  void (*big_int_set_unsigned_bytes_func_ptr)(void *context,
-                                              int32_t destination_handle,
-                                              int32_t byte_offset,
-                                              int32_t byte_length);
-  void (*big_int_set_signed_bytes_func_ptr)(void *context,
-                                            int32_t destination_handle,
-                                            int32_t byte_offset,
-                                            int32_t byte_length);
+  int32_t (*big_int_get_unsigned_bytes_func_ptr)(void *context, int32_t reference_handle, int32_t byte_offset);
+  int32_t (*big_int_get_signed_bytes_func_ptr)(void *context, int32_t reference_handle, int32_t byte_offset);
+  void (*big_int_set_unsigned_bytes_func_ptr)(void *context, int32_t destination_handle, int32_t byte_offset, int32_t byte_length);
+  void (*big_int_set_signed_bytes_func_ptr)(void *context, int32_t destination_handle, int32_t byte_offset, int32_t byte_length);
   int32_t (*big_int_is_int64_func_ptr)(void *context, int32_t destination_handle);
   int64_t (*big_int_get_int64_func_ptr)(void *context, int32_t destination_handle);
   void (*big_int_set_int64_func_ptr)(void *context, int32_t destination_handle, int64_t value);
-  void (*big_int_add_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
-  void (*big_int_sub_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
-  void (*big_int_mul_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
-  void (*big_int_tdiv_func_ptr)(void *context,
-                                int32_t destination_handle,
-                                int32_t op1_handle,
-                                int32_t op2_handle);
-  void (*big_int_tmod_func_ptr)(void *context,
-                                int32_t destination_handle,
-                                int32_t op1_handle,
-                                int32_t op2_handle);
-  void (*big_int_ediv_func_ptr)(void *context,
-                                int32_t destination_handle,
-                                int32_t op1_handle,
-                                int32_t op2_handle);
-  void (*big_int_emod_func_ptr)(void *context,
-                                int32_t destination_handle,
-                                int32_t op1_handle,
-                                int32_t op2_handle);
+  void (*big_int_add_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_sub_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_mul_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_tdiv_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_tmod_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_ediv_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_emod_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
   void (*big_int_sqrt_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
-  void (*big_int_pow_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
+  void (*big_int_pow_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
   int32_t (*big_int_log2_func_ptr)(void *context, int32_t op1_handle);
   void (*big_int_abs_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
   void (*big_int_neg_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
   int32_t (*big_int_sign_func_ptr)(void *context, int32_t op_handle);
   int32_t (*big_int_cmp_func_ptr)(void *context, int32_t op1_handle, int32_t op2_handle);
   void (*big_int_not_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle);
-  void (*big_int_and_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
-  void (*big_int_or_func_ptr)(void *context,
-                              int32_t destination_handle,
-                              int32_t op1_handle,
-                              int32_t op2_handle);
-  void (*big_int_xor_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op1_handle,
-                               int32_t op2_handle);
-  void (*big_int_shr_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op_handle,
-                               int32_t bits);
-  void (*big_int_shl_func_ptr)(void *context,
-                               int32_t destination_handle,
-                               int32_t op_handle,
-                               int32_t bits);
+  void (*big_int_and_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_or_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_xor_func_ptr)(void *context, int32_t destination_handle, int32_t op1_handle, int32_t op2_handle);
+  void (*big_int_shr_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle, int32_t bits);
+  void (*big_int_shl_func_ptr)(void *context, int32_t destination_handle, int32_t op_handle, int32_t bits);
   void (*big_int_finish_unsigned_func_ptr)(void *context, int32_t reference_handle);
   void (*big_int_finish_signed_func_ptr)(void *context, int32_t reference_handle);
-  void (*big_int_to_string_func_ptr)(void *context,
-                                     int32_t big_int_handle,
-                                     int32_t destination_handle);
+  void (*big_int_to_string_func_ptr)(void *context, int32_t big_int_handle, int32_t destination_handle);
   int32_t (*mbuffer_new_func_ptr)(void *context);
   int32_t (*mbuffer_new_from_bytes_func_ptr)(void *context, int32_t data_offset, int32_t data_length);
   int32_t (*mbuffer_get_length_func_ptr)(void *context, int32_t m_buffer_handle);
-  int32_t (*mbuffer_get_bytes_func_ptr)(void *context,
-                                        int32_t m_buffer_handle,
-                                        int32_t result_offset);
-  int32_t (*mbuffer_get_byte_slice_func_ptr)(void *context,
-                                             int32_t source_handle,
-                                             int32_t starting_position,
-                                             int32_t slice_length,
-                                             int32_t result_offset);
-  int32_t (*mbuffer_copy_byte_slice_func_ptr)(void *context,
-                                              int32_t source_handle,
-                                              int32_t starting_position,
-                                              int32_t slice_length,
-                                              int32_t destination_handle);
+  int32_t (*mbuffer_get_bytes_func_ptr)(void *context, int32_t m_buffer_handle, int32_t result_offset);
+  int32_t (*mbuffer_get_byte_slice_func_ptr)(void *context, int32_t source_handle, int32_t starting_position, int32_t slice_length, int32_t result_offset);
+  int32_t (*mbuffer_copy_byte_slice_func_ptr)(void *context, int32_t source_handle, int32_t starting_position, int32_t slice_length, int32_t destination_handle);
   int32_t (*mbuffer_eq_func_ptr)(void *context, int32_t m_buffer_handle1, int32_t m_buffer_handle2);
-  int32_t (*mbuffer_set_bytes_func_ptr)(void *context,
-                                        int32_t m_buffer_handle,
-                                        int32_t data_offset,
-                                        int32_t data_length);
-  int32_t (*mbuffer_set_byte_slice_func_ptr)(void *context,
-                                             int32_t m_buffer_handle,
-                                             int32_t starting_position,
-                                             int32_t data_length,
-                                             int32_t data_offset);
+  int32_t (*mbuffer_set_bytes_func_ptr)(void *context, int32_t m_buffer_handle, int32_t data_offset, int32_t data_length);
+  int32_t (*mbuffer_set_byte_slice_func_ptr)(void *context, int32_t m_buffer_handle, int32_t starting_position, int32_t data_length, int32_t data_offset);
   int32_t (*mbuffer_append_func_ptr)(void *context, int32_t accumulator_handle, int32_t data_handle);
-  int32_t (*mbuffer_append_bytes_func_ptr)(void *context,
-                                           int32_t accumulator_handle,
-                                           int32_t data_offset,
-                                           int32_t data_length);
-  int32_t (*mbuffer_to_big_int_unsigned_func_ptr)(void *context,
-                                                  int32_t m_buffer_handle,
-                                                  int32_t big_int_handle);
-  int32_t (*mbuffer_to_big_int_signed_func_ptr)(void *context,
-                                                int32_t m_buffer_handle,
-                                                int32_t big_int_handle);
-  int32_t (*mbuffer_from_big_int_unsigned_func_ptr)(void *context,
-                                                    int32_t m_buffer_handle,
-                                                    int32_t big_int_handle);
-  int32_t (*mbuffer_from_big_int_signed_func_ptr)(void *context,
-                                                  int32_t m_buffer_handle,
-                                                  int32_t big_int_handle);
+  int32_t (*mbuffer_append_bytes_func_ptr)(void *context, int32_t accumulator_handle, int32_t data_offset, int32_t data_length);
+  int32_t (*mbuffer_to_big_int_unsigned_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_int_handle);
+  int32_t (*mbuffer_to_big_int_signed_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_int_handle);
+  int32_t (*mbuffer_from_big_int_unsigned_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_int_handle);
+  int32_t (*mbuffer_from_big_int_signed_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_int_handle);
   int64_t (*mbuffer_to_small_int_unsigned_func_ptr)(void *context, int32_t m_buffer_handle);
   int64_t (*mbuffer_to_small_int_signed_func_ptr)(void *context, int32_t m_buffer_handle);
-  void (*mbuffer_from_small_int_unsigned_func_ptr)(void *context,
-                                                   int32_t m_buffer_handle,
-                                                   int64_t value);
-  void (*mbuffer_from_small_int_signed_func_ptr)(void *context,
-                                                 int32_t m_buffer_handle,
-                                                 int64_t value);
-  int32_t (*mbuffer_to_big_float_func_ptr)(void *context,
-                                           int32_t m_buffer_handle,
-                                           int32_t big_float_handle);
-  int32_t (*mbuffer_from_big_float_func_ptr)(void *context,
-                                             int32_t m_buffer_handle,
-                                             int32_t big_float_handle);
+  void (*mbuffer_from_small_int_unsigned_func_ptr)(void *context, int32_t m_buffer_handle, int64_t value);
+  void (*mbuffer_from_small_int_signed_func_ptr)(void *context, int32_t m_buffer_handle, int64_t value);
+  int32_t (*mbuffer_to_big_float_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_float_handle);
+  int32_t (*mbuffer_from_big_float_func_ptr)(void *context, int32_t m_buffer_handle, int32_t big_float_handle);
   int32_t (*mbuffer_storage_store_func_ptr)(void *context, int32_t key_handle, int32_t source_handle);
-  int32_t (*mbuffer_storage_load_func_ptr)(void *context,
-                                           int32_t key_handle,
-                                           int32_t destination_handle);
-  void (*mbuffer_storage_load_from_address_func_ptr)(void *context,
-                                                     int32_t address_handle,
-                                                     int32_t key_handle,
-                                                     int32_t destination_handle);
+  int32_t (*mbuffer_storage_load_func_ptr)(void *context, int32_t key_handle, int32_t destination_handle);
+  void (*mbuffer_storage_load_from_address_func_ptr)(void *context, int32_t address_handle, int32_t key_handle, int32_t destination_handle);
   int32_t (*mbuffer_get_argument_func_ptr)(void *context, int32_t id, int32_t destination_handle);
   int32_t (*mbuffer_finish_func_ptr)(void *context, int32_t source_handle);
   int32_t (*mbuffer_set_random_func_ptr)(void *context, int32_t destination_handle, int32_t length);
   int32_t (*managed_map_new_func_ptr)(void *context);
-  int32_t (*managed_map_put_func_ptr)(void *context,
-                                      int32_t m_map_handle,
-                                      int32_t key_handle,
-                                      int32_t value_handle);
-  int32_t (*managed_map_get_func_ptr)(void *context,
-                                      int32_t m_map_handle,
-                                      int32_t key_handle,
-                                      int32_t out_value_handle);
-  int32_t (*managed_map_remove_func_ptr)(void *context,
-                                         int32_t m_map_handle,
-                                         int32_t key_handle,
-                                         int32_t out_value_handle);
+  int32_t (*managed_map_put_func_ptr)(void *context, int32_t m_map_handle, int32_t key_handle, int32_t value_handle);
+  int32_t (*managed_map_get_func_ptr)(void *context, int32_t m_map_handle, int32_t key_handle, int32_t out_value_handle);
+  int32_t (*managed_map_remove_func_ptr)(void *context, int32_t m_map_handle, int32_t key_handle, int32_t out_value_handle);
   int32_t (*managed_map_contains_func_ptr)(void *context, int32_t m_map_handle, int32_t key_handle);
   int64_t (*small_int_get_unsigned_argument_func_ptr)(void *context, int32_t id);
   int64_t (*small_int_get_signed_argument_func_ptr)(void *context, int32_t id);
   void (*small_int_finish_unsigned_func_ptr)(void *context, int64_t value);
   void (*small_int_finish_signed_func_ptr)(void *context, int64_t value);
-  int32_t (*small_int_storage_store_unsigned_func_ptr)(void *context,
-                                                       int32_t key_offset,
-                                                       int32_t key_length,
-                                                       int64_t value);
-  int32_t (*small_int_storage_store_signed_func_ptr)(void *context,
-                                                     int32_t key_offset,
-                                                     int32_t key_length,
-                                                     int64_t value);
-  int64_t (*small_int_storage_load_unsigned_func_ptr)(void *context,
-                                                      int32_t key_offset,
-                                                      int32_t key_length);
-  int64_t (*small_int_storage_load_signed_func_ptr)(void *context,
-                                                    int32_t key_offset,
-                                                    int32_t key_length);
+  int32_t (*small_int_storage_store_unsigned_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int64_t value);
+  int32_t (*small_int_storage_store_signed_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int64_t value);
+  int64_t (*small_int_storage_load_unsigned_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
+  int64_t (*small_int_storage_load_signed_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
   int64_t (*int64get_argument_func_ptr)(void *context, int32_t id);
   void (*int64finish_func_ptr)(void *context, int64_t value);
-  int32_t (*int64storage_store_func_ptr)(void *context,
-                                         int32_t key_offset,
-                                         int32_t key_length,
-                                         int64_t value);
+  int32_t (*int64storage_store_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int64_t value);
   int64_t (*int64storage_load_func_ptr)(void *context, int32_t key_offset, int32_t key_length);
-  int32_t (*sha256_func_ptr)(void *context,
-                             int32_t data_offset,
-                             int32_t length,
-                             int32_t result_offset);
+  int32_t (*sha256_func_ptr)(void *context, int32_t data_offset, int32_t length, int32_t result_offset);
   int32_t (*managed_sha256_func_ptr)(void *context, int32_t input_handle, int32_t output_handle);
-  int32_t (*keccak256_func_ptr)(void *context,
-                                int32_t data_offset,
-                                int32_t length,
-                                int32_t result_offset);
+  int32_t (*keccak256_func_ptr)(void *context, int32_t data_offset, int32_t length, int32_t result_offset);
   int32_t (*managed_keccak256_func_ptr)(void *context, int32_t input_handle, int32_t output_handle);
-  int32_t (*ripemd160_func_ptr)(void *context,
-                                int32_t data_offset,
-                                int32_t length,
-                                int32_t result_offset);
+  int32_t (*ripemd160_func_ptr)(void *context, int32_t data_offset, int32_t length, int32_t result_offset);
   int32_t (*managed_ripemd160_func_ptr)(void *context, int32_t input_handle, int32_t output_handle);
-  int32_t (*verify_bls_func_ptr)(void *context,
-                                 int32_t key_offset,
-                                 int32_t message_offset,
-                                 int32_t message_length,
-                                 int32_t sig_offset);
-  int32_t (*managed_verify_bls_func_ptr)(void *context,
-                                         int32_t key_handle,
-                                         int32_t message_handle,
-                                         int32_t sig_handle);
-  int32_t (*verify_ed25519_func_ptr)(void *context,
-                                     int32_t key_offset,
-                                     int32_t message_offset,
-                                     int32_t message_length,
-                                     int32_t sig_offset);
-  int32_t (*managed_verify_ed25519_func_ptr)(void *context,
-                                             int32_t key_handle,
-                                             int32_t message_handle,
-                                             int32_t sig_handle);
-  int32_t (*verify_custom_secp256k1_func_ptr)(void *context,
-                                              int32_t key_offset,
-                                              int32_t key_length,
-                                              int32_t message_offset,
-                                              int32_t message_length,
-                                              int32_t sig_offset,
-                                              int32_t hash_type);
-  int32_t (*managed_verify_custom_secp256k1_func_ptr)(void *context,
-                                                      int32_t key_handle,
-                                                      int32_t message_handle,
-                                                      int32_t sig_handle,
-                                                      int32_t hash_type);
-  int32_t (*verify_secp256k1_func_ptr)(void *context,
-                                       int32_t key_offset,
-                                       int32_t key_length,
-                                       int32_t message_offset,
-                                       int32_t message_length,
-                                       int32_t sig_offset);
-  int32_t (*managed_verify_secp256k1_func_ptr)(void *context,
-                                               int32_t key_handle,
-                                               int32_t message_handle,
-                                               int32_t sig_handle);
-  int32_t (*encode_secp256k1_der_signature_func_ptr)(void *context,
-                                                     int32_t r_offset,
-                                                     int32_t r_length,
-                                                     int32_t s_offset,
-                                                     int32_t s_length,
-                                                     int32_t sig_offset);
-  int32_t (*managed_encode_secp256k1_der_signature_func_ptr)(void *context,
-                                                             int32_t r_handle,
-                                                             int32_t s_handle,
-                                                             int32_t sig_handle);
-  void (*add_ec_func_ptr)(void *context,
-                          int32_t x_result_handle,
-                          int32_t y_result_handle,
-                          int32_t ec_handle,
-                          int32_t fst_point_xhandle,
-                          int32_t fst_point_yhandle,
-                          int32_t snd_point_xhandle,
-                          int32_t snd_point_yhandle);
-  void (*double_ec_func_ptr)(void *context,
-                             int32_t x_result_handle,
-                             int32_t y_result_handle,
-                             int32_t ec_handle,
-                             int32_t point_xhandle,
-                             int32_t point_yhandle);
-  int32_t (*is_on_curve_ec_func_ptr)(void *context,
-                                     int32_t ec_handle,
-                                     int32_t point_xhandle,
-                                     int32_t point_yhandle);
-  int32_t (*scalar_base_mult_ec_func_ptr)(void *context,
-                                          int32_t x_result_handle,
-                                          int32_t y_result_handle,
-                                          int32_t ec_handle,
-                                          int32_t data_offset,
-                                          int32_t length);
-  int32_t (*managed_scalar_base_mult_ec_func_ptr)(void *context,
-                                                  int32_t x_result_handle,
-                                                  int32_t y_result_handle,
-                                                  int32_t ec_handle,
-                                                  int32_t data_handle);
-  int32_t (*scalar_mult_ec_func_ptr)(void *context,
-                                     int32_t x_result_handle,
-                                     int32_t y_result_handle,
-                                     int32_t ec_handle,
-                                     int32_t point_xhandle,
-                                     int32_t point_yhandle,
-                                     int32_t data_offset,
-                                     int32_t length);
-  int32_t (*managed_scalar_mult_ec_func_ptr)(void *context,
-                                             int32_t x_result_handle,
-                                             int32_t y_result_handle,
-                                             int32_t ec_handle,
-                                             int32_t point_xhandle,
-                                             int32_t point_yhandle,
-                                             int32_t data_handle);
-  int32_t (*marshal_ec_func_ptr)(void *context,
-                                 int32_t x_pair_handle,
-                                 int32_t y_pair_handle,
-                                 int32_t ec_handle,
-                                 int32_t result_offset);
-  int32_t (*managed_marshal_ec_func_ptr)(void *context,
-                                         int32_t x_pair_handle,
-                                         int32_t y_pair_handle,
-                                         int32_t ec_handle,
-                                         int32_t result_handle);
-  int32_t (*marshal_compressed_ec_func_ptr)(void *context,
-                                            int32_t x_pair_handle,
-                                            int32_t y_pair_handle,
-                                            int32_t ec_handle,
-                                            int32_t result_offset);
-  int32_t (*managed_marshal_compressed_ec_func_ptr)(void *context,
-                                                    int32_t x_pair_handle,
-                                                    int32_t y_pair_handle,
-                                                    int32_t ec_handle,
-                                                    int32_t result_handle);
-  int32_t (*unmarshal_ec_func_ptr)(void *context,
-                                   int32_t x_result_handle,
-                                   int32_t y_result_handle,
-                                   int32_t ec_handle,
-                                   int32_t data_offset,
-                                   int32_t length);
-  int32_t (*managed_unmarshal_ec_func_ptr)(void *context,
-                                           int32_t x_result_handle,
-                                           int32_t y_result_handle,
-                                           int32_t ec_handle,
-                                           int32_t data_handle);
-  int32_t (*unmarshal_compressed_ec_func_ptr)(void *context,
-                                              int32_t x_result_handle,
-                                              int32_t y_result_handle,
-                                              int32_t ec_handle,
-                                              int32_t data_offset,
-                                              int32_t length);
-  int32_t (*managed_unmarshal_compressed_ec_func_ptr)(void *context,
-                                                      int32_t x_result_handle,
-                                                      int32_t y_result_handle,
-                                                      int32_t ec_handle,
-                                                      int32_t data_handle);
-  int32_t (*generate_key_ec_func_ptr)(void *context,
-                                      int32_t x_pub_key_handle,
-                                      int32_t y_pub_key_handle,
-                                      int32_t ec_handle,
-                                      int32_t result_offset);
-  int32_t (*managed_generate_key_ec_func_ptr)(void *context,
-                                              int32_t x_pub_key_handle,
-                                              int32_t y_pub_key_handle,
-                                              int32_t ec_handle,
-                                              int32_t result_handle);
+  int32_t (*verify_bls_func_ptr)(void *context, int32_t key_offset, int32_t message_offset, int32_t message_length, int32_t sig_offset);
+  int32_t (*managed_verify_bls_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
+  int32_t (*verify_ed25519_func_ptr)(void *context, int32_t key_offset, int32_t message_offset, int32_t message_length, int32_t sig_offset);
+  int32_t (*managed_verify_ed25519_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
+  int32_t (*verify_custom_secp256k1_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t message_offset, int32_t message_length, int32_t sig_offset, int32_t hash_type);
+  int32_t (*managed_verify_custom_secp256k1_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle, int32_t hash_type);
+  int32_t (*verify_secp256k1_func_ptr)(void *context, int32_t key_offset, int32_t key_length, int32_t message_offset, int32_t message_length, int32_t sig_offset);
+  int32_t (*managed_verify_secp256k1_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
+  int32_t (*encode_secp256k1_der_signature_func_ptr)(void *context, int32_t r_offset, int32_t r_length, int32_t s_offset, int32_t s_length, int32_t sig_offset);
+  int32_t (*managed_encode_secp256k1_der_signature_func_ptr)(void *context, int32_t r_handle, int32_t s_handle, int32_t sig_handle);
+  void (*add_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t fst_point_xhandle, int32_t fst_point_yhandle, int32_t snd_point_xhandle, int32_t snd_point_yhandle);
+  void (*double_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t point_xhandle, int32_t point_yhandle);
+  int32_t (*is_on_curve_ec_func_ptr)(void *context, int32_t ec_handle, int32_t point_xhandle, int32_t point_yhandle);
+  int32_t (*scalar_base_mult_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_offset, int32_t length);
+  int32_t (*managed_scalar_base_mult_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_handle);
+  int32_t (*scalar_mult_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t point_xhandle, int32_t point_yhandle, int32_t data_offset, int32_t length);
+  int32_t (*managed_scalar_mult_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t point_xhandle, int32_t point_yhandle, int32_t data_handle);
+  int32_t (*marshal_ec_func_ptr)(void *context, int32_t x_pair_handle, int32_t y_pair_handle, int32_t ec_handle, int32_t result_offset);
+  int32_t (*managed_marshal_ec_func_ptr)(void *context, int32_t x_pair_handle, int32_t y_pair_handle, int32_t ec_handle, int32_t result_handle);
+  int32_t (*marshal_compressed_ec_func_ptr)(void *context, int32_t x_pair_handle, int32_t y_pair_handle, int32_t ec_handle, int32_t result_offset);
+  int32_t (*managed_marshal_compressed_ec_func_ptr)(void *context, int32_t x_pair_handle, int32_t y_pair_handle, int32_t ec_handle, int32_t result_handle);
+  int32_t (*unmarshal_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_offset, int32_t length);
+  int32_t (*managed_unmarshal_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_handle);
+  int32_t (*unmarshal_compressed_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_offset, int32_t length);
+  int32_t (*managed_unmarshal_compressed_ec_func_ptr)(void *context, int32_t x_result_handle, int32_t y_result_handle, int32_t ec_handle, int32_t data_handle);
+  int32_t (*generate_key_ec_func_ptr)(void *context, int32_t x_pub_key_handle, int32_t y_pub_key_handle, int32_t ec_handle, int32_t result_offset);
+  int32_t (*managed_generate_key_ec_func_ptr)(void *context, int32_t x_pub_key_handle, int32_t y_pub_key_handle, int32_t ec_handle, int32_t result_handle);
   int32_t (*create_ec_func_ptr)(void *context, int32_t data_offset, int32_t data_length);
   int32_t (*managed_create_ec_func_ptr)(void *context, int32_t data_handle);
   int32_t (*get_curve_length_ec_func_ptr)(void *context, int32_t ec_handle);
   int32_t (*get_priv_key_byte_length_ec_func_ptr)(void *context, int32_t ec_handle);
-  int32_t (*elliptic_curve_get_values_func_ptr)(void *context,
-                                                int32_t ec_handle,
-                                                int32_t field_order_handle,
-                                                int32_t base_point_order_handle,
-                                                int32_t eq_constant_handle,
-                                                int32_t x_base_point_handle,
-                                                int32_t y_base_point_handle);
-  int32_t (*managed_verify_secp256r1_func_ptr)(void *context,
-                                               int32_t key_handle,
-                                               int32_t message_handle,
-                                               int32_t sig_handle);
-  int32_t (*managed_verify_blssignature_share_func_ptr)(void *context,
-                                                        int32_t key_handle,
-                                                        int32_t message_handle,
-                                                        int32_t sig_handle);
-  int32_t (*managed_verify_blsaggregated_signature_func_ptr)(void *context,
-                                                             int32_t key_handle,
-                                                             int32_t message_handle,
-                                                             int32_t sig_handle);
+  int32_t (*elliptic_curve_get_values_func_ptr)(void *context, int32_t ec_handle, int32_t field_order_handle, int32_t base_point_order_handle, int32_t eq_constant_handle, int32_t x_base_point_handle, int32_t y_base_point_handle);
+  int32_t (*managed_verify_secp256r1_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
+  int32_t (*managed_verify_blssignature_share_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
+  int32_t (*managed_verify_blsaggregated_signature_func_ptr)(void *context, int32_t key_handle, int32_t message_handle, int32_t sig_handle);
 } vm_exec_vm_hook_c_func_pointers;
 
 typedef struct vm_exec_compilation_options_t {
@@ -931,8 +332,7 @@ typedef struct vm_exec_opcode_cost_t {
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_set_breakpoint_value(const struct vm_exec_instance_t *instance_ptr,
-                                                            uint64_t value);
+enum vm_exec_result_t vm_exec_instance_set_breakpoint_value(const struct vm_exec_instance_t *instance_ptr, uint64_t value);
 
 /**
  * Returns the runtime breakpoint value from the given instance.
@@ -980,8 +380,7 @@ int vm_exec_last_error_message(char *dest_buffer, int dest_buffer_len);
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_new_executor(struct vm_exec_executor_t **executor,
-                                           struct vm_exec_vm_hook_c_func_pointers **vm_hook_pointers_ptr_ptr);
+enum vm_exec_result_t vm_exec_new_executor(struct vm_exec_executor_t **executor, struct vm_exec_vm_hook_c_func_pointers **vm_hook_pointers_ptr_ptr);
 
 /**
  * Forces reinstalling the sighandlers.
@@ -1006,8 +405,7 @@ void vm_force_sighandler_reinstall(void);
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_executor_set_vm_hooks_ptr(struct vm_exec_executor_t *executor_ptr,
-                                                        void *vm_hooks_ptr);
+enum vm_exec_result_t vm_exec_executor_set_vm_hooks_ptr(struct vm_exec_executor_t *executor_ptr, void *vm_hooks_ptr);
 
 /**
  * Destroys a VM executor object.
@@ -1027,11 +425,7 @@ void vm_exec_executor_destroy(struct vm_exec_executor_t *executor_ptr);
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_new_instance(struct vm_exec_executor_t *executor_ptr,
-                                           struct vm_exec_instance_t **instance_ptr_ptr,
-                                           uint8_t *wasm_bytes_ptr,
-                                           uint32_t wasm_bytes_len,
-                                           const struct vm_exec_compilation_options_t *options_ptr);
+enum vm_exec_result_t vm_exec_new_instance(struct vm_exec_executor_t *executor_ptr, struct vm_exec_instance_t **instance_ptr_ptr, uint8_t *wasm_bytes_ptr, uint32_t wasm_bytes_len, const struct vm_exec_compilation_options_t *options_ptr);
 
 /**
  * Calls an exported function of a WebAssembly instance by `name`
@@ -1052,8 +446,7 @@ enum vm_exec_result_t vm_exec_new_instance(struct vm_exec_executor_t *executor_p
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_call(struct vm_exec_instance_t *instance_ptr,
-                                            const char *func_name_ptr);
+enum vm_exec_result_t vm_exec_instance_call(struct vm_exec_instance_t *instance_ptr, const char *func_name_ptr);
 
 /**
  * Checks that all public module functions (SC endpoints) have no arguments or results.
@@ -1073,8 +466,7 @@ enum vm_exec_result_t vm_check_signatures(struct vm_exec_instance_t *instance_pt
  *
  * C API function, works with raw object pointers.
  */
-int vm_exec_instance_has_function(struct vm_exec_instance_t *instance_ptr,
-                                  const char *func_name_ptr);
+int vm_exec_instance_has_function(struct vm_exec_instance_t *instance_ptr, const char *func_name_ptr);
 
 /**
  * Checks whether SC has an endpoint with given name.
@@ -1083,8 +475,7 @@ int vm_exec_instance_has_function(struct vm_exec_instance_t *instance_ptr,
  *
  * C API function, works with raw object pointers.
  */
-int vm_exec_instance_has_imported_function(struct vm_exec_instance_t *instance_ptr,
-                                           const char *func_name_ptr);
+int vm_exec_instance_has_imported_function(struct vm_exec_instance_t *instance_ptr, const char *func_name_ptr);
 
 /**
  * Required to be able to extract all SC endpoint names. See `vm_exported_function_names`.
@@ -1108,9 +499,7 @@ int vm_exported_function_names_length(struct vm_exec_instance_t *instance_ptr);
  *
  * C API function, works with raw object pointers.
  */
-int vm_exported_function_names(struct vm_exec_instance_t *instance_ptr,
-                               char *dest_buffer,
-                               int dest_buffer_len);
+int vm_exported_function_names(struct vm_exec_instance_t *instance_ptr, char *dest_buffer, int dest_buffer_len);
 
 /**
  * Frees memory for the given `vm_exec_instance_t`.
@@ -1142,9 +531,7 @@ enum vm_exec_result_t vm_exec_instance_reset(struct vm_exec_instance_t *instance
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_cache(const struct vm_exec_instance_t *instance_ptr,
-                                             const uint8_t **cache_bytes_ptr,
-                                             uint32_t *cache_bytes_len);
+enum vm_exec_result_t vm_exec_instance_cache(const struct vm_exec_instance_t *instance_ptr, const uint8_t **cache_bytes_ptr, uint32_t *cache_bytes_len);
 
 /**
  * Creates a new VM executor instance from cache.
@@ -1155,11 +542,7 @@ enum vm_exec_result_t vm_exec_instance_cache(const struct vm_exec_instance_t *in
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_from_cache(struct vm_exec_executor_t *executor_ptr,
-                                                  struct vm_exec_instance_t **instance_ptr_ptr,
-                                                  uint8_t *cache_bytes_ptr,
-                                                  uint32_t cache_bytes_len,
-                                                  const struct vm_exec_compilation_options_t *options_ptr);
+enum vm_exec_result_t vm_exec_instance_from_cache(struct vm_exec_executor_t *executor_ptr, struct vm_exec_instance_t **instance_ptr_ptr, uint8_t *cache_bytes_ptr, uint32_t cache_bytes_len, const struct vm_exec_compilation_options_t *options_ptr);
 
 /**
  * Sets the log level.
@@ -1204,8 +587,7 @@ uint8_t *vm_exec_instance_memory_data(struct vm_exec_instance_t *instance_ptr);
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_memory_grow(struct vm_exec_instance_t *instance_ptr,
-                                                   uint32_t by_num_pages);
+enum vm_exec_result_t vm_exec_instance_memory_grow(struct vm_exec_instance_t *instance_ptr, uint32_t by_num_pages);
 
 /**
  * Sets the opcode costs for the given executor.
@@ -1218,8 +600,7 @@ enum vm_exec_result_t vm_exec_instance_memory_grow(struct vm_exec_instance_t *in
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_set_opcode_costs(struct vm_exec_executor_t *executor_ptr,
-                                               const struct vm_exec_opcode_cost_t *opcode_cost_ptr);
+enum vm_exec_result_t vm_exec_set_opcode_costs(struct vm_exec_executor_t *executor_ptr, const struct vm_exec_opcode_cost_t *opcode_cost_ptr);
 
 /**
  * Sets the number of points(gas) limit for the given instance.
@@ -1232,8 +613,7 @@ enum vm_exec_result_t vm_exec_set_opcode_costs(struct vm_exec_executor_t *execut
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_set_points_limit(const struct vm_exec_instance_t *instance_ptr,
-                                                        uint64_t limit);
+enum vm_exec_result_t vm_exec_instance_set_points_limit(const struct vm_exec_instance_t *instance_ptr, uint64_t limit);
 
 /**
  * Sets the number of points(gas) for the given instance.
@@ -1246,8 +626,7 @@ enum vm_exec_result_t vm_exec_instance_set_points_limit(const struct vm_exec_ins
  *
  * C API function, works with raw object pointers.
  */
-enum vm_exec_result_t vm_exec_instance_set_points_used(const struct vm_exec_instance_t *instance_ptr,
-                                                       uint64_t points);
+enum vm_exec_result_t vm_exec_instance_set_points_used(const struct vm_exec_instance_t *instance_ptr, uint64_t points);
 
 /**
  * Returns the number of points(gas) used by the given instance.
