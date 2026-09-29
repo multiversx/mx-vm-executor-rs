@@ -24,15 +24,18 @@ impl WasmerProdInstanceState {
             .map_or_else(|| Err(WasmerExecutorError::BadInstancePointer.into()), Ok)
     }
 
-    pub fn set_breakpoint_value_legacy(&self, value: BreakpointValueLegacy) {
-        self.instance_rc()
-            .unwrap()
+    pub fn set_breakpoint_value_legacy(
+        &self,
+        value: BreakpointValueLegacy,
+    ) -> Result<(), ExecutorError> {
+        self.instance_rc()?
             .set_breakpoint_value(value)
-            .expect("set_breakpoint_value_legacy globals error");
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
     }
 
-    pub fn set_early_exit(&self, early_exit: VMHooksEarlyExit) {
-        self.instance_rc().unwrap().set_early_exit(early_exit);
+    pub fn set_early_exit(&self, early_exit: VMHooksEarlyExit) -> Result<(), ExecutorError> {
+        self.instance_rc()?.set_early_exit(early_exit);
+        Ok(())
     }
 }
 
@@ -47,6 +50,16 @@ impl InstanceState for WasmerProdInstanceState {
         self.instance_rc()?
             .set_points_used(points)
             .map_err(|err| WasmerExecutorError::SetPointsUsed(err).into())
+    }
+
+    fn memory_length(&self) -> Result<u64, ExecutorError> {
+        self.instance_rc()?
+            .memory_length()
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
+    }
+
+    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+        self.instance_rc()?.memory_grow(by_num_pages)
     }
 
     fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {

@@ -12,7 +12,7 @@ use multiversx_chain_vm_executor::{
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use std::{rc::Rc, rc::Weak, sync::Arc};
 use wasmer::sys::{CompilerConfig, Singlepass};
-use wasmer::{Extern, Module, Pages, Store};
+use wasmer::{Extern, ExternType, Module, Pages, Store};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
@@ -221,9 +221,10 @@ impl Instance for ExperimentalInstance {
                 match runtime_error.downcast::<VMHooksEarlyExit>() {
                     Ok(vm_hooks_error) => InstanceCallResult::VMHooksEarlyExit(vm_hooks_error),
                     Err(other_error) => {
-                        let breakpoint = self
-                            .get_breakpoint_value()
-                            .expect("error retrieving instance breakpoint value");
+                        let breakpoint = match self.get_breakpoint_value() {
+                            Ok(breakpoint) => breakpoint,
+                            Err(err) => return InstanceCallResult::RuntimeError(err),
+                        };
                         if breakpoint != BreakpointValue::None {
                             InstanceCallResult::Breakpoint(breakpoint)
                         } else {
@@ -273,12 +274,22 @@ impl Instance for ExperimentalInstance {
             .collect()
     }
 
+    fn get_imported_function_names(&self) -> Vec<String> {
+        self.inner
+            .wasmer_instance
+            .module()
+            .imports()
+            .filter(|import| matches!(import.ty(), ExternType::Function(_)))
+            .map(|import| import.name().to_string())
+            .collect()
+    }
+
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         get_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store)
     }
 
     fn reset(&self) -> Result<(), ExecutorError> {
-        panic!("ExperimentalInstance reset not supported")
+        Err(ExperimentalError::ResetUnsupported.into())
     }
 
     fn cache(&self) -> Result<Vec<u8>, ExecutorError> {
