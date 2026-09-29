@@ -7,18 +7,37 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::ExperimentalError;
 
-pub(crate) fn create_global_index(
+/// Creates and exports a fresh mutable i32 global in the module and initializes it.
+pub(crate) fn create_i32_global_index(
+    module_info: &mut ModuleInfo,
+    key: &str,
+    init: i32,
+) -> GlobalIndex {
+    create_global_index(module_info, key, Type::I32, GlobalInit::I32Const(init))
+}
+
+/// Creates and exports a fresh mutable i64 global in the module and initializes it.
+pub(crate) fn create_i64_global_index(
     module_info: &mut ModuleInfo,
     key: &str,
     init: i64,
 ) -> GlobalIndex {
+    create_global_index(module_info, key, Type::I64, GlobalInit::I64Const(init))
+}
+
+/// Only reachable through the typed constructors above, which are what keeps the declared
+/// type and the initializer from disagreeing.
+fn create_global_index(
+    module_info: &mut ModuleInfo,
+    key: &str,
+    global_type: Type,
+    init: GlobalInit,
+) -> GlobalIndex {
     let global_index = module_info
         .globals
-        .push(GlobalType::new(Type::I64, Mutability::Var));
+        .push(GlobalType::new(global_type, Mutability::Var));
 
-    module_info
-        .global_initializers
-        .push(GlobalInit::I64Const(init));
+    module_info.global_initializers.push(init);
 
     module_info
         .exports

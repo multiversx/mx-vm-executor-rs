@@ -9,7 +9,7 @@ use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 use crate::{
     // we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    we_helpers::create_global_index,
+    we_helpers::create_i64_global_index,
     // MiddlewareWithProtectedGlobals,
 };
 
@@ -92,12 +92,12 @@ impl ModuleMiddleware for OpcodeControl {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
-            memory_grow_count_global_index: create_global_index(
+            memory_grow_count_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_MEMORY_GROW_COUNT,
                 0,
             ),
-            operand_backup_global_index: create_global_index(
+            operand_backup_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_OPERAND_BACKUP,
                 0,
