@@ -22,6 +22,13 @@ pub trait Instance {
     /// Required to be able to extract all SC endpoint names.
     fn get_exported_function_names(&self) -> Vec<String>;
 
+    /// Returns the names of all the host functions (VM hooks) the contract imports.
+    ///
+    /// Needed to validate a contract against the set of hooks it is allowed to use. All the
+    /// names are returned at once, rather than offering a per-name query, because the
+    /// callers check the module against whole sets of names.
+    fn get_imported_function_names(&self) -> Vec<String>;
+
     /// Returns the number of points(gas) used by the given instance.
     fn get_points_used(&mut self) -> Result<u64, ExecutorError>;
 

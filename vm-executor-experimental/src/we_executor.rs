@@ -1,4 +1,4 @@
-use crate::{ExperimentalInstance, ExperimentalVMHooksBuilder};
+use crate::{ExperimentalError, ExperimentalInstance, ExperimentalVMHooksBuilder};
 use multiversx_chain_vm_executor::{
     CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig, check_missing_wasm,
 };
@@ -30,16 +30,15 @@ impl ExperimentalExecutor {
         &self,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Box<dyn Instance> {
-        Box::new(
-            ExperimentalInstance::try_new_instance(
-                self.runtime_ref.vm_hooks_builder(),
-                self.runtime_ref.opcode_config(),
-                wasm_bytes,
-                compilation_options,
-            )
-            .expect("instance init failed"),
-        )
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
+        let instance = ExperimentalInstance::try_new_instance(
+            self.runtime_ref.vm_hooks_builder(),
+            self.runtime_ref.opcode_config(),
+            wasm_bytes,
+            compilation_options,
+        )?;
+
+        Ok(Box::new(instance))
     }
 }
 
@@ -51,7 +50,7 @@ impl Executor for ExperimentalExecutor {
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         check_missing_wasm(wasm_bytes)?;
 
-        Ok(self.new_instance_from_bytes(wasm_bytes, compilation_options))
+        self.new_instance_from_bytes(wasm_bytes, compilation_options)
     }
 
     fn new_instance_from_cache(
@@ -59,6 +58,6 @@ impl Executor for ExperimentalExecutor {
         _cache_bytes: &[u8],
         _compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        panic!("WasmerProdExecutor new_instance_from_cache not supported")
+        Err(ExperimentalError::InstanceFromCacheUnsupported.into())
     }
 }

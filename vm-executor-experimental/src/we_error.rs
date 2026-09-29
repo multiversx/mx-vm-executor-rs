@@ -19,4 +19,13 @@ pub enum ExperimentalError {
 
     #[error("instance call error: {0}")]
     InstanceCall(wasmer::RuntimeError),
+
+    #[error("instance memory access error: {0}")]
+    MemoryAccess(String),
+
+    #[error("creating an instance from cache is not supported")]
+    InstanceFromCacheUnsupported,
+
+    #[error("resetting an instance is not supported")]
+    ResetUnsupported,
 }

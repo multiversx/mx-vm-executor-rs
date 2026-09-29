@@ -76,6 +76,10 @@ impl Instance for WasmerProdInstance {
         self.inner_instance_ref.get_exported_function_names()
     }
 
+    fn get_imported_function_names(&self) -> Vec<String> {
+        self.inner_instance_ref.get_imported_function_names()
+    }
+
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         self.inner_instance_ref
             .get_points_used()

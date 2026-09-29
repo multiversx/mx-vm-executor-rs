@@ -4,13 +4,14 @@ use crate::WasmerInstance;
 use crate::executor_interface::{
     CompilationOptions, Executor, ExecutorError, Instance, VMHooksLegacy, check_missing_wasm,
 };
+use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use std::{
     fmt,
     rc::Rc,
     sync::{Arc, Mutex},
 };
 
-use super::{WasmerProdInstance, WasmerProdInstanceState};
+use super::{WasmerExecutorError, WasmerProdInstance, WasmerProdInstanceState};
 
 pub trait WasmerProdRuntimeRef: Send + Sync {
     fn vm_hooks(&self, instance_state: WasmerProdInstanceState) -> Box<dyn VMHooksLegacy>;
@@ -38,8 +39,8 @@ impl WasmerProdExecutor {
         &self,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
-    ) -> Box<dyn Instance> {
-        let inner_instance_ref = Rc::new_cyclic(|weak| {
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
+        let inner_instance_ref = rc_new_cyclic_fallible(|weak| {
             let instance_state = WasmerProdInstanceState::new(weak.clone());
             let vm_hooks = self.runtime_ref.vm_hooks(instance_state);
 
@@ -49,12 +50,11 @@ impl WasmerProdExecutor {
                 wasm_bytes,
                 &compilation_options.to_legacy(),
             )
-            .expect("instance init failed")
-        });
+        })?;
 
         let wasmer_instance_ref = WasmerProdInstance::new(inner_instance_ref);
 
-        Box::new(wasmer_instance_ref)
+        Ok(Box::new(wasmer_instance_ref))
     }
 }
 
@@ -66,7 +66,7 @@ impl Executor for WasmerProdExecutor {
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         check_missing_wasm(wasm_bytes)?;
 
-        Ok(self.new_instance_from_bytes(wasm_bytes, compilation_options))
+        self.new_instance_from_bytes(wasm_bytes, compilation_options)
     }
 
     fn new_instance_from_cache(
@@ -74,6 +74,6 @@ impl Executor for WasmerProdExecutor {
         _cache_bytes: &[u8],
         _compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        panic!("WasmerProdExecutor new_instance_from_cache not supported")
+        Err(WasmerExecutorError::InstanceFromCacheUnsupported.into())
     }
 }
