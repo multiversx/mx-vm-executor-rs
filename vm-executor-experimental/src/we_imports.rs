@@ -117,6 +117,11 @@ fn wasmer_import_create_async_call(env: FunctionEnvMut<VMHooksWrapper>, dest_off
 }
 
 #[rustfmt::skip]
+fn wasmer_import_create_async_v3_call(env: FunctionEnvMut<VMHooksWrapper>, dest_offset: i32, value_offset: i32, data_offset: i32, data_length: i32, success_offset: i32, success_length: i32, error_offset: i32, error_length: i32, gas: i64, extra_gas_for_callback: i64) -> Result<i32, VMHooksEarlyExit> {
+    with_vm_hooks(env, |vh| vh.create_async_v3_call(convert_mem_ptr(dest_offset), convert_mem_ptr(value_offset), convert_mem_ptr(data_offset), convert_mem_length(data_length), convert_mem_ptr(success_offset), convert_mem_length(success_length), convert_mem_ptr(error_offset), convert_mem_length(error_length), gas, extra_gas_for_callback))
+}
+
+#[rustfmt::skip]
 fn wasmer_import_set_async_context_callback(env: FunctionEnvMut<VMHooksWrapper>, callback: i32, callback_length: i32, data: i32, data_length: i32, gas: i64) -> Result<i32, VMHooksEarlyExit> {
     with_vm_hooks(env, |vh| vh.set_async_context_callback(convert_mem_ptr(callback), convert_mem_length(callback_length), convert_mem_ptr(data), convert_mem_length(data_length), gas))
 }
@@ -1482,6 +1487,7 @@ pub fn generate_import_object(store: &mut Store, vh_wrapper: VMHooksWrapper) -> 
             "transferESDTNFTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_transfer_esdt_nft_execute),
             "multiTransferESDTNFTExecute" => Function::new_typed_with_env(store, &function_env, wasmer_import_multi_transfer_esdt_nft_execute),
             "createAsyncCall" => Function::new_typed_with_env(store, &function_env, wasmer_import_create_async_call),
+            "createAsyncV3Call" => Function::new_typed_with_env(store, &function_env, wasmer_import_create_async_v3_call),
             "setAsyncContextCallback" => Function::new_typed_with_env(store, &function_env, wasmer_import_set_async_context_callback),
             "upgradeContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_upgrade_contract),
             "upgradeFromSourceContract" => Function::new_typed_with_env(store, &function_env, wasmer_import_upgrade_from_source_contract),
