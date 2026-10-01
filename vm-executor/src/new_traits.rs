@@ -13,7 +13,7 @@ pub use compilation_options_new::CompilationOptions;
 pub use executor_new::Executor;
 pub use instance_new::{Instance, InstanceCallResult};
 pub use instance_state::InstanceState;
-pub use memory::{MemoryError, checked_load_range, checked_store_range};
+pub use memory::{MemoryError, checked_load_range, checked_store_range, clamped_load_len};
 pub use vm_hooks_early_exit::VMHooksEarlyExit;
 pub use vm_hooks_legacy_adapter::{VMHooksLegacyAdapter, VMHooksSetEarlyExit};
 pub use vm_hooks_new::{VMHooks, VMHooksDefault};

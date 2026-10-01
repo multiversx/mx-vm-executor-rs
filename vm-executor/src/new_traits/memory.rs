@@ -78,6 +78,40 @@ pub fn checked_load_range(
     Ok((mem_ptr as usize, end as usize))
 }
 
+/// Computes how many bytes a **clamped** load may read.
+///
+/// Where [`checked_load_range`] rejects a range that ends past the end of the memory, this
+/// truncates it, which is the Go VM's historical behaviour. The offset and length checks, and
+/// the order in which they are applied, are the same as for a strict load.
+///
+/// Returning the length rather than a range lets a caller read straight into a
+/// caller-provided buffer, which is what the C API needs;
+/// [`crate::InstanceState::memory_load_clamped`] is the owned-buffer counterpart. Both go
+/// through here, so the truncating rule has a single implementation.
+pub fn clamped_load_len(
+    mem_ptr: MemPtr,
+    mem_length: MemLength,
+    memory_size: u64,
+) -> Result<usize, MemoryError> {
+    if mem_length == 0 {
+        return Ok(0);
+    }
+
+    // Checked in this order to match the Go VM: an out-of-range offset takes precedence
+    // over a negative length.
+    if mem_ptr < 0 || mem_ptr as u64 > memory_size {
+        return Err(MemoryError::BadBounds);
+    }
+    if mem_length < 0 {
+        return Err(MemoryError::NegativeLength);
+    }
+
+    // Computed as a minimum rather than as `mem_ptr + mem_length`, which can overflow for a
+    // length a contract is free to choose.
+    let available = memory_size - mem_ptr as u64;
+    Ok(std::cmp::min(mem_length as u64, available) as usize)
+}
+
 /// Validates a range for a store, returning it as a `start..end` byte range.
 ///
 /// Mirrors the Go VM's `MemStoreToMemory`, including the fact that an empty write is
@@ -171,6 +205,33 @@ mod tests {
             checked_load_range(1, MemLength::MAX, SIZE),
             Err(MemoryError::BadBoundsUpper)
         );
+    }
+
+    #[test]
+    fn clamped_load_len_truncates_at_the_end_of_memory() {
+        assert_eq!(clamped_load_len(0, 100, SIZE), Ok(100));
+        assert_eq!(clamped_load_len(95, 10, SIZE), Ok(5));
+        assert_eq!(clamped_load_len(1, MemLength::MAX, SIZE), Ok(99));
+        // An offset exactly at the end is valid, and yields nothing.
+        assert_eq!(clamped_load_len(100, 1, SIZE), Ok(0));
+    }
+
+    #[test]
+    fn clamped_load_len_rejects_what_a_strict_load_rejects() {
+        assert_eq!(clamped_load_len(-1, 10, SIZE), Err(MemoryError::BadBounds));
+        assert_eq!(clamped_load_len(101, 10, SIZE), Err(MemoryError::BadBounds));
+        assert_eq!(
+            clamped_load_len(0, -1, SIZE),
+            Err(MemoryError::NegativeLength)
+        );
+        // Same precedence as a strict load.
+        assert_eq!(clamped_load_len(-1, -1, SIZE), Err(MemoryError::BadBounds));
+    }
+
+    #[test]
+    fn clamped_load_len_zero_length_ignores_a_bad_offset() {
+        assert_eq!(clamped_load_len(-1, 0, SIZE), Ok(0));
+        assert_eq!(clamped_load_len(1_000, 0, SIZE), Ok(0));
     }
 
     #[test]

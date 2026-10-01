@@ -1,10 +1,10 @@
-use crate::{ExecutorError, MemLength, MemPtr, MemoryError};
+use crate::{ExecutorError, MemLength, MemPtr, clamped_load_len};
 
 /// The interface through which VM hooks update the instance state.
 ///
 /// All accesses are validated by the executor, which is the only side that knows the real
 /// extent of the instance memory. The load and store methods are **strict**: a range that
-/// does not fit entirely inside the memory is rejected with a [`MemoryError`]. The one
+/// does not fit entirely inside the memory is rejected with a [`crate::MemoryError`]. The one
 /// exception is [`InstanceState::memory_load_clamped`], which reproduces the Go VM's
 /// historical truncating behaviour; see its documentation.
 pub trait InstanceState {
@@ -59,21 +59,7 @@ pub trait InstanceState {
             return Ok(Vec::new());
         }
 
-        let memory_length = self.memory_length()?;
-
-        // Checked in this order to match the Go VM: an out-of-range offset takes
-        // precedence over a negative length.
-        if mem_ptr < 0 || mem_ptr as u64 > memory_length {
-            return Err(MemoryError::BadBounds.into());
-        }
-        if mem_length < 0 {
-            return Err(MemoryError::NegativeLength.into());
-        }
-
-        // Computed as a minimum rather than as `mem_ptr + mem_length`, which can overflow
-        // for a length a contract is free to choose.
-        let available = memory_length - mem_ptr as u64;
-        let to_load = std::cmp::min(mem_length as u64, available);
+        let to_load = clamped_load_len(mem_ptr, mem_length, self.memory_length()?)?;
 
         self.memory_load_owned(mem_ptr, to_load as MemLength)
     }

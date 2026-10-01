@@ -1,5 +1,6 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
+	capi2 capi2-linux-amd64 capi2-linux-arm capi2-osx-amd64 capi2-osx-arm \
 	ci-local clean check-macos
 
 # cargo and docker already parallelise internally, and a parallel make would
@@ -37,6 +38,35 @@ capi-osx-amd64: check-macos capi
 capi-osx-arm: check-macos capi
 	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
 	install_name_tool -id @rpath/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
+
+# --- The new C API ------------------------------------------------------------
+# Built into separately named artifacts, so a consumer can link one, the other, or
+# both: the two libraries share no exported symbols (`vm_exec_*` against
+# `vm_exec2_*`), which is what makes running them side by side for differential
+# testing possible.
+#
+# Not wired into `ci-local` or the release workflows yet. That happens when the Go
+# VM starts consuming it, so the release assets do not grow a library nothing
+# links against.
+
+capi2:
+	cargo build -p multiversx-chain-vm-executor-c-api-new --release
+
+capi2-linux-amd64: capi2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_new.so target/release/libvmexeccapi2.so
+	patchelf --set-soname libvmexeccapi2.so target/release/libvmexeccapi2.so
+
+capi2-linux-arm: capi2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_new.so target/release/libvmexeccapi2_arm.so
+	patchelf --set-soname libvmexeccapi2_arm.so target/release/libvmexeccapi2_arm.so
+
+capi2-osx-amd64: check-macos capi2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_new.dylib target/release/libvmexeccapi2.dylib
+	install_name_tool -id @rpath/libvmexeccapi2.dylib target/release/libvmexeccapi2.dylib
+
+capi2-osx-arm: check-macos capi2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_new.dylib target/release/libvmexeccapi2_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi2_arm.dylib target/release/libvmexeccapi2_arm.dylib
 
 # --- Local reproduction of the CI build matrix -------------------------------
 # The four targets above are what CI runs natively, one per runner. The targets
@@ -97,5 +127,10 @@ clean:
 	rm -f target/release/libvmexeccapi.dylib
 	rm -f target/release/libvmexeccapi_arm.dylib
 	rm -f c-api/libvmexeccapi.h
+	rm -f target/release/libvmexeccapi2.so
+	rm -f target/release/libvmexeccapi2_arm.so
+	rm -f target/release/libvmexeccapi2.dylib
+	rm -f target/release/libvmexeccapi2_arm.dylib
+	rm -f c-api-new/libvmexeccapi_new.h
 	rm -f target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	rm -rf $(CI_LOCAL_DIR)
