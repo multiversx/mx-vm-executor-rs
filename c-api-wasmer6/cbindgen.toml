@@ -1,5 +1,5 @@
-# `vm_exec2_hook_result_t` is the return type of every generated VM hook pointer, so the Go
+# `vm_exec_w6_hook_result_t` is the return type of every generated VM hook pointer, so the Go
 # side and the Phase 3 generator both need its typedef — but no function exported from this
 # crate mentions it yet, so cbindgen would not emit it on reachability alone.
 [export]
-include = ["vm_exec2_hook_result_t"]
+include = ["vm_exec_w6_hook_result_t"]

@@ -1,6 +1,6 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
-	capi2 capi2-linux-amd64 capi2-linux-arm capi2-osx-amd64 capi2-osx-arm \
+	capi-w6 capi-w6-linux-amd64 capi-w6-linux-arm capi-w6-osx-amd64 capi-w6-osx-arm \
 	ci-local clean check-macos
 
 # cargo and docker already parallelise internally, and a parallel make would
@@ -14,14 +14,14 @@ CI_LOCAL_DIR ?= target/ci-local
 UNAME_S := $(shell uname -s)
 
 capi:
-	cargo build -p multiversx-chain-vm-executor-c-api --release
+	cargo build -p multiversx-chain-vm-executor-c-api-legacy --release
 
 capi-linux-amd64: capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.so target/release/libvmexeccapi.so
 	patchelf --set-soname libvmexeccapi.so target/release/libvmexeccapi.so
 
 capi-linux-arm: capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi_arm.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.so target/release/libvmexeccapi_arm.so
 	patchelf --set-soname libvmexeccapi_arm.so target/release/libvmexeccapi_arm.so
 
 # A prerequisite, not an inline check in the recipe: under .NOTPARALLEL, make
@@ -32,11 +32,11 @@ check-macos:
 	@test "$(UNAME_S)" = "Darwin" || { echo "This target requires a macOS host (produces a Mach-O .dylib)." >&2; exit 1; }
 
 capi-osx-amd64: check-macos capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/release/libvmexeccapi.dylib
 	install_name_tool -id @rpath/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
 capi-osx-arm: check-macos capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/release/libvmexeccapi_arm.dylib
 	install_name_tool -id @rpath/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
 
 # --- The new C API ------------------------------------------------------------
@@ -49,24 +49,24 @@ capi-osx-arm: check-macos capi
 # VM starts consuming it, so the release assets do not grow a library nothing
 # links against.
 
-capi2:
-	cargo build -p multiversx-chain-vm-executor-c-api-new --release
+capi-w6:
+	cargo build -p multiversx-chain-vm-executor-c-api-wasmer6 --release
 
-capi2-linux-amd64: capi2
-	mv target/release/libmultiversx_chain_vm_executor_c_api_new.so target/release/libvmexeccapi2.so
-	patchelf --set-soname libvmexeccapi2.so target/release/libvmexeccapi2.so
+capi-w6-linux-amd64: capi-w6
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.so target/release/libvmexeccapi_w6.so
+	patchelf --set-soname libvmexeccapi_w6.so target/release/libvmexeccapi_w6.so
 
-capi2-linux-arm: capi2
-	mv target/release/libmultiversx_chain_vm_executor_c_api_new.so target/release/libvmexeccapi2_arm.so
-	patchelf --set-soname libvmexeccapi2_arm.so target/release/libvmexeccapi2_arm.so
+capi-w6-linux-arm: capi-w6
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.so target/release/libvmexeccapi_w6_arm.so
+	patchelf --set-soname libvmexeccapi_w6_arm.so target/release/libvmexeccapi_w6_arm.so
 
-capi2-osx-amd64: check-macos capi2
-	mv target/release/libmultiversx_chain_vm_executor_c_api_new.dylib target/release/libvmexeccapi2.dylib
-	install_name_tool -id @rpath/libvmexeccapi2.dylib target/release/libvmexeccapi2.dylib
+capi-w6-osx-amd64: check-macos capi-w6
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.dylib target/release/libvmexeccapi_w6.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w6.dylib target/release/libvmexeccapi_w6.dylib
 
-capi2-osx-arm: check-macos capi2
-	mv target/release/libmultiversx_chain_vm_executor_c_api_new.dylib target/release/libvmexeccapi2_arm.dylib
-	install_name_tool -id @rpath/libvmexeccapi2_arm.dylib target/release/libvmexeccapi2_arm.dylib
+capi-w6-osx-arm: check-macos capi-w6
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.dylib target/release/libvmexeccapi_w6_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w6_arm.dylib target/release/libvmexeccapi_w6_arm.dylib
 
 # --- Local reproduction of the CI build matrix -------------------------------
 # The four targets above are what CI runs natively, one per runner. The targets
@@ -86,8 +86,8 @@ capi-osx-amd64-cross:
 	  exit 1; \
 	}
 	rustup target add x86_64-apple-darwin
-	cargo build -p multiversx-chain-vm-executor-c-api --release --target x86_64-apple-darwin
-	cp target/x86_64-apple-darwin/release/libmultiversx_chain_vm_executor_c_api.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
+	cargo build -p multiversx-chain-vm-executor-c-api-legacy --release --target x86_64-apple-darwin
+	cp target/x86_64-apple-darwin/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	install_name_tool -id @rpath/libvmexeccapi.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 
 capi-linux-amd64-docker:
@@ -127,10 +127,10 @@ clean:
 	rm -f target/release/libvmexeccapi.dylib
 	rm -f target/release/libvmexeccapi_arm.dylib
 	rm -f c-api/libvmexeccapi.h
-	rm -f target/release/libvmexeccapi2.so
-	rm -f target/release/libvmexeccapi2_arm.so
-	rm -f target/release/libvmexeccapi2.dylib
-	rm -f target/release/libvmexeccapi2_arm.dylib
-	rm -f c-api-new/libvmexeccapi_new.h
+	rm -f target/release/libvmexeccapi_w6.so
+	rm -f target/release/libvmexeccapi_w6_arm.so
+	rm -f target/release/libvmexeccapi_w6.dylib
+	rm -f target/release/libvmexeccapi_w6_arm.dylib
+	rm -f c-api-wasmer6/libvmexeccapi_w6.h
 	rm -f target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	rm -rf $(CI_LOCAL_DIR)

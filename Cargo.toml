@@ -3,8 +3,8 @@ resolver = "2"
 
 members = [
     "meta",
-    "c-api",
-    "c-api-new",
+    "c-api-legacy",
+    "c-api-wasmer6",
     "vm-executor",
     "vm-executor-experimental",
     "vm-executor-wasmer",

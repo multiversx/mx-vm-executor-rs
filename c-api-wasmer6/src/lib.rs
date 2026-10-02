@@ -4,14 +4,14 @@
 //! shipping while this one is brought up. The two differ in four ways that matter to a
 //! caller:
 //!
-//! - **Exported symbols are prefixed `vm_exec2_`**, so both libraries can be linked into one
+//! - **Exported symbols are prefixed `vm_exec_w6_`**, so both libraries can be linked into one
 //!   binary. The legacy API already owns `vm_exec_new_executor` and friends.
 //! - **Errors travel through a caller-provided buffer**, not a thread-local last-error
 //!   singleton. See `capi_status`.
 //! - **Configuration is passed once**, at the point the thing it configures is created.
 //!   There are no post-construction setters.
 //! - **A call reports what happened in its result**, instead of leaving the caller to poll a
-//!   wasm global afterwards. See `vm_exec2_call_result_t`.
+//!   wasm global afterwards. See `vm_exec_w6_call_result_t`.
 //!
 //! The hook dispatch — the typed function-pointer table (`capi_vm_hook_pointers`) and the
 //! `VMHooks` implementation that calls into it (`capi_vm_hooks`) — is generated from the Go

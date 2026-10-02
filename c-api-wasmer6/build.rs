@@ -3,7 +3,7 @@ extern crate cbindgen;
 use cbindgen::{Builder, Config, Language, Style};
 use std::{env, fs, path::PathBuf};
 
-const HEADER_FILE_NAME: &str = "libvmexeccapi_new";
+const HEADER_FILE_NAME: &str = "libvmexeccapi_w6";
 
 fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();

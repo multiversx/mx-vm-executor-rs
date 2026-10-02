@@ -13,33 +13,33 @@ use std::{ptr, slice};
 
 /// Result of a C API call.
 ///
-/// `VM_EXEC2_OK` is zero and every failure is negative, so the functions that return a
+/// `VM_EXEC_W6_OK` is zero and every failure is negative, so the functions that return a
 /// count (the memory loads) can share the same code space: a non-negative result is a
 /// count, a negative one is one of these.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum vm_exec2_status_t {
+pub enum vm_exec_w6_status_t {
     /// The call succeeded.
-    VM_EXEC2_OK = 0,
+    VM_EXEC_W6_OK = 0,
 
     /// The call failed; the error message was written to the provided error buffer.
-    VM_EXEC2_ERROR = -1,
+    VM_EXEC_W6_ERROR = -1,
 
     /// A pointer argument that must not be null was null. No message is produced, because
     /// a null pointer may well be the error buffer itself.
-    VM_EXEC2_NULL_POINTER = -2,
+    VM_EXEC_W6_NULL_POINTER = -2,
 
     /// A hook context was used outside the host call it belongs to. See
     /// [`crate::capi_vm_hook_context`].
-    VM_EXEC2_STALE_CONTEXT = -3,
+    VM_EXEC_W6_STALE_CONTEXT = -3,
 
     /// A panic was caught at the boundary. Rust panics must never unwind into C, so every
     /// entry point traps them and reports this instead.
-    VM_EXEC2_PANIC = -4,
+    VM_EXEC_W6_PANIC = -4,
 }
 
-impl vm_exec2_status_t {
+impl vm_exec_w6_status_t {
     pub fn as_c_int(self) -> c_int {
         self as c_int
     }
@@ -54,7 +54,7 @@ impl vm_exec2_status_t {
 /// The message is truncated to fit and always NUL-terminated. Truncation is silent and
 /// deliberate: the alternative is a second call to ask for the length, which is the
 /// round-trip this API is getting rid of. Callers size the buffer once; see
-/// `VM_EXEC2_ERROR_BUF_RECOMMENDED_LEN`.
+/// `VM_EXEC_W6_ERROR_BUF_RECOMMENDED_LEN`.
 ///
 /// A null buffer, or a buffer with no room for the terminator, is accepted and ignored, so
 /// that a caller that does not care about the message can pass `(NULL, 0)`.
@@ -62,7 +62,7 @@ pub(crate) fn write_error(
     message: impl Display,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     if !err_buf.is_null() && err_buf_len > 0 {
         let message = message.to_string();
         let capacity = err_buf_len as usize - 1; // room for the NUL
@@ -81,7 +81,7 @@ pub(crate) fn write_error(
         }
     }
 
-    vm_exec2_status_t::VM_EXEC2_ERROR
+    vm_exec_w6_status_t::VM_EXEC_W6_ERROR
 }
 
 /// Writes a message and returns it as a negative count, for the functions that return one.
@@ -98,13 +98,13 @@ pub(crate) fn write_error_count(
 /// Exported so the Go side has one place to take the number from rather than picking its
 /// own.
 #[unsafe(no_mangle)]
-pub static VM_EXEC2_ERROR_BUF_RECOMMENDED_LEN: c_int = 1024;
+pub static VM_EXEC_W6_ERROR_BUF_RECOMMENDED_LEN: c_int = 1024;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn write_to_buf(message: &str, len: usize) -> (vm_exec2_status_t, String) {
+    fn write_to_buf(message: &str, len: usize) -> (vm_exec_w6_status_t, String) {
         let mut buf = vec![0i8; len];
         let status = write_error(message, buf.as_mut_ptr() as *mut c_char, len as c_int);
         let bytes: Vec<u8> = buf
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn error_message_round_trips() {
         let (status, written) = write_to_buf("boom", 64);
-        assert_eq!(status, vm_exec2_status_t::VM_EXEC2_ERROR);
+        assert_eq!(status, vm_exec_w6_status_t::VM_EXEC_W6_ERROR);
         assert_eq!(written, "boom");
     }
 
@@ -139,22 +139,22 @@ mod tests {
     fn error_message_tolerates_no_buffer() {
         assert_eq!(
             write_error("boom", std::ptr::null_mut(), 0),
-            vm_exec2_status_t::VM_EXEC2_ERROR
+            vm_exec_w6_status_t::VM_EXEC_W6_ERROR
         );
         assert_eq!(
             write_error("boom", std::ptr::null_mut(), 64),
-            vm_exec2_status_t::VM_EXEC2_ERROR
+            vm_exec_w6_status_t::VM_EXEC_W6_ERROR
         );
     }
 
     #[test]
     fn status_codes_leave_room_for_counts() {
-        assert_eq!(vm_exec2_status_t::VM_EXEC2_OK.as_i64(), 0);
+        assert_eq!(vm_exec_w6_status_t::VM_EXEC_W6_OK.as_i64(), 0);
         for status in [
-            vm_exec2_status_t::VM_EXEC2_ERROR,
-            vm_exec2_status_t::VM_EXEC2_NULL_POINTER,
-            vm_exec2_status_t::VM_EXEC2_STALE_CONTEXT,
-            vm_exec2_status_t::VM_EXEC2_PANIC,
+            vm_exec_w6_status_t::VM_EXEC_W6_ERROR,
+            vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER,
+            vm_exec_w6_status_t::VM_EXEC_W6_STALE_CONTEXT,
+            vm_exec_w6_status_t::VM_EXEC_W6_PANIC,
         ] {
             assert!(status.as_i64() < 0, "{status:?} must be negative");
         }

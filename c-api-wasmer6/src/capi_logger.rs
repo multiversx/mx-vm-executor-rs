@@ -12,7 +12,7 @@ static PANIC_HANDLER: Once = Once::new();
 /// Installs a no-op panic hook, so a caught panic does not also print a backtrace.
 ///
 /// A panic must never unwind across `extern "C"`; the `capi_safe_unwind` attribute catches
-/// it and turns it into `VM_EXEC2_PANIC`. This only silences the default hook's output.
+/// it and turns it into `VM_EXEC_W6_PANIC`. This only silences the default hook's output.
 pub fn set_panic_handler() {
     PANIC_HANDLER.call_once(|| {
         std::panic::set_hook(Box::new(|_| {}));

@@ -2,7 +2,7 @@
 //!
 //! Every function here takes a hook context and is valid only while the hook that was handed
 //! that context is still running. See `capi_vm_hook_context` for how that is enforced; a stale
-//! context yields `VM_EXEC2_STALE_CONTEXT` rather than a dereference of a dead borrow.
+//! context yields `VM_EXEC_W6_STALE_CONTEXT` rather than a dereference of a dead borrow.
 //!
 //! Bounds checking lives on this side of the boundary, not in Go. The executor is the only
 //! side that knows the real extent of the instance memory, and the rules are observable by
@@ -16,14 +16,14 @@ use multiversx_chain_vm_executor::{
 };
 use std::slice;
 
-use crate::capi_status::{vm_exec2_status_t, write_error, write_error_count};
-use crate::capi_vm_hook_context::{ContextError, vm_exec2_hook_context_t, with_instance_state};
+use crate::capi_status::{vm_exec_w6_status_t, write_error, write_error_count};
+use crate::capi_vm_hook_context::{ContextError, vm_exec_w6_hook_context_t, with_instance_state};
 
 impl ContextError {
-    fn as_status(self) -> vm_exec2_status_t {
+    fn as_status(self) -> vm_exec_w6_status_t {
         match self {
-            ContextError::NullContext => vm_exec2_status_t::VM_EXEC2_NULL_POINTER,
-            ContextError::Stale => vm_exec2_status_t::VM_EXEC2_STALE_CONTEXT,
+            ContextError::NullContext => vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER,
+            ContextError::Stale => vm_exec_w6_status_t::VM_EXEC_W6_STALE_CONTEXT,
         }
     }
 }
@@ -44,9 +44,9 @@ impl ContextError {
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC.as_i64())]
-pub unsafe extern "C" fn vm_exec2_state_mem_load(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC.as_i64())]
+pub unsafe extern "C" fn vm_exec_w6_state_mem_load(
+    ctx: *mut vm_exec_w6_hook_context_t,
     mem_ptr: i32,
     dest: *mut u8,
     dest_len: i32,
@@ -85,20 +85,20 @@ pub unsafe extern "C" fn vm_exec2_state_mem_load(
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC)]
-pub unsafe extern "C" fn vm_exec2_state_mem_store(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC)]
+pub unsafe extern "C" fn vm_exec_w6_state_mem_store(
+    ctx: *mut vm_exec_w6_hook_context_t,
     mem_ptr: i32,
     src: *const u8,
     src_len: i32,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     if src_len < 0 {
         return write_error("negative length", err_buf, err_buf_len);
     }
     if src.is_null() && src_len > 0 {
-        return vm_exec2_status_t::VM_EXEC2_NULL_POINTER;
+        return vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER;
     }
 
     let stored = unsafe {
@@ -115,7 +115,7 @@ pub unsafe extern "C" fn vm_exec2_state_mem_store(
     match stored {
         Err(context_err) => context_err.as_status(),
         Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(())) => vm_exec2_status_t::VM_EXEC2_OK,
+        Ok(Ok(())) => vm_exec_w6_status_t::VM_EXEC_W6_OK,
     }
 }
 
@@ -125,15 +125,15 @@ pub unsafe extern "C" fn vm_exec2_state_mem_store(
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC)]
-pub unsafe extern "C" fn vm_exec2_state_mem_length(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC)]
+pub unsafe extern "C" fn vm_exec_w6_state_mem_length(
+    ctx: *mut vm_exec_w6_hook_context_t,
     length_out: *mut u64,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     if length_out.is_null() {
-        return vm_exec2_status_t::VM_EXEC2_NULL_POINTER;
+        return vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER;
     }
 
     let length = unsafe { with_instance_state(ctx, |state| state.memory_length()) };
@@ -145,7 +145,7 @@ pub unsafe extern "C" fn vm_exec2_state_mem_length(
             unsafe {
                 *length_out = length;
             }
-            vm_exec2_status_t::VM_EXEC2_OK
+            vm_exec_w6_status_t::VM_EXEC_W6_OK
         }
     }
 }
@@ -158,16 +158,16 @@ pub unsafe extern "C" fn vm_exec2_state_mem_length(
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC)]
-pub unsafe extern "C" fn vm_exec2_state_mem_grow(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC)]
+pub unsafe extern "C" fn vm_exec_w6_state_mem_grow(
+    ctx: *mut vm_exec_w6_hook_context_t,
     by_num_pages: u32,
     prev_pages_out: *mut u32,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     if prev_pages_out.is_null() {
-        return vm_exec2_status_t::VM_EXEC2_NULL_POINTER;
+        return vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER;
     }
 
     let grown = unsafe { with_instance_state(ctx, |state| state.memory_grow(by_num_pages)) };
@@ -179,7 +179,7 @@ pub unsafe extern "C" fn vm_exec2_state_mem_grow(
             unsafe {
                 *prev_pages_out = prev_pages;
             }
-            vm_exec2_status_t::VM_EXEC2_OK
+            vm_exec_w6_status_t::VM_EXEC_W6_OK
         }
     }
 }
@@ -190,15 +190,15 @@ pub unsafe extern "C" fn vm_exec2_state_mem_grow(
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC)]
-pub unsafe extern "C" fn vm_exec2_state_get_points_used(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC)]
+pub unsafe extern "C" fn vm_exec_w6_state_get_points_used(
+    ctx: *mut vm_exec_w6_hook_context_t,
     points_out: *mut u64,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     if points_out.is_null() {
-        return vm_exec2_status_t::VM_EXEC2_NULL_POINTER;
+        return vm_exec_w6_status_t::VM_EXEC_W6_NULL_POINTER;
     }
 
     let points = unsafe { with_instance_state(ctx, |state| state.get_points_used()) };
@@ -210,7 +210,7 @@ pub unsafe extern "C" fn vm_exec2_state_get_points_used(
             unsafe {
                 *points_out = points;
             }
-            vm_exec2_status_t::VM_EXEC2_OK
+            vm_exec_w6_status_t::VM_EXEC_W6_OK
         }
     }
 }
@@ -221,18 +221,18 @@ pub unsafe extern "C" fn vm_exec2_state_get_points_used(
 ///
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec2_status_t::VM_EXEC2_PANIC)]
-pub unsafe extern "C" fn vm_exec2_state_set_points_used(
-    ctx: *mut vm_exec2_hook_context_t,
+#[capi_safe_unwind(vm_exec_w6_status_t::VM_EXEC_W6_PANIC)]
+pub unsafe extern "C" fn vm_exec_w6_state_set_points_used(
+    ctx: *mut vm_exec_w6_hook_context_t,
     points: u64,
     err_buf: *mut c_char,
     err_buf_len: c_int,
-) -> vm_exec2_status_t {
+) -> vm_exec_w6_status_t {
     let set = unsafe { with_instance_state(ctx, |state| state.set_points_used(points)) };
 
     match set {
         Err(context_err) => context_err.as_status(),
         Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(())) => vm_exec2_status_t::VM_EXEC2_OK,
+        Ok(Ok(())) => vm_exec_w6_status_t::VM_EXEC_W6_OK,
     }
 }

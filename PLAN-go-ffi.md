@@ -17,15 +17,41 @@ one config object rather than a sequence of setters.
 
 ## Where things live
 
+Four integrations, because two of them are the *same backend* reached two ways: wasmer 2.2
+through the legacy interfaces and wasmer 2.2 through the new ones. Both are kept until the
+migration is shown to be correct, which is what the hook-sequence differential is for.
+
+| Backend | Interfaces | Crate | Symbols | Library | Go package |
+| --- | --- | --- | --- | --- | --- |
+| wasmer 2.2 | legacy | `c-api-legacy` | `vm_exec_*` | `libvmexeccapi` | `wasmer2legacy` |
+| wasmer 2.2 | new | `c-api-wasmer2` *(planned)* | `vm_exec_w2_*` | `libvmexeccapi_w2` | `wasmer2` *(planned)* |
+| wasmer 6 | new | `c-api-wasmer6` | `vm_exec_w6_*` | `libvmexeccapi_w6` | `wasmer6` |
+| — | shared | `c-api-common` *(planned)* | `vm_exec_*` | header only | `wasmercommon` *(planned)* |
+
+The numbers name the **backend**, not the interface generation. The old `vm_exec2_*` prefix
+meant "second interface set", which stopped working the moment a second backend joined that
+set; it is retired rather than recycled, so no prefix ever changes meaning. The shared types
+go into one `libvmexeccapi_common.h` that both backend headers include, which is what lets a
+Go package include both and a binary link both without redefinition — and what gives
+`wasmercommon` a single set of Go types to wrap.
+
+One constraint that falls out: a Go package must not include the legacy header together with a
+new one. They both declare `vm_exec_compilation_options_t` and `vm_exec_opcode_cost_t`, and the
+compilation options differ in layout (seven fields against four). No package does, and the
+problem dies with `c-api-legacy`.
+
+Cgo `//export` shim names are C symbols too, so they also have to be unique per package:
+`w2_*` for the legacy shims and `w6_*` for wasmer 6. The new wasmer 2.2 package will need a
+third prefix rather than reusing `w2_`.
+
 | Piece | Path |
 | --- | --- |
 | Interfaces, legacy + new | `vm-executor/src/` and `vm-executor/src/new_traits/` |
 | Wasmer 2.2 backend (legacy native, new traits via a shim) | `vm-executor-wasmer/` |
 | Wasmer 6 backend (new traits native) | `vm-executor-experimental/` |
-| Current C API (legacy only) | `c-api/` |
-| New C API (new traits, Wasmer 6) | `c-api-new/` |
+| C APIs | see the table above |
 | Code generator (drives **both** repos) | `mx-chain-vm-go/vmhost/vmhooks/generate/` |
-| Go VM | `mx-chain-vm-go/`, cgo bridge in `wasmer2/` |
+| Go VM | `mx-chain-vm-go/`, cgo bridges in `wasmer2legacy/` and `wasmer6/` |
 | Rust VM, Wasmer 6 consumer | `mx-sdk-rs/chain/vm/src/executor_impl/we_executor.rs` |
 | Rust VM, Wasmer 2.2 consumer | `mx-sdk-rs/chain/wasmer-prod/src/wasmer_prod.rs` |
 
@@ -622,6 +648,71 @@ validation; the new header is the only one with `imported_function_names` at all
 No interface change, identical semantics, and the consensus-relevant check stays exactly as
 written.
 
+#### Done: wasmer3 is selectable, and the differential harness is running
+
+The most useful thing to have early, because it replaces reasoning about what the new backend
+does with observing it. `wasmer3.ExecutorFactory()` implements
+`executor.ExecutorAbstractFactory`, and `$VMEXECUTOR=wasmer3` selects it — the same switch that
+carried the Wasmer 1 to Wasmer 2 migration, which had decayed to one option.
+
+Serving the legacy 24-method `Instance` before it is shrunk needs an adapter, and it is kept in
+`wasmer3/wasmer3InstanceLegacy.go` and `wasmer3ExecutorLegacy.go` so that the split stays
+visible and those files can be deleted rather than untangled. Three groups of method: plain
+forwarding with an error the legacy signature cannot report; memory and gas, which this
+executor can only address from inside a host call; and the things it has no notion of —
+breakpoint globals, the per-instance hooks pointer, reset and cache.
+
+The middle group needed one mechanism: `instanceHooks.activeState`, the state of the hook
+currently running on the instance, published by the single helper the generated shims already
+call. No generated code changed. It is safe without clearing, for the reasons the re-entry guard
+established in 4a: a nested call runs on a different instance, re-entering the same one is
+refused, and a context used after its call fails the token check.
+
+**Shared, not duplicated.** `functionNames` existed in two copies (wasmer2 and the mock) and a
+third was about to be generated; it is now `executor.VMHookNames`, generated once by
+`WriteExecutorVMHookNames`. Same argument as the opcode cost table: the hook names are a
+property of the executor interface, not of what runs below it.
+
+**One VM change was needed, and it is a latent bug fix.** `runtimeContext.saveCompiledCode`
+serialised the module and saved the warm instance behind a shared early return, so an executor
+that cannot serialise lost its warm instance too. Invisible on wasmer2, where serialising does
+not fail; under wasmer3 it was the single cause of **all 42** `vmhookstest` failures, reported as
+`unclosed cold instances remaining`. Split into `saveCompiledCodeToStorage` plus
+`saveWarmInstance`; the warm path already degrades correctly when `Reset()` fails.
+
+Where the suites stand under `$VMEXECUTOR=wasmer3`:
+
+| Suite | Result |
+| --- | --- |
+| `vmhost/vmhookstest` | **passes in full** |
+| `vmhost/hostCore` | **passes in full** |
+| `vmhost/contexts` | 8 failures, all `TestRuntimeContext_Mem*` — tests that address memory through `Instance` from *outside* a host call |
+| `vmhost/hosttest` | 17 failures: 8 async-call, 2 memory reset, the rest gas and bad-contract cases |
+
+Every remaining failure is in a named, already-planned bucket: the breakpoint-as-halt work
+(async call is the `BreakpointAsyncCall` producer), `Reset()` and the module cache (Phase 6),
+and memory reached through `Instance` from outside a call (item 1 below). None is a surprise and
+none needed a new gate.
+
+#### Done: the hook-sequence differential, and it already agrees
+
+`integrationTests/json/scenariosExecutorDiff_test.go` runs a scenario folder under both
+backends with the `executorwrapper` logger and compares the traces. The wrapper records every
+hook with its arguments and its result, so agreement there is a much stronger statement than
+matching `VMOutput`s.
+
+On the `erc20-c` suite — a **9,135-line** trace — the two backends differ on **96 lines**, and
+every one of them is instance lifecycle: `Reset`, `Clean`, and the `SetPointsUsed` /
+`SetGasLimit` / `SetBreakpointValue` triple that follows a successful warm reuse. **Every VM
+hook call and every gas value is identical**, which is the first direct evidence that the two
+metering middlewares agree. The difference is entirely `Reset()` returning false, which is
+Phase 6.
+
+The test is skipped unless `VMEXECUTOR_DIFF=1`, since it cannot pass until Phase 6 lands, and
+`VMEXECUTOR_DIFF_FOLDER` chooses the scenario. `TestCErc20Executors` was also revived to its
+original purpose: wasmer2, wasmer2, wasmer3, wasmer3, wasmer2 in one process, which passes and
+exercises backend coexistence through the real VM rather than through a trap-handler probe.
+
 #### Still to do
 
 1. Shrink `executor.Instance` to the outside view, pushing the legacy-only methods down into
@@ -633,8 +724,8 @@ written.
 3. `MemLoadFromMemory` / `MemStoreToMemory` bypassed for wasmer3, where bounds checking lives
    in Rust, and kept for wasmer2.
 4. `SetOpcodeConfig` removal — see the G4 resolution below.
-5. `wasmer3` implements `executor.Executor` and `executor.Instance`, behind
-   `ExecutorAbstractFactory`.
+5. ~~`wasmer3` implements `executor.Executor` and `executor.Instance`~~ — **done**, as a
+   transitional adapter; it is item 1 that lets the adapter go away.
 
 #### G4 resolved: the config can be immutable, if the executor is rebuilt
 
@@ -660,6 +751,56 @@ resets its counter to zero.
 For now this is harmless, because warm instances are deferred to Phase 6 for wasmer3. It stops
 being harmless the moment they are not, and the fix is a Rust-side addition rather than a Go
 workaround. Recorded here so Phase 6 does not rediscover it.
+
+## Phase 4c — Two libraries per backend, and the shared layer
+
+Driven by the conclusion that bundling is out (gate G5) and that the two Wasmer 2.2
+integrations have to coexist until the new one is trusted.
+
+### Done: the renames, and the prefix scheme
+
+Mechanical but load-bearing, because every later stage inherits the names.
+
+- Rust: `c-api` → `c-api-legacy`, `c-api-new` → `c-api-wasmer6`, with `vm_exec2_*` →
+  `vm_exec_w6_*` and `libvmexeccapi_new.h` → `libvmexeccapi_w6.h`. Makefile targets
+  `capi2-*` → `capi-w6-*`, artifacts `libvmexeccapi2*` → `libvmexeccapi_w6*`.
+- Generator: the `Capi2` writers became `CapiW6`, `WriteWasmer3Cgo` became `WriteWasmer6Cgo`,
+  the emitted shim prefix `w3_` became `w6_`, and every copy target moved with its crate. Also
+  the legacy cgo writer's emitted package, which is what the first regeneration caught.
+- Go: `wasmer3` → `wasmer6` (directory, package, files, `Wasmer3*` → `Wasmer6*`), and
+  `wasmer2` → `wasmer2legacy`. The node does not import either package — checked against
+  `mx-chain-go`, which reaches the VM only through `vmhost` — so this was internal, 13 files.
+- `$VMEXECUTOR` values now name backends unambiguously: `wasmer2legacy` (the default, what
+  production runs), `wasmer6`, and `wasmer2` **reserved** for the new Wasmer 2.2 integration so
+  the two can never be confused.
+
+Verified by regenerating — which must move nothing — and by running the full suite under both
+`wasmer2legacy` and `wasmer6`, plus the dual-backend trap tests and the hook-sequence
+differential.
+
+### Still to do
+
+1. **`c-api-common`.** The extraction is small: of the thirteen modules in `c-api-wasmer6`,
+   **ten already reference no backend type at all**. Only `capi_vm_hook_context.rs` (10
+   references), `capi_instance.rs` (3) and `capi_vm_hook_table.rs` (1) are coupled. So status
+   codes, strings, config, opcode cost, the logger, the hook result struct and the generated
+   hook tables move as-is; the context and the instance stay behind, parameterised by backend.
+2. **`c-api-wasmer2`.** Wasmer 2.2 through the new interfaces. This is what puts **Phase 1.6
+   back on the critical path**: `WasmerProdRuntimeRef::vm_hooks` returns
+   `Box<dyn VMHooksLegacy>` and `Arc<Mutex<OpcodeConfig>>` where the Wasmer 6 side returns a
+   builder and a plain `Arc`, and the two have to converge before one crate body can serve
+   both. The `VMHooksLegacyAdapter` activation path described under "What the wasmer 2.2 path
+   needs" is the other half.
+3. **`wasmercommon` in Go**, wrapping the common header: the error buffer, the status mapping,
+   the call result and the hook result, so `wasmer2` and `wasmer6` share them instead of each
+   carrying a copy. Worth doing *after* `c-api-common`, since the Go types mirror it.
+4. A third cgo shim prefix for the new `wasmer2` package, since `w2_` belongs to the legacy one
+   for as long as both exist.
+
+The payoff is the comparison the whole structure exists for: **wasmer 2.2 against wasmer 2.2**,
+one through each interface set, under the hook-sequence differential. That isolates the
+interface migration from the runtime upgrade — if those two agree, any remaining difference
+against `wasmer6` is Wasmer's doing and not the new FFI's.
 
 ## Phase 5 — Bring-up and validation
 
