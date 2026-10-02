@@ -1,10 +1,10 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
-    capi_compilation_options::vm_exec_compilation_options_t,
-    capi_executor::{CapiExecutor, vm_exec_executor_t},
+    capi_compilation_options::vm_legacy_compilation_options_t,
+    capi_executor::{CapiExecutor, vm_legacy_executor_t},
     service_singleton::with_service,
-    string_copy, vm_exec_result_t,
+    string_copy, vm_legacy_result_t,
 };
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
@@ -18,7 +18,7 @@ use std::{ffi::CStr, slice};
 /// the `wasmer_module_instantiate()` function for the most common paths.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_instance_t;
+pub struct vm_legacy_instance_t;
 
 pub struct CapiInstance {
     pub(crate) content: Box<dyn InstanceLegacy>,
@@ -33,19 +33,19 @@ pub struct CapiInstance {
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_new_instance(
-    executor_ptr: *mut vm_exec_executor_t,
-    instance_ptr_ptr: *mut *mut vm_exec_instance_t,
+    executor_ptr: *mut vm_legacy_executor_t,
+    instance_ptr_ptr: *mut *mut vm_legacy_instance_t,
     wasm_bytes_ptr: *mut u8,
     wasm_bytes_len: u32,
-    options_ptr: *const vm_exec_compilation_options_t,
-) -> vm_exec_result_t {
+    options_ptr: *const vm_legacy_compilation_options_t,
+) -> vm_legacy_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
     if wasm_bytes_ptr.is_null() {
         with_service(|service| service.update_last_error_str("wasm bytes ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
+        return vm_legacy_result_t::VM_LEGACY_ERROR;
     }
 
     return_if_ptr_null!(options_ptr, "compilation options ptr is null");
@@ -63,13 +63,13 @@ pub unsafe extern "C" fn vm_exec_new_instance(
             };
             unsafe {
                 *instance_ptr_ptr =
-                    Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+                    Box::into_raw(Box::new(capi_instance)) as *mut vm_legacy_instance_t;
             }
-            vm_exec_result_t::VM_EXEC_OK
+            vm_legacy_result_t::VM_LEGACY_OK
         }
         Err(message) => {
             with_service(|service| service.update_last_error_str(message.to_string()));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
@@ -78,8 +78,8 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 /// with the provided parameters. The exported function results are
 /// stored on the provided `results` pointer.
 ///
-/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
-/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// This function returns `vm_legacy_result_t::WASMER_OK` upon success,
+/// `vm_legacy_result_t::WASMER_ERROR` otherwise. You can use
 /// `wasmer_last_error_message()` to get the generated error message.
 ///
 /// Potential errors are the following:
@@ -93,27 +93,27 @@ pub unsafe extern "C" fn vm_exec_new_instance(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_call(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
     func_name_ptr: *const c_char,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
 
     // unpack the function name
     if func_name_ptr.is_null() {
         with_service(|service| service.update_last_error_str("name ptr is null".to_string()));
-        return vm_exec_result_t::VM_EXEC_ERROR;
+        return vm_legacy_result_t::VM_LEGACY_ERROR;
     }
     let func_name_c = unsafe { CStr::from_ptr(func_name_ptr) };
     let func_name_r = func_name_c.to_str().unwrap();
 
     let result = capi_instance.content.call(func_name_r);
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
@@ -127,20 +127,20 @@ pub unsafe extern "C" fn vm_exec_instance_call(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_check_signatures(
-    instance_ptr: *mut vm_exec_instance_t,
-) -> vm_exec_result_t {
+    instance_ptr: *mut vm_legacy_instance_t,
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     if capi_instance.content.check_signatures() {
-        vm_exec_result_t::VM_EXEC_OK
+        vm_legacy_result_t::VM_LEGACY_OK
     } else {
         with_service(|service| {
             service.update_last_error_str(
                 "non-zero number of params or results for at least one endpoint".to_string(),
             )
         });
-        vm_exec_result_t::VM_EXEC_ERROR
+        vm_legacy_result_t::VM_LEGACY_ERROR
     }
 }
 
@@ -153,7 +153,7 @@ pub unsafe extern "C" fn vm_check_signatures(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(-1)]
 pub unsafe extern "C" fn vm_exec_instance_has_function(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
     func_name_ptr: *const c_char,
 ) -> c_int {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", -1);
@@ -175,7 +175,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_function(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(-1)]
 pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
     func_name_ptr: *const c_char,
 ) -> c_int {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", -1);
@@ -197,7 +197,7 @@ pub unsafe extern "C" fn vm_exec_instance_has_imported_function(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exported_function_names_length(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
 ) -> c_int {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
 
@@ -225,7 +225,7 @@ pub unsafe extern "C" fn vm_exported_function_names_length(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exported_function_names(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
     dest_buffer: *mut c_char,
     dest_buffer_len: c_int,
 ) -> c_int {
@@ -236,7 +236,7 @@ pub unsafe extern "C" fn vm_exported_function_names(
     unsafe { string_copy(concat, dest_buffer, dest_buffer_len) }
 }
 
-/// Frees memory for the given `vm_exec_instance_t`.
+/// Frees memory for the given `vm_legacy_instance_t`.
 ///
 /// Check the `wasmer_instantiate()` function to get a complete
 /// example.
@@ -248,7 +248,7 @@ pub unsafe extern "C" fn vm_exported_function_names(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vm_exec_instance_destroy(instance_ptr: *mut vm_exec_instance_t) {
+pub unsafe extern "C" fn vm_exec_instance_destroy(instance_ptr: *mut vm_legacy_instance_t) {
     if !instance_ptr.is_null() {
         let instance = unsafe { Box::from_raw(instance_ptr as *mut CapiInstance) };
         drop(instance);
@@ -262,18 +262,18 @@ pub unsafe extern "C" fn vm_exec_instance_destroy(instance_ptr: *mut vm_exec_ins
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_reset(
-    instance_ptr: *mut vm_exec_instance_t,
-) -> vm_exec_result_t {
+    instance_ptr: *mut vm_legacy_instance_t,
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
 
     let result = capi_instance.content.reset();
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }

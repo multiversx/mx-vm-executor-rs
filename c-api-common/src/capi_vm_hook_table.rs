@@ -7,14 +7,14 @@
 
 use std::sync::Arc;
 
-use crate::capi_vm_hook_pointers::vm_exec_w6_vm_hook_c_func_pointers;
+use crate::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
 
 /// An owned copy of the caller's hook table.
 ///
 /// Cloning is cheap and shares the copy; each instance's hooks builder holds one.
 #[derive(Clone, Debug)]
 pub struct CapiVMHookTable {
-    func_pointers: Arc<vm_exec_w6_vm_hook_c_func_pointers>,
+    func_pointers: Arc<vm_exec_vm_hook_c_func_pointers>,
 }
 
 // The table is a block of plain function pointers with no interior mutability, and is only
@@ -32,13 +32,13 @@ impl CapiVMHookTable {
     /// entry is called without a further null check, because a partially filled table is not
     /// something this API can detect: a null function pointer and a wrong one are
     /// indistinguishable here.
-    pub unsafe fn copy_from(func_pointers: *const vm_exec_w6_vm_hook_c_func_pointers) -> Self {
+    pub unsafe fn copy_from(func_pointers: *const vm_exec_vm_hook_c_func_pointers) -> Self {
         CapiVMHookTable {
             func_pointers: Arc::new(unsafe { (*func_pointers).clone() }),
         }
     }
 
-    pub fn func_pointers(&self) -> &vm_exec_w6_vm_hook_c_func_pointers {
+    pub fn func_pointers(&self) -> &vm_exec_vm_hook_c_func_pointers {
         &self.func_pointers
     }
 }

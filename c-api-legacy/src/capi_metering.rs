@@ -1,15 +1,15 @@
-use crate::capi_executor::{CapiExecutor, vm_exec_executor_t};
-use crate::capi_instance::{CapiInstance, vm_exec_instance_t};
-use crate::capi_opcode_cost::vm_exec_opcode_cost_t;
+use crate::capi_executor::{CapiExecutor, vm_legacy_executor_t};
+use crate::capi_instance::{CapiInstance, vm_legacy_instance_t};
+use crate::capi_opcode_cost::vm_legacy_opcode_cost_t;
 use crate::service_singleton::with_service;
-use crate::vm_exec_result_t;
+use crate::vm_legacy_result_t;
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::{OpcodeConfig, OpcodeVersion};
 
 /// Sets the opcode costs for the given executor.
 ///
-/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
-/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// This function returns `vm_legacy_result_t::WASMER_OK` upon success,
+/// `vm_legacy_result_t::WASMER_ERROR` otherwise. You can use
 /// `wasmer_last_error_message()` to get the generated error message.
 ///
 /// # Safety
@@ -17,12 +17,12 @@ use multiversx_chain_vm_executor::{OpcodeConfig, OpcodeVersion};
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_set_opcode_config(
-    executor_ptr: *mut vm_exec_executor_t,
+    executor_ptr: *mut vm_legacy_executor_t,
     opcode_version_code: i32,
-    opcode_cost_ptr: *const vm_exec_opcode_cost_t,
-) -> vm_exec_result_t {
+    opcode_cost_ptr: *const vm_legacy_opcode_cost_t,
+) -> vm_legacy_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
     let Some(opcode_version) = OpcodeVersion::from_i32(opcode_version_code) else {
@@ -32,7 +32,7 @@ pub unsafe extern "C" fn vm_exec_set_opcode_config(
                 opcode_version_code
             ))
         });
-        return vm_exec_result_t::VM_EXEC_ERROR;
+        return vm_legacy_result_t::VM_LEGACY_ERROR;
     };
 
     let opcode_cost = unsafe { (*opcode_cost_ptr).to_opcode_cost() };
@@ -43,18 +43,18 @@ pub unsafe extern "C" fn vm_exec_set_opcode_config(
 
     let result = capi_executor.content.set_opcode_config(opcode_config);
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message.to_string()));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
 
 /// Sets the number of points(gas) limit for the given instance.
 ///
-/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
-/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// This function returns `vm_legacy_result_t::WASMER_OK` upon success,
+/// `vm_legacy_result_t::WASMER_ERROR` otherwise. You can use
 /// `wasmer_last_error_message()` to get the generated error message.
 ///
 /// # Safety
@@ -62,26 +62,26 @@ pub unsafe extern "C" fn vm_exec_set_opcode_config(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
     limit: u64,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     let result = capi_instance.content.set_points_limit(limit);
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
 
 /// Sets the number of points(gas) for the given instance.
 ///
-/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
-/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// This function returns `vm_legacy_result_t::WASMER_OK` upon success,
+/// `vm_legacy_result_t::WASMER_ERROR` otherwise. You can use
 /// `wasmer_last_error_message()` to get the generated error message.
 ///
 /// # Safety
@@ -89,18 +89,18 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_limit(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_points_used(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
     points: u64,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     let result = capi_instance.content.set_points_used(points);
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
@@ -114,7 +114,7 @@ pub unsafe extern "C" fn vm_exec_instance_set_points_used(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_get_points_used(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
 ) -> u64 {
     let capi_instance =
         cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);

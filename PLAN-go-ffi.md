@@ -778,13 +778,58 @@ Verified by regenerating — which must move nothing — and by running the full
 `wasmer2legacy` and `wasmer6`, plus the dual-backend trap tests and the hook-sequence
 differential.
 
+### Done: the prefix separation, and `c-api-common`
+
+**Shim and legacy-type prefixes.** The cgo `//export` names are C symbols, so the legacy
+shims moved to `w2l_*`, freeing `w2_*` for the new Wasmer 2.2 integration. And the legacy C
+*types* became `vm_legacy_*` — `vm_legacy_compilation_options_t`, `vm_legacy_result_t`,
+`vm_legacy_executor_t`, `vm_legacy_instance_t`, `vm_legacy_opcode_cost_t`,
+`vm_legacy_vm_hook_c_func_pointers`, plus `VM_LEGACY_OK` / `VM_LEGACY_ERROR` — which removes
+the collision class entirely rather than relying on no package including both headers. The
+legacy *functions* keep `vm_exec_*`, since the common header declares no functions and nothing
+of theirs can collide. The shared opcode-cost writer had to be parameterised by C type name,
+because one output fed both the legacy crate and the new one.
+
+**`c-api-common` is extracted, and it took more than the types.** The result:
+
+| | Lines | Contents |
+| --- | --- | --- |
+| `c-api-common` | **2,435** | status, strings, config, opcode cost, panic suppression, call result, and the *whole* hook dispatch path — context ABI, context pool, builder, table, and the generated `VMHooks` implementation |
+| `c-api-wasmer6` | **734** | the two opaque handles, the prefixed entry points, and one file naming the backend |
+
+The hook dispatch moved because the context carries the instance state as an **erased pointer**:
+nothing in the pool, the table or the 900-odd generated lines ever names a backend type. Making
+`with_instance_state` and `with_hook_context` generic over `S` was enough, and the backend crate
+now names its state type in exactly one place — `capi_backend.rs`, which defines
+`BackendInstanceState` and wraps the shared builder to implement its own builder trait. So
+`c-api-wasmer2` will not duplicate the generated hooks; it gets a `capi_backend.rs` of its own.
+
+Two things the compiler forced, both worth keeping:
+
+- **The orphan rule.** With the builder in `c-api-common`, both it and `ExperimentalVMHooksBuilder`
+  are foreign to the backend crate, so the trait cannot be implemented directly. A newtype
+  (`BackendVMHooksBuilder`) fixes it and makes the seam explicit rather than incidental.
+- **`capi_logger` has to exist in every crate**, because `meta::capi_safe_unwind` expands to
+  `crate::capi_logger::set_panic_handler()`. Each backend crate carries a one-line re-export.
+
+**The shared header works.** `c-api-common` generates `libvmexeccapi_common.h` with an include
+guard and an explicit export list (nothing is reachable from an entry point, since the crate
+exports no functions); `c-api-wasmer6`'s cbindgen excludes those types and emits
+`#include "libvmexeccapi_common.h"`. Verified: nine shared types appear once, in the common
+header, and zero times in the backend header.
+
+Shared types are published under the neutral `vm_exec_*` prefix. The rule that fell out is
+worth stating, because it is what the next crate follows: **types shared → `vm_exec_*`;
+opaque handles and functions → `vm_exec_w6_*`.**
+
 ### Still to do
 
-1. **`c-api-common`.** The extraction is small: of the thirteen modules in `c-api-wasmer6`,
+1. ~~**`c-api-common`.**~~ **Done** — see above. What remains of the original estimate: The extraction is small: of the thirteen modules in `c-api-wasmer6`,
    **ten already reference no backend type at all**. Only `capi_vm_hook_context.rs` (10
-   references), `capi_instance.rs` (3) and `capi_vm_hook_table.rs` (1) are coupled. So status
-   codes, strings, config, opcode cost, the logger, the hook result struct and the generated
-   hook tables move as-is; the context and the instance stay behind, parameterised by backend.
+   the three `#[no_mangle]` entry-point files (`capi_executor.rs`, `capi_instance.rs`,
+   `capi_instance_state.rs`, ~700 lines) are still per-backend, because each needs its own
+   symbol prefix. `c-api-wasmer2` will duplicate them unless they are generated from a macro
+   parameterised by prefix — worth deciding when that crate is written, not before.
 2. **`c-api-wasmer2`.** Wasmer 2.2 through the new interfaces. This is what puts **Phase 1.6
    back on the critical path**: `WasmerProdRuntimeRef::vm_hooks` returns
    `Box<dyn VMHooksLegacy>` and `Arc<Mutex<OpcodeConfig>>` where the Wasmer 6 side returns a

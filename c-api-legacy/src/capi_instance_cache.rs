@@ -3,11 +3,11 @@ use std::slice;
 use meta::capi_safe_unwind;
 
 use crate::{
-    capi_compilation_options::vm_exec_compilation_options_t,
-    capi_executor::{CapiExecutor, vm_exec_executor_t},
-    capi_instance::{CapiInstance, vm_exec_instance_t},
+    capi_compilation_options::vm_legacy_compilation_options_t,
+    capi_executor::{CapiExecutor, vm_legacy_executor_t},
+    capi_instance::{CapiInstance, vm_legacy_instance_t},
     service_singleton::with_service,
-    vm_exec_result_t,
+    vm_legacy_result_t,
 };
 
 /// Caches an instance.
@@ -17,12 +17,12 @@ use crate::{
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_cache(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
     cache_bytes_ptr: *mut *const u8,
     cache_bytes_len: *mut u32,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
 
     let result = capi_instance.content.cache();
@@ -33,11 +33,11 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
                 *cache_bytes_len = bytes.len() as u32;
             }
             std::mem::forget(bytes);
-            vm_exec_result_t::VM_EXEC_OK
+            vm_legacy_result_t::VM_LEGACY_OK
         }
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
@@ -51,21 +51,21 @@ pub unsafe extern "C" fn vm_exec_instance_cache(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment, unused_variables)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_from_cache(
-    executor_ptr: *mut vm_exec_executor_t,
-    instance_ptr_ptr: *mut *mut vm_exec_instance_t,
+    executor_ptr: *mut vm_legacy_executor_t,
+    instance_ptr_ptr: *mut *mut vm_legacy_instance_t,
     cache_bytes_ptr: *mut u8,
     cache_bytes_len: u32,
-    options_ptr: *const vm_exec_compilation_options_t,
-) -> vm_exec_result_t {
+    options_ptr: *const vm_legacy_compilation_options_t,
+) -> vm_legacy_result_t {
     let capi_executor = cast_input_ptr!(executor_ptr, CapiExecutor, "executor ptr is null");
 
     if cache_bytes_ptr.is_null() {
         with_service(|service| {
             service.update_last_error_str("cache bytes ptr is null".to_string())
         });
-        return vm_exec_result_t::VM_EXEC_ERROR;
+        return vm_legacy_result_t::VM_LEGACY_ERROR;
     }
 
     return_if_ptr_null!(options_ptr, "compilation options ptr is null");
@@ -83,13 +83,13 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
             };
             unsafe {
                 *instance_ptr_ptr =
-                    Box::into_raw(Box::new(capi_instance)) as *mut vm_exec_instance_t;
+                    Box::into_raw(Box::new(capi_instance)) as *mut vm_legacy_instance_t;
             }
-            vm_exec_result_t::VM_EXEC_OK
+            vm_legacy_result_t::VM_LEGACY_OK
         }
         Err(message) => {
             with_service(|service| service.update_last_error_str(message.to_string()));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }

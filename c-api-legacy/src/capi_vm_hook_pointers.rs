@@ -10,7 +10,7 @@ use std::ffi::c_void;
 #[derive(Clone)]
 #[allow(non_camel_case_types)]
 #[rustfmt::skip]
-pub struct vm_exec_vm_hook_c_func_pointers {
+pub struct vm_legacy_vm_hook_c_func_pointers {
     pub get_gas_left_func_ptr: extern "C" fn(context: *mut c_void) -> i64,
     pub get_sc_address_func_ptr: extern "C" fn(context: *mut c_void, result_offset: i32),
     pub get_owner_address_func_ptr: extern "C" fn(context: *mut c_void, result_offset: i32),
@@ -290,8 +290,8 @@ pub struct vm_exec_vm_hook_c_func_pointers {
     pub managed_verify_blsaggregated_signature_func_ptr: extern "C" fn(context: *mut c_void, key_handle: i32, message_handle: i32, sig_handle: i32) -> i32,
 }
 
-impl std::fmt::Debug for vm_exec_vm_hook_c_func_pointers {
+impl std::fmt::Debug for vm_legacy_vm_hook_c_func_pointers {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "vm_exec_vm_hook_c_func_pointers")
+        write!(f, "vm_legacy_vm_hook_c_func_pointers")
     }
 }

@@ -8,7 +8,7 @@ use libc::{c_char, c_int};
 use std::{ptr, slice};
 
 /// The length, including the NUL terminator, that `copy_pipe_joined` needs for `names`.
-pub(crate) fn pipe_joined_length(names: &[String]) -> c_int {
+pub fn pipe_joined_length(names: &[String]) -> c_int {
     if names.is_empty() {
         return 0;
     }
@@ -26,11 +26,7 @@ pub(crate) fn pipe_joined_length(names: &[String]) -> c_int {
 /// # Safety
 ///
 /// `dest` must be null or writable for `dest_len` bytes.
-pub(crate) unsafe fn copy_pipe_joined(
-    names: &[String],
-    dest: *mut c_char,
-    dest_len: c_int,
-) -> c_int {
+pub unsafe fn copy_pipe_joined(names: &[String], dest: *mut c_char, dest_len: c_int) -> c_int {
     let joined = names.join("|");
 
     if dest.is_null() || dest_len <= 0 {

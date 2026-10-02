@@ -3,9 +3,9 @@
 use meta::capi_safe_unwind;
 
 use crate::{
-    capi_instance::{CapiInstance, vm_exec_instance_t},
+    capi_instance::{CapiInstance, vm_legacy_instance_t},
     service_singleton::with_service,
-    vm_exec_result_t,
+    vm_legacy_result_t,
 };
 use std::ptr;
 
@@ -20,7 +20,7 @@ use std::ptr;
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
 ) -> u64 {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);
     let result = capi_instance.content.memory_length();
@@ -48,7 +48,7 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data_length(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(ptr::null_mut())]
 pub unsafe extern "C" fn vm_exec_instance_memory_data(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
 ) -> *mut u8 {
     let capi_instance = cast_input_ptr!(
         instance_ptr,
@@ -78,19 +78,19 @@ pub unsafe extern "C" fn vm_exec_instance_memory_data(
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_memory_grow(
-    instance_ptr: *mut vm_exec_instance_t,
+    instance_ptr: *mut vm_legacy_instance_t,
     by_num_pages: u32,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     let grow_result = capi_instance.content.memory_grow(by_num_pages);
 
     match grow_result {
-        Ok(_) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(_) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(grow_error) => {
             with_service(|service| service.update_last_error_str(grow_error.to_string()));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }

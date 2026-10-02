@@ -6,8 +6,8 @@
 
 use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks, VMHooksEarlyExit};
 
-use crate::capi_vm_hook_context::{vm_exec_w6_hook_context_t, vm_exec_w6_hook_result_t};
-use crate::capi_vm_hook_pointers::vm_exec_w6_vm_hook_c_func_pointers;
+use crate::capi_vm_hook_context::{vm_exec_hook_context_t, vm_exec_hook_result_t};
+use crate::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
 
 /// Services one host call by dispatching each VM hook to the Go side.
 ///
@@ -15,14 +15,14 @@ use crate::capi_vm_hook_pointers::vm_exec_w6_vm_hook_c_func_pointers;
 /// the Go side hands back to the state functions. It borrows the table rather than owning a
 /// copy, because the executor already owns one for the lifetime of the instance.
 pub struct CapiVMHooks<'a> {
-    ctx: *mut vm_exec_w6_hook_context_t,
-    func_pointers: &'a vm_exec_w6_vm_hook_c_func_pointers,
+    ctx: *mut vm_exec_hook_context_t,
+    func_pointers: &'a vm_exec_vm_hook_c_func_pointers,
 }
 
 impl<'a> CapiVMHooks<'a> {
     pub fn new(
-        ctx: *mut vm_exec_w6_hook_context_t,
-        func_pointers: &'a vm_exec_w6_vm_hook_c_func_pointers,
+        ctx: *mut vm_exec_hook_context_t,
+        func_pointers: &'a vm_exec_vm_hook_c_func_pointers,
     ) -> Self {
         CapiVMHooks { ctx, func_pointers }
     }
@@ -51,21 +51,21 @@ fn early_exit(code: u64) -> VMHooksEarlyExit {
     VMHooksEarlyExit::new(code)
 }
 
-fn unpack_void(result: vm_exec_w6_hook_result_t) -> Result<(), VMHooksEarlyExit> {
+fn unpack_void(result: vm_exec_hook_result_t) -> Result<(), VMHooksEarlyExit> {
     match result.early_exit_code() {
         Some(code) => Err(early_exit(code)),
         None => Ok(()),
     }
 }
 
-fn unpack_i32(result: vm_exec_w6_hook_result_t) -> Result<i32, VMHooksEarlyExit> {
+fn unpack_i32(result: vm_exec_hook_result_t) -> Result<i32, VMHooksEarlyExit> {
     match result.early_exit_code() {
         Some(code) => Err(early_exit(code)),
         None => Ok(result.value as i32),
     }
 }
 
-fn unpack_i64(result: vm_exec_w6_hook_result_t) -> Result<i64, VMHooksEarlyExit> {
+fn unpack_i64(result: vm_exec_hook_result_t) -> Result<i64, VMHooksEarlyExit> {
     match result.early_exit_code() {
         Some(code) => Err(early_exit(code)),
         None => Ok(result.value),

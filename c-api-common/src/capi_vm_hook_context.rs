@@ -10,7 +10,7 @@
 //! 1. **Lifetime.** Each activation gets a fresh, non-zero call token. The context records
 //!    it, and the pool records which token is currently innermost. A state function accepts
 //!    a context only while the two agree, so a context used after its hook returned is
-//!    rejected with `VM_EXEC_W6_STALE_CONTEXT` instead of dereferencing a dead borrow.
+//!    rejected with `VM_EXEC_STALE_CONTEXT` instead of dereferencing a dead borrow.
 //!
 //! 2. **Exclusivity.** Contexts are activated in a stack, one per nesting level, so a hook
 //!    that re-enters the VM (`executeOnDestContext` running a contract from inside a hook)
@@ -35,19 +35,18 @@ use std::cell::RefCell;
 use std::ffi::c_void;
 
 use multiversx_chain_vm_executor::VMHooks;
-use multiversx_chain_vm_executor_wasmer_experimental::{
-    ExperimentalInstanceState, ExperimentalVMHooksBuilder,
-};
+
+use crate::capi_status::vm_exec_status_t;
 
 use crate::capi_vm_hook_table::CapiVMHookTable;
 use crate::capi_vm_hooks::CapiVMHooks;
 
-/// The value of `vm_exec_w6_hook_result_t::early_exit` that means "the hook returned normally".
+/// The value of `vm_exec_hook_result_t::early_exit` that means "the hook returned normally".
 ///
 /// A dedicated sentinel is needed because `0` is a real early-exit code: the Rust VM uses
 /// `ASYNC_CALL_EARLY_EXIT_CODE = 0` and the Go VM has the same async-call case, so "code 0"
 /// and "no code" have to stay distinguishable.
-pub const VM_EXEC_W6_NO_EARLY_EXIT: u64 = u64::MAX;
+pub const VM_EXEC_NO_EARLY_EXIT: u64 = u64::MAX;
 
 /// What every VM hook returns.
 ///
@@ -63,27 +62,27 @@ pub const VM_EXEC_W6_NO_EARLY_EXIT: u64 = u64::MAX;
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct vm_exec_w6_hook_result_t {
+pub struct vm_exec_hook_result_t {
     /// The hook's own return value, widened to 64 bits. Ignored for a `void` hook, and for
     /// any hook that reports an early exit.
     pub value: i64,
 
-    /// The early-exit code, or `VM_EXEC_W6_NO_EARLY_EXIT`.
+    /// The early-exit code, or `VM_EXEC_NO_EARLY_EXIT`.
     pub early_exit: u64,
 }
 
-impl vm_exec_w6_hook_result_t {
+impl vm_exec_hook_result_t {
     /// The hook returned normally, with the given value (`0` for a `void` hook).
     pub fn ok(value: i64) -> Self {
-        vm_exec_w6_hook_result_t {
+        vm_exec_hook_result_t {
             value,
-            early_exit: VM_EXEC_W6_NO_EARLY_EXIT,
+            early_exit: VM_EXEC_NO_EARLY_EXIT,
         }
     }
 
     /// The hook requested an early exit with the given code.
     pub fn early_exit(code: u64) -> Self {
-        vm_exec_w6_hook_result_t {
+        vm_exec_hook_result_t {
             value: 0,
             early_exit: code,
         }
@@ -91,7 +90,7 @@ impl vm_exec_w6_hook_result_t {
 
     /// The early-exit code, if there is one.
     pub fn early_exit_code(self) -> Option<u64> {
-        if self.early_exit == VM_EXEC_W6_NO_EARLY_EXIT {
+        if self.early_exit == VM_EXEC_NO_EARLY_EXIT {
             None
         } else {
             Some(self.early_exit)
@@ -105,7 +104,7 @@ impl vm_exec_w6_hook_result_t {
 /// Rust, and the whole pointer is what travels back into the state functions.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_w6_hook_context_t {
+pub struct vm_exec_hook_context_t {
     /// The caller's VM hooks handle for this instance. Read by the caller, never by Rust.
     ///
     /// An opaque word rather than a pointer, deliberately: Rust only stores it and hands it
@@ -115,7 +114,7 @@ pub struct vm_exec_w6_hook_context_t {
     /// `unsafe.Pointer(uintptr(...))`, exactly the pattern `go vet` rejects.
     pub go_vm_hooks: usize,
 
-    /// Erased `&mut ExperimentalInstanceState<'_>`; null while no call is active.
+    /// Erased `&mut S` for the backend's instance state; null while no call is active.
     state: *mut c_void,
 
     /// Erased `&RefCell<CapiVMHookContextPool>`, for the token check.
@@ -125,16 +124,9 @@ pub struct vm_exec_w6_hook_context_t {
     token: u64,
 }
 
-/// Lifetime-erased form of the instance state pointer kept in a context.
-///
-/// The real type is `&mut ExperimentalInstanceState<'s>` for the `'s` of the host-call frame.
-/// That lifetime cannot be expressed across C, so it is erased here and enforced at runtime
-/// by the call token.
-type ErasedInstanceState = ExperimentalInstanceState<'static>;
-
-impl vm_exec_w6_hook_context_t {
+impl vm_exec_hook_context_t {
     fn inactive() -> Self {
-        vm_exec_w6_hook_context_t {
+        vm_exec_hook_context_t {
             go_vm_hooks: 0,
             state: std::ptr::null_mut(),
             pool: std::ptr::null(),
@@ -150,12 +142,12 @@ impl vm_exec_w6_hook_context_t {
 ///
 /// # Safety
 ///
-/// `ctx` must either be null or point to a `vm_exec_w6_hook_context_t` that this crate
+/// `ctx` must either be null or point to a `vm_exec_hook_context_t` that this crate
 /// activated. Pooled contexts are never freed before their instance, so a context pointer
 /// obtained from a hook always satisfies this, live or not.
-pub(crate) unsafe fn with_instance_state<R>(
-    ctx: *mut vm_exec_w6_hook_context_t,
-    f: impl FnOnce(&mut &mut ExperimentalInstanceState<'static>) -> R,
+pub unsafe fn with_instance_state<S, R>(
+    ctx: *mut vm_exec_hook_context_t,
+    f: impl FnOnce(&mut &mut S) -> R,
 ) -> Result<R, ContextError> {
     if ctx.is_null() {
         return Err(ContextError::NullContext);
@@ -176,16 +168,31 @@ pub(crate) unsafe fn with_instance_state<R>(
         return Err(ContextError::Stale);
     }
 
-    let mut state: &mut ErasedInstanceState =
-        unsafe { &mut *(ctx.state as *mut ErasedInstanceState) };
+    // The caller names `S`, and is responsible for naming the same type the matching
+    // `with_hook_context` erased. Within one backend crate there is only one such type, which
+    // is what makes that obligation checkable by reading a single file.
+    let mut state: &mut S = unsafe { &mut *(ctx.state as *mut S) };
     Ok(f(&mut state))
 }
 
 /// Why a context could not be used.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum ContextError {
+pub enum ContextError {
     NullContext,
     Stale,
+}
+
+impl ContextError {
+    /// The status a state function reports for this failure.
+    ///
+    /// Lives here rather than with the state functions, because every backend's copy of those
+    /// maps it the same way and the mapping is part of what the error means.
+    pub fn as_status(self) -> vm_exec_status_t {
+        match self {
+            ContextError::NullContext => vm_exec_status_t::VM_EXEC_NULL_POINTER,
+            ContextError::Stale => vm_exec_status_t::VM_EXEC_STALE_CONTEXT,
+        }
+    }
 }
 
 /// The per-instance stack of hook contexts.
@@ -194,12 +201,12 @@ pub struct CapiVMHookContextPool {
     /// One boxed context per nesting level.
     ///
     /// The `Box` is load-bearing and not the redundancy clippy takes it for: a
-    /// `Vec<vm_exec_w6_hook_context_t>` would move its elements when it grows, invalidating
+    /// `Vec<vm_exec_hook_context_t>` would move its elements when it grows, invalidating
     /// context pointers that outer hook invocations are still holding. Boxing each context
     /// individually pins its address for the instance's lifetime, which is what lets a
     /// stale pointer be read and rejected instead of being undefined behaviour.
     #[allow(clippy::vec_box)]
-    slots: Vec<Box<vm_exec_w6_hook_context_t>>,
+    slots: Vec<Box<vm_exec_hook_context_t>>,
 
     /// Nesting depth of the currently active call.
     depth: usize,
@@ -213,6 +220,10 @@ pub struct CapiVMHookContextPool {
 }
 
 /// Builds the VM hooks for one host call, and owns the context lifecycle.
+///
+/// Backend-independent: the state pointer it stores is erased, so nothing here names the
+/// backend's state type. Each backend crate supplies the `with_vm_hooks` implementation that
+/// its builder trait requires, naming its own state type at that one point.
 pub struct CapiVMHooksBuilder {
     go_vm_hooks: usize,
     hook_table: CapiVMHookTable,
@@ -233,12 +244,12 @@ impl CapiVMHooksBuilder {
     /// The context is deactivated before this returns, whether `f` panics or not, so a
     /// pointer that escapes is guaranteed to fail the token check rather than reach a dead
     /// borrow.
-    pub fn with_hook_context<R>(
+    pub fn with_hook_context<S, R>(
         &self,
-        instance_state: &mut ExperimentalInstanceState<'_>,
-        f: impl FnOnce(*mut vm_exec_w6_hook_context_t) -> R,
+        instance_state: &mut S,
+        f: impl FnOnce(*mut vm_exec_hook_context_t) -> R,
     ) -> R {
-        let state_ptr = (instance_state as *mut ExperimentalInstanceState<'_>).cast::<c_void>();
+        let state_ptr = (instance_state as *mut S).cast::<c_void>();
 
         // Safety: the pointer is derived from a live `&mut` that outlives this call, and the
         // context holding it is deactivated before we return.
@@ -253,12 +264,13 @@ impl CapiVMHooksBuilder {
     ///
     /// # Safety
     ///
-    /// `state` must point to a live `ExperimentalInstanceState` for the whole of `f`, unless
+    /// `state` must point to a live instance state of the backend's own type for the whole of
+    /// `f`, unless
     /// `f` never reaches the state through the context.
     pub unsafe fn with_hook_context_raw<R>(
         &self,
         state: *mut c_void,
-        f: impl FnOnce(*mut vm_exec_w6_hook_context_t) -> R,
+        f: impl FnOnce(*mut vm_exec_hook_context_t) -> R,
     ) -> R {
         let (ctx_ptr, parent_token) = {
             let mut pool = self.pool.borrow_mut();
@@ -266,7 +278,7 @@ impl CapiVMHooksBuilder {
             let depth = pool.depth;
             if depth == pool.slots.len() {
                 pool.slots
-                    .push(Box::new(vm_exec_w6_hook_context_t::inactive()));
+                    .push(Box::new(vm_exec_hook_context_t::inactive()));
             }
 
             pool.next_token += 1;
@@ -283,7 +295,7 @@ impl CapiVMHooksBuilder {
             slot.pool = pool_ptr;
             slot.token = token;
 
-            (&mut **slot as *mut vm_exec_w6_hook_context_t, parent_token)
+            (&mut **slot as *mut vm_exec_hook_context_t, parent_token)
         };
 
         // The pool borrow is released across `f`, because the hook will call back into the
@@ -299,7 +311,7 @@ impl CapiVMHooksBuilder {
         result
     }
 
-    fn deactivate(&self, ctx_ptr: *mut vm_exec_w6_hook_context_t, parent_token: u64) {
+    fn deactivate(&self, ctx_ptr: *mut vm_exec_hook_context_t, parent_token: u64) {
         let mut pool = self.pool.borrow_mut();
         pool.depth = pool.depth.saturating_sub(1);
         pool.active_token = parent_token;
@@ -313,10 +325,30 @@ impl CapiVMHooksBuilder {
     }
 }
 
+impl CapiVMHooksBuilder {
+    /// Activates a context around `instance_state` and lends the generated hooks to `f`.
+    ///
+    /// This is the whole of hook dispatch, and it names no backend: the state is erased on the
+    /// way in and reconstituted by `with_instance_state` on the way back. A backend crate
+    /// wraps this in the builder trait its executor expects, which is the one place its state
+    /// type appears.
+    pub fn with_vm_hooks_for_state<S>(
+        &self,
+        instance_state: &mut S,
+        f: &mut dyn FnMut(&mut dyn VMHooks),
+    ) {
+        self.with_hook_context(instance_state, |ctx| {
+            // The hooks borrow the context, so they live exactly as long as this activation
+            // — which is also exactly as long as the instance state they reach through it.
+            f(&mut CapiVMHooks::new(ctx, self.hook_table.func_pointers()));
+        });
+    }
+}
+
 /// Runs the deactivation even if the hook body unwinds.
 struct DeactivateOnDrop<'a> {
     builder: &'a CapiVMHooksBuilder,
-    ctx_ptr: *mut vm_exec_w6_hook_context_t,
+    ctx_ptr: *mut vm_exec_hook_context_t,
     parent_token: u64,
 }
 
@@ -326,53 +358,39 @@ impl Drop for DeactivateOnDrop<'_> {
     }
 }
 
-impl ExperimentalVMHooksBuilder for CapiVMHooksBuilder {
-    fn with_vm_hooks(
-        &self,
-        instance_state_ref: &mut ExperimentalInstanceState,
-        f: &mut dyn FnMut(&mut dyn VMHooks),
-    ) {
-        self.with_hook_context(instance_state_ref, |ctx| {
-            // The hooks borrow the context, so they live exactly as long as this activation
-            // — which is also exactly as long as the instance state they reach through it.
-            f(&mut CapiVMHooks::new(ctx, self.hook_table.func_pointers()));
-        });
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn hook_result_distinguishes_code_zero_from_no_code() {
-        assert_eq!(vm_exec_w6_hook_result_t::ok(7).early_exit_code(), None);
+        assert_eq!(vm_exec_hook_result_t::ok(7).early_exit_code(), None);
         assert_eq!(
-            vm_exec_w6_hook_result_t::early_exit(0).early_exit_code(),
+            vm_exec_hook_result_t::early_exit(0).early_exit_code(),
             Some(0)
         );
         assert_eq!(
-            vm_exec_w6_hook_result_t::early_exit(4).early_exit_code(),
+            vm_exec_hook_result_t::early_exit(4).early_exit_code(),
             Some(4)
         );
     }
 
     #[test]
     fn hook_result_fits_in_two_registers() {
-        assert_eq!(std::mem::size_of::<vm_exec_w6_hook_result_t>(), 16);
-        assert_eq!(std::mem::align_of::<vm_exec_w6_hook_result_t>(), 8);
+        assert_eq!(std::mem::size_of::<vm_exec_hook_result_t>(), 16);
+        assert_eq!(std::mem::align_of::<vm_exec_hook_result_t>(), 8);
     }
 
     #[test]
     fn null_context_is_rejected() {
-        let result = unsafe { with_instance_state(std::ptr::null_mut(), |_| ()) };
+        let result = unsafe { with_instance_state::<(), _>(std::ptr::null_mut(), |_| ()) };
         assert_eq!(result, Err(ContextError::NullContext));
     }
 
     #[test]
     fn inactive_context_is_rejected() {
-        let mut ctx = vm_exec_w6_hook_context_t::inactive();
-        let result = unsafe { with_instance_state(&mut ctx, |_| ()) };
+        let mut ctx = vm_exec_hook_context_t::inactive();
+        let result = unsafe { with_instance_state::<(), _>(&mut ctx, |_| ()) };
         assert_eq!(result, Err(ContextError::Stale));
     }
 }

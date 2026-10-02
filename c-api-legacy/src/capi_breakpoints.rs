@@ -1,14 +1,14 @@
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::InstanceLegacy;
 
-use crate::capi_instance::{CapiInstance, vm_exec_instance_t};
+use crate::capi_instance::{CapiInstance, vm_legacy_instance_t};
 use crate::service_singleton::with_service;
-use crate::vm_exec_result_t;
+use crate::vm_legacy_result_t;
 
 /// Sets the runtime breakpoint value for the given instance.
 ///
-/// This function returns `vm_exec_result_t::WASMER_OK` upon success,
-/// `vm_exec_result_t::WASMER_ERROR` otherwise. You can use
+/// This function returns `vm_legacy_result_t::WASMER_OK` upon success,
+/// `vm_legacy_result_t::WASMER_ERROR` otherwise. You can use
 /// `wasmer_last_error_message()` to get the generated error message.
 ///
 /// # Safety
@@ -16,18 +16,18 @@ use crate::vm_exec_result_t;
 /// C API function, works with raw object pointers.
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
-#[capi_safe_unwind(vm_exec_result_t::VM_EXEC_ERROR)]
+#[capi_safe_unwind(vm_legacy_result_t::VM_LEGACY_ERROR)]
 pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
     value: u64,
-) -> vm_exec_result_t {
+) -> vm_legacy_result_t {
     let capi_instance = cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null");
     let result = set_breakpoint_value_u64(capi_instance.content.as_ref(), value);
     match result {
-        Ok(()) => vm_exec_result_t::VM_EXEC_OK,
+        Ok(()) => vm_legacy_result_t::VM_LEGACY_OK,
         Err(message) => {
             with_service(|service| service.update_last_error_str(message));
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         }
     }
 }
@@ -41,7 +41,7 @@ pub unsafe extern "C" fn vm_exec_instance_set_breakpoint_value(
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(0)]
 pub unsafe extern "C" fn vm_exec_instance_get_breakpoint_value(
-    instance_ptr: *const vm_exec_instance_t,
+    instance_ptr: *const vm_legacy_instance_t,
 ) -> u64 {
     let capi_instance =
         cast_input_const_ptr!(instance_ptr, CapiInstance, "instance ptr is null", 0);

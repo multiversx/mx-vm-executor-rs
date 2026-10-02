@@ -13,7 +13,7 @@ use multiversx_chain_vm_executor::OpcodeCost;
 /// ABI, and vice versa.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_opcode_cost_t {
+pub struct vm_legacy_opcode_cost_t {
     pub opcode_block: u32,
     pub opcode_br: u32,
     pub opcode_brif: u32,
@@ -148,7 +148,7 @@ pub struct vm_exec_opcode_cost_t {
     pub opcode_localallocate: u32,
 }
 
-impl vm_exec_opcode_cost_t {
+impl vm_legacy_opcode_cost_t {
     pub(crate) fn to_opcode_cost(&self) -> OpcodeCost {
         OpcodeCost {
             opcode_block: self.opcode_block,

@@ -5,12 +5,12 @@ use std::{ptr, slice};
 /// success, or a failure.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub enum vm_exec_result_t {
+pub enum vm_legacy_result_t {
     /// Represents a success.
-    VM_EXEC_OK = 1,
+    VM_LEGACY_OK = 1,
 
     /// Represents a failure.
-    VM_EXEC_ERROR = 2,
+    VM_LEGACY_ERROR = 2,
 }
 
 #[allow(non_camel_case_types)]

@@ -11,7 +11,7 @@ use multiversx_chain_vm_executor::CompilationOptionsLegacy;
 /// width across host platforms.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_compilation_options_t {
+pub struct vm_legacy_compilation_options_t {
     pub gas_limit: u64,
     pub unmetered_locals: u64,
     pub max_memory_grow: u64,
@@ -21,7 +21,7 @@ pub struct vm_exec_compilation_options_t {
     pub runtime_breakpoints: bool,
 }
 
-impl vm_exec_compilation_options_t {
+impl vm_legacy_compilation_options_t {
     pub(crate) fn to_legacy(&self) -> CompilationOptionsLegacy {
         CompilationOptionsLegacy {
             gas_limit: self.gas_limit,

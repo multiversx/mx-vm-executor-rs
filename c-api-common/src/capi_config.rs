@@ -15,7 +15,7 @@ use crate::capi_opcode_cost::vm_exec_opcode_cost_t;
 /// caller already holds one. It is read during the call and not retained.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_w6_executor_config_t {
+pub struct vm_exec_executor_config_t {
     /// Which opcode set and whitelist to apply; see `OpcodeVersion` on the Rust side.
     pub opcode_version: i32,
 
@@ -23,13 +23,13 @@ pub struct vm_exec_w6_executor_config_t {
     pub opcode_cost: *const vm_exec_opcode_cost_t,
 }
 
-impl vm_exec_w6_executor_config_t {
+impl vm_exec_executor_config_t {
     /// Converts to the executor's own config type.
     ///
     /// # Safety
     ///
     /// `self.opcode_cost` must be a valid, non-null pointer for the duration of the call.
-    pub(crate) unsafe fn to_opcode_config(&self) -> Result<OpcodeConfig, String> {
+    pub unsafe fn to_opcode_config(&self) -> Result<OpcodeConfig, String> {
         let Some(opcode_version) = OpcodeVersion::from_i32(self.opcode_version) else {
             return Err(format!(
                 "invalid opcode version code: {}",
@@ -55,15 +55,15 @@ impl vm_exec_w6_executor_config_t {
 /// fixed to `u64` here, since `usize` has no guaranteed width across host platforms.
 #[allow(non_camel_case_types)]
 #[repr(C)]
-pub struct vm_exec_w6_compilation_options_t {
+pub struct vm_exec_compilation_options_t {
     pub unmetered_locals: u64,
     pub max_memory_grow: u64,
     pub max_memory_grow_delta: u64,
     pub opcode_trace: bool,
 }
 
-impl vm_exec_w6_compilation_options_t {
-    pub(crate) fn to_compilation_options(&self) -> CompilationOptions {
+impl vm_exec_compilation_options_t {
+    pub fn to_compilation_options(&self) -> CompilationOptions {
         CompilationOptions {
             unmetered_locals: self.unmetered_locals as usize,
             max_memory_grow: self.max_memory_grow as usize,

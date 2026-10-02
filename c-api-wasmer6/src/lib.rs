@@ -11,7 +11,7 @@
 //! - **Configuration is passed once**, at the point the thing it configures is created.
 //!   There are no post-construction setters.
 //! - **A call reports what happened in its result**, instead of leaving the caller to poll a
-//!   wasm global afterwards. See `vm_exec_w6_call_result_t`.
+//!   wasm global afterwards. See `vm_exec_call_result_t`.
 //!
 //! The hook dispatch — the typed function-pointer table (`capi_vm_hook_pointers`) and the
 //! `VMHooks` implementation that calls into it (`capi_vm_hooks`) — is generated from the Go
@@ -21,14 +21,14 @@
 
 mod capi_logger;
 
-pub mod capi_config;
+pub mod capi_backend;
 pub mod capi_executor;
 pub mod capi_instance;
 pub mod capi_instance_state;
-pub mod capi_opcode_cost;
-pub mod capi_status;
-pub(crate) mod capi_strings;
-pub mod capi_vm_hook_context;
-pub mod capi_vm_hook_pointers;
-pub mod capi_vm_hook_table;
-pub mod capi_vm_hooks;
+
+// The shared C vocabulary, re-exported so that this crate's modules — and the cbindgen run
+// that produces its header — reach the same definitions the common header publishes.
+pub use multiversx_chain_vm_executor_c_api_common::{
+    capi_call_result, capi_config, capi_opcode_cost, capi_status, capi_strings,
+    capi_vm_hook_context, capi_vm_hook_pointers, capi_vm_hook_table, capi_vm_hooks,
+};

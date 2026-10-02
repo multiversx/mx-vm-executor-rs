@@ -6,7 +6,7 @@ macro_rules! return_if_ptr_null {
         }
     };
     ($ptr_var:ident, $err_msg:expr) => {
-        return_if_ptr_null!($ptr_var, $err_msg, vm_exec_result_t::VM_EXEC_ERROR)
+        return_if_ptr_null!($ptr_var, $err_msg, vm_legacy_result_t::VM_LEGACY_ERROR)
     };
 }
 
@@ -24,7 +24,7 @@ macro_rules! cast_input_ptr {
             $ptr_var,
             $expected_ty,
             $err_msg,
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         )
     };
 }
@@ -43,7 +43,7 @@ macro_rules! cast_input_const_ptr {
             $ptr_var,
             $expected_ty,
             $err_msg,
-            vm_exec_result_t::VM_EXEC_ERROR
+            vm_legacy_result_t::VM_LEGACY_ERROR
         )
     };
 }

@@ -12,6 +12,7 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 meta = { path = "../meta" }
 multiversx-chain-vm-executor = { path = "../vm-executor" }
+multiversx-chain-vm-executor-c-api-common = { path = "../c-api-common" }
 multiversx-chain-vm-executor-wasmer-experimental = { path = "../vm-executor-experimental" }
 
 libc = { version = "^0.2", default-features = false }
