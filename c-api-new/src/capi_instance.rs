@@ -15,9 +15,9 @@ use std::slice;
 
 use crate::capi_config::vm_exec2_compilation_options_t;
 use crate::capi_executor::{CapiExecutor, vm_exec2_executor_t};
-use crate::capi_hook_context::CapiVMHooksBuilder;
 use crate::capi_status::{vm_exec2_status_t, write_error};
 use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
+use crate::capi_vm_hook_context::CapiVMHooksBuilder;
 
 /// Opaque handle to an instance.
 #[allow(non_camel_case_types)]

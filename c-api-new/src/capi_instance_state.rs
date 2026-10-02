@@ -1,7 +1,7 @@
 //! The state operations: what a VM hook may do to the instance it is running inside.
 //!
 //! Every function here takes a hook context and is valid only while the hook that was handed
-//! that context is still running. See `capi_hook_context` for how that is enforced; a stale
+//! that context is still running. See `capi_vm_hook_context` for how that is enforced; a stale
 //! context yields `VM_EXEC2_STALE_CONTEXT` rather than a dereference of a dead borrow.
 //!
 //! Bounds checking lives on this side of the boundary, not in Go. The executor is the only
@@ -16,8 +16,8 @@ use multiversx_chain_vm_executor::{
 };
 use std::slice;
 
-use crate::capi_hook_context::{ContextError, vm_exec2_hook_context_t, with_instance_state};
 use crate::capi_status::{vm_exec2_status_t, write_error, write_error_count};
+use crate::capi_vm_hook_context::{ContextError, vm_exec2_hook_context_t, with_instance_state};
 
 impl ContextError {
     fn as_status(self) -> vm_exec2_status_t {

@@ -13,20 +13,22 @@
 //! - **A call reports what happened in its result**, instead of leaving the caller to poll a
 //!   wasm global afterwards. See `vm_exec2_call_result_t`.
 //!
-//! The hook dispatch itself — the typed function-pointer table and the 277-method `VMHooks`
-//! implementation that calls into it — is generated code and arrives with Phase 3 of
-//! `PLAN-go-ffi.md`. Everything it needs is here: the result and context ABI
-//! (`capi_hook_context`), the table ownership (`capi_hook_table`) and the state operations
-//! (`capi_instance_state`).
+//! The hook dispatch — the typed function-pointer table (`capi_vm_hook_pointers`) and the
+//! `VMHooks` implementation that calls into it (`capi_vm_hooks`) — is generated from the Go
+//! VM's hook definitions by the generator in `mx-chain-vm-go/vmhost/vmhooks/generate`. It
+//! builds on the result and context ABI in `capi_vm_hook_context`, the table ownership in
+//! `capi_vm_hook_table`, and the state operations in `capi_instance_state`.
 
 mod capi_logger;
 
 pub mod capi_config;
 pub mod capi_executor;
-pub mod capi_hook_context;
-pub mod capi_hook_table;
 pub mod capi_instance;
 pub mod capi_instance_state;
 pub mod capi_opcode_cost;
 pub mod capi_status;
 pub(crate) mod capi_strings;
+pub mod capi_vm_hook_context;
+pub mod capi_vm_hook_pointers;
+pub mod capi_vm_hook_table;
+pub mod capi_vm_hooks;

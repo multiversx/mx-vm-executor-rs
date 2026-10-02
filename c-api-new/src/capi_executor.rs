@@ -17,12 +17,12 @@
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::OpcodeConfig;
-use std::ffi::c_void;
 use std::sync::Arc;
 
 use crate::capi_config::vm_exec2_executor_config_t;
-use crate::capi_hook_table::CapiHookTable;
 use crate::capi_status::{vm_exec2_status_t, write_error};
+use crate::capi_vm_hook_pointers::vm_exec2_vm_hook_c_func_pointers;
+use crate::capi_vm_hook_table::CapiVMHookTable;
 
 /// Opaque handle to an executor.
 #[allow(non_camel_case_types)]
@@ -31,13 +31,13 @@ pub struct vm_exec2_executor_t;
 
 pub struct CapiExecutor {
     pub(crate) opcode_config: Arc<OpcodeConfig>,
-    pub(crate) hook_table: CapiHookTable,
+    pub(crate) hook_table: CapiVMHookTable,
 }
 
 /// Creates an executor from one configuration struct and one hook table.
 ///
-/// `hook_table` is copied, so the caller is free to release it as soon as this returns.
-/// `hook_table_len` is the number of pointer-sized entries in it.
+/// `hook_table` is copied, so the caller is free to release it as soon as this returns. Every
+/// entry must be populated; see `CapiVMHookTable::copy_from`.
 ///
 /// On success writes the executor to `executor_out` and returns `VM_EXEC2_OK`. The caller
 /// owns the result and must release it with `vm_exec2_executor_destroy`.
@@ -51,12 +51,11 @@ pub struct CapiExecutor {
 pub unsafe extern "C" fn vm_exec2_new_executor(
     executor_out: *mut *mut vm_exec2_executor_t,
     config: *const vm_exec2_executor_config_t,
-    hook_table: *const c_void,
-    hook_table_len: usize,
+    hook_table: *const vm_exec2_vm_hook_c_func_pointers,
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec2_status_t {
-    if executor_out.is_null() || config.is_null() {
+    if executor_out.is_null() || config.is_null() || hook_table.is_null() {
         return vm_exec2_status_t::VM_EXEC2_NULL_POINTER;
     }
 
@@ -67,7 +66,7 @@ pub unsafe extern "C" fn vm_exec2_new_executor(
 
     let capi_executor = CapiExecutor {
         opcode_config: Arc::new(opcode_config),
-        hook_table: unsafe { CapiHookTable::copy_from(hook_table, hook_table_len) },
+        hook_table: unsafe { CapiVMHookTable::copy_from(hook_table) },
     };
 
     unsafe {

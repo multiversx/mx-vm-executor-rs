@@ -34,12 +34,13 @@
 use std::cell::RefCell;
 use std::ffi::c_void;
 
-use multiversx_chain_vm_executor::{VMHooks, VMHooksDefault};
+use multiversx_chain_vm_executor::VMHooks;
 use multiversx_chain_vm_executor_wasmer_experimental::{
     ExperimentalInstanceState, ExperimentalVMHooksBuilder,
 };
 
-use crate::capi_hook_table::CapiHookTable;
+use crate::capi_vm_hook_table::CapiVMHookTable;
+use crate::capi_vm_hooks::CapiVMHooks;
 
 /// The value of `vm_exec2_hook_result_t::early_exit` that means "the hook returned normally".
 ///
@@ -111,7 +112,7 @@ pub struct vm_exec2_hook_context_t {
     /// Erased `&mut ExperimentalInstanceState<'_>`; null while no call is active.
     state: *mut c_void,
 
-    /// Erased `&RefCell<CapiHookContextPool>`, for the token check.
+    /// Erased `&RefCell<CapiVMHookContextPool>`, for the token check.
     pool: *const c_void,
 
     /// This activation's call token; `0` while no call is active.
@@ -162,7 +163,7 @@ pub(crate) unsafe fn with_instance_state<R>(
     // Shared borrow only, and released before `f` runs, so a hook is free to re-enter the
     // VM and activate a nested context while this one is being read.
     let active_token = {
-        let pool = unsafe { &*(ctx.pool as *const RefCell<CapiHookContextPool>) };
+        let pool = unsafe { &*(ctx.pool as *const RefCell<CapiVMHookContextPool>) };
         pool.borrow().active_token
     };
     if ctx.token != active_token {
@@ -183,7 +184,7 @@ pub(crate) enum ContextError {
 
 /// The per-instance stack of hook contexts.
 #[derive(Default)]
-pub struct CapiHookContextPool {
+pub struct CapiVMHookContextPool {
     /// One boxed context per nesting level.
     ///
     /// The `Box` is load-bearing and not the redundancy clippy takes it for: a
@@ -208,17 +209,16 @@ pub struct CapiHookContextPool {
 /// Builds the VM hooks for one host call, and owns the context lifecycle.
 pub struct CapiVMHooksBuilder {
     go_vm_hooks: *mut c_void,
-    #[allow(dead_code)] // Consumed by the generated hooks implementation; see `with_vm_hooks`.
-    hook_table: CapiHookTable,
-    pool: RefCell<CapiHookContextPool>,
+    hook_table: CapiVMHookTable,
+    pool: RefCell<CapiVMHookContextPool>,
 }
 
 impl CapiVMHooksBuilder {
-    pub fn new(go_vm_hooks: *mut c_void, hook_table: CapiHookTable) -> Self {
+    pub fn new(go_vm_hooks: *mut c_void, hook_table: CapiVMHookTable) -> Self {
         CapiVMHooksBuilder {
             go_vm_hooks,
             hook_table,
-            pool: RefCell::new(CapiHookContextPool::default()),
+            pool: RefCell::new(CapiVMHookContextPool::default()),
         }
     }
 
@@ -269,7 +269,7 @@ impl CapiVMHooksBuilder {
             pool.active_token = token;
             pool.depth = depth + 1;
 
-            let pool_ptr = &self.pool as *const RefCell<CapiHookContextPool> as *const c_void;
+            let pool_ptr = &self.pool as *const RefCell<CapiVMHookContextPool> as *const c_void;
 
             let slot = &mut pool.slots[depth];
             slot.go_vm_hooks = self.go_vm_hooks;
@@ -326,14 +326,10 @@ impl ExperimentalVMHooksBuilder for CapiVMHooksBuilder {
         instance_state_ref: &mut ExperimentalInstanceState,
         f: &mut dyn FnMut(&mut dyn VMHooks),
     ) {
-        self.with_hook_context(instance_state_ref, |_ctx| {
-            // TODO(Phase 3): replace with the generated `CapiVMHooks` built from `_ctx` and
-            // `self.hook_table`, which dispatches each of the 277 hooks to its Go function
-            // pointer and turns a non-sentinel `early_exit` into `Err(VMHooksEarlyExit)`.
-            // Everything that implementation needs — the context, the table, the token
-            // lifecycle — is in place; the 277-method `VMHooks` impl is generated code and
-            // does not belong in a hand-written file.
-            f(&mut VMHooksDefault);
+        self.with_hook_context(instance_state_ref, |ctx| {
+            // The hooks borrow the context, so they live exactly as long as this activation
+            // — which is also exactly as long as the instance state they reach through it.
+            f(&mut CapiVMHooks::new(ctx, self.hook_table.func_pointers()));
         });
     }
 }

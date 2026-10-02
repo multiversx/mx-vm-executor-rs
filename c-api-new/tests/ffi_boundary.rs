@@ -1,16 +1,18 @@
 //! Drives the C API from Rust, so the boundary is testable before any Go exists.
 //!
-//! Two halves:
+//! Three halves:
 //!
-//! - [`lifecycle`] goes through the exported functions exactly as the Go side will, using a
-//!   mock hook table.
-//! - [`state_ops`] installs a mock hooks provider that calls the state functions from inside
-//!   a real host call, which is the only place a hook context is live. It also checks that a
-//!   context which outlives its call, or which belongs to an outer call while a nested one is
-//!   running, is rejected rather than followed.
+//! - [`lifecycle`] goes through the exported functions exactly as the Go side will.
+//! - [`hook_dispatch`] runs a contract that calls VM hooks, with a mock hook table standing
+//!   in for the generated Go shims. This is the full round trip: wasm into Rust, out through
+//!   a C function pointer, back into Rust through the state functions, and — for an early
+//!   exit — out again as an `InstanceCallResult`.
+//! - [`state_ops`] installs a mock hooks *provider* instead, to reach the context lifecycle
+//!   directly: a context that outlives its call, and an outer context while a nested call is
+//!   running, must both be refused.
 
 use std::ffi::{CString, c_char, c_int, c_void};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use multiversx_chain_vm_executor::{VMHooks, VMHooksDefault};
 use multiversx_chain_vm_executor_c_api_new::capi_config::{
@@ -19,30 +21,39 @@ use multiversx_chain_vm_executor_c_api_new::capi_config::{
 use multiversx_chain_vm_executor_c_api_new::capi_executor::{
     vm_exec2_executor_destroy, vm_exec2_executor_t, vm_exec2_new_executor,
 };
-use multiversx_chain_vm_executor_c_api_new::capi_hook_context::{
-    CapiVMHooksBuilder, vm_exec2_hook_context_t,
-};
-use multiversx_chain_vm_executor_c_api_new::capi_hook_table::CapiHookTable;
 use multiversx_chain_vm_executor_c_api_new::capi_instance::*;
 use multiversx_chain_vm_executor_c_api_new::capi_instance_state::*;
 use multiversx_chain_vm_executor_c_api_new::capi_opcode_cost::vm_exec_opcode_cost_t;
 use multiversx_chain_vm_executor_c_api_new::capi_status::vm_exec2_status_t;
+use multiversx_chain_vm_executor_c_api_new::capi_vm_hook_context::{
+    CapiVMHooksBuilder, vm_exec2_hook_context_t, vm_exec2_hook_result_t,
+};
+use multiversx_chain_vm_executor_c_api_new::capi_vm_hook_pointers::vm_exec2_vm_hook_c_func_pointers;
+use multiversx_chain_vm_executor_c_api_new::capi_vm_hook_table::CapiVMHookTable;
 use multiversx_chain_vm_executor_wasmer_experimental::{
     ExperimentalInstance, ExperimentalInstanceState, ExperimentalVMHooksBuilder,
 };
 
-/// One memory page, five known bytes at offset 0, one endpoint that calls a VM hook.
+/// One memory page, five known bytes at offset 0, and endpoints that call VM hooks.
 const CONTRACT_WAT: &str = r#"
 (module
     (import "env" "getGasLeft" (func $getGasLeft (result i64)))
+    (import "env" "signalError" (func $signalError (param i32 i32)))
     (memory (export "memory") 1)
     (data (i32.const 0) "hello")
     (func (export "doNothing"))
-    (func (export "callHook") (drop (call $getGasLeft)))
+    (func (export "callGetGasLeft") (drop (call $getGasLeft)))
+    (func (export "callSignalError") (call $signalError (i32.const 0) (i32.const 5)))
 )
 "#;
 
 const ERR_BUF_LEN: c_int = 1024;
+
+/// The code the mock `signalError` reports; `vmcommon.UserError` on the Go side.
+const USER_ERROR_CODE: u64 = 4;
+
+/// Reported by a hook the test contract was not supposed to call.
+const UNEXPECTED_HOOK_CODE: u64 = 9999;
 
 struct ErrBuf(Vec<c_char>);
 
@@ -67,8 +78,8 @@ impl ErrBuf {
 }
 
 fn opcode_cost() -> vm_exec_opcode_cost_t {
-    // A `#[repr(C)]` struct of `u32`s, so an all-zero cost table is a valid value. Zero
-    // costs keep the tests away from the metering limit, which is not what they are about.
+    // A `#[repr(C)]` struct of `u32`s, so an all-zero cost table is a valid value. Zero costs
+    // keep the tests away from the metering limit, which is not what they are about.
     unsafe { std::mem::zeroed() }
 }
 
@@ -81,10 +92,118 @@ fn compilation_options() -> vm_exec2_compilation_options_t {
     }
 }
 
-/// A mock hook table: plausible non-null words, never called in this phase.
-fn mock_hook_table() -> Vec<*const c_void> {
-    (1..=8usize).map(|n| n as *const c_void).collect()
+// --- The mock hook table ----------------------------------------------------------------
+//
+// Only the two hooks the test contract imports get a correctly typed implementation. The rest
+// of the table is filled with a stub of the same shape, so that copying the table reads valid
+// function pointers throughout — a `mem::zeroed` table would be immediately invalid, since
+// `extern "C" fn` is a non-nullable type. Calling one of the stubs would be a bug in the test
+// contract, and it reports a code the assertions would catch.
+
+extern "C" fn stub_hook(_ctx: *mut vm_exec2_hook_context_t) -> vm_exec2_hook_result_t {
+    vm_exec2_hook_result_t::early_exit(UNEXPECTED_HOOK_CODE)
 }
+
+/// What the mock hooks record, for assertions after the call has returned.
+///
+/// They cannot assert directly: a panic must not unwind out of an `extern "C"` function.
+#[derive(Default)]
+struct HookLog {
+    get_gas_left_calls: usize,
+    signal_error_calls: usize,
+    /// What `getGasLeft` read out of the contract's memory through its context.
+    memory_seen: Option<Vec<u8>>,
+    /// The message `signalError` was pointed at.
+    signalled_message: Option<Vec<u8>>,
+    /// Non-empty if a state operation misbehaved.
+    failures: Vec<String>,
+}
+
+fn hook_log() -> &'static Mutex<HookLog> {
+    static LOG: OnceLock<Mutex<HookLog>> = OnceLock::new();
+    LOG.get_or_init(|| Mutex::new(HookLog::default()))
+}
+
+/// Loads from the contract's memory through the hook context it was handed.
+fn load_through_context(
+    ctx: *mut vm_exec2_hook_context_t,
+    mem_ptr: i32,
+    len: i32,
+) -> Result<Vec<u8>, i64> {
+    let mut buf = vec![0u8; len.max(0) as usize];
+    let loaded = unsafe {
+        vm_exec2_state_mem_load(ctx, mem_ptr, buf.as_mut_ptr(), len, std::ptr::null_mut(), 0)
+    };
+    if loaded < 0 {
+        return Err(loaded);
+    }
+    buf.truncate(loaded as usize);
+    Ok(buf)
+}
+
+extern "C" fn mock_get_gas_left(ctx: *mut vm_exec2_hook_context_t) -> vm_exec2_hook_result_t {
+    let mut log = hook_log().lock().unwrap();
+    log.get_gas_left_calls += 1;
+
+    // The point of the exercise: a hook reaching back into the instance it is running inside,
+    // through the context the executor handed it.
+    match load_through_context(ctx, 0, 5) {
+        Ok(bytes) => log.memory_seen = Some(bytes),
+        Err(status) => log
+            .failures
+            .push(format!("mem_load in getGasLeft: {status}")),
+    }
+
+    let mut length = 0u64;
+    let status = unsafe { vm_exec2_state_mem_length(ctx, &mut length, std::ptr::null_mut(), 0) };
+    if status != vm_exec2_status_t::VM_EXEC2_OK || length != 65536 {
+        log.failures
+            .push(format!("mem_length in getGasLeft: {status:?}, {length}"));
+    }
+
+    vm_exec2_hook_result_t::ok(4242)
+}
+
+extern "C" fn mock_signal_error(
+    ctx: *mut vm_exec2_hook_context_t,
+    message_offset: i32,
+    message_length: i32,
+) -> vm_exec2_hook_result_t {
+    let mut log = hook_log().lock().unwrap();
+    log.signal_error_calls += 1;
+
+    match load_through_context(ctx, message_offset, message_length) {
+        Ok(bytes) => log.signalled_message = Some(bytes),
+        Err(status) => log
+            .failures
+            .push(format!("mem_load in signalError: {status}")),
+    }
+
+    // A hook that wants execution to stop says so in its result. Nothing is written to a
+    // breakpoint global on the way out.
+    vm_exec2_hook_result_t::early_exit(USER_ERROR_CODE)
+}
+
+/// Builds a table whose every entry is a valid function pointer.
+fn mock_hook_table() -> &'static vm_exec2_vm_hook_c_func_pointers {
+    const WORD: usize = std::mem::size_of::<usize>();
+    let words = std::mem::size_of::<vm_exec2_vm_hook_c_func_pointers>() / WORD;
+    assert_eq!(
+        std::mem::size_of::<vm_exec2_vm_hook_c_func_pointers>() % WORD,
+        0,
+        "the hook table should be a flat block of function pointers"
+    );
+
+    let filled = vec![stub_hook as *const () as usize; words].into_boxed_slice();
+    let table =
+        unsafe { &mut *(Box::leak(filled).as_mut_ptr() as *mut vm_exec2_vm_hook_c_func_pointers) };
+
+    table.get_gas_left_func_ptr = mock_get_gas_left;
+    table.signal_error_func_ptr = mock_signal_error;
+    table
+}
+
+// --- Driving the exported functions -------------------------------------------------------
 
 fn new_executor(err: &mut ErrBuf) -> *mut vm_exec2_executor_t {
     let cost = opcode_cost();
@@ -92,15 +211,13 @@ fn new_executor(err: &mut ErrBuf) -> *mut vm_exec2_executor_t {
         opcode_version: 1,
         opcode_cost: &cost,
     };
-    let table = mock_hook_table();
 
     let mut executor: *mut vm_exec2_executor_t = std::ptr::null_mut();
     let status = unsafe {
         vm_exec2_new_executor(
             &mut executor,
             &config,
-            table.as_ptr() as *const c_void,
-            table.len(),
+            mock_hook_table(),
             err.ptr(),
             ERR_BUF_LEN,
         )
@@ -203,13 +320,7 @@ fn lifecycle() {
     let executor = new_executor(&mut err);
     let instance = new_instance(executor, &mut err);
 
-    // A call that does nothing succeeds.
     let result = call(instance, "doNothing", &mut err);
-    assert_eq!(result.kind, vm_exec2_call_result_kind_t::VM_EXEC2_CALL_OK);
-
-    // A call into a VM hook succeeds too; with no generated dispatch yet, the hooks are the
-    // executor's own placeholder implementation.
-    let result = call(instance, "callHook", &mut err);
     assert_eq!(result.kind, vm_exec2_call_result_kind_t::VM_EXEC2_CALL_OK);
 
     // A missing endpoint is reported in the result, not as a failure of the call itself.
@@ -219,14 +330,12 @@ fn lifecycle() {
         vm_exec2_call_result_kind_t::VM_EXEC2_CALL_FUNCTION_NOT_FOUND
     );
 
-    // Gas accounting is readable from outside a host call.
     let mut points = u64::MAX;
     let status =
         unsafe { vm_exec2_instance_get_points_used(instance, &mut points, err.ptr(), ERR_BUF_LEN) };
     assert_eq!(status, vm_exec2_status_t::VM_EXEC2_OK);
     assert_ne!(points, u64::MAX, "points_used was not written");
 
-    // Every endpoint takes no arguments and returns nothing.
     assert_eq!(unsafe { vm_exec2_instance_check_signatures(instance) }, 1);
 
     let present = CString::new("doNothing").unwrap();
@@ -246,7 +355,11 @@ fn lifecycle() {
             vm_exec2_instance_exported_function_names_length,
             vm_exec2_instance_exported_function_names,
         ),
-        vec!["callHook".to_string(), "doNothing".to_string()]
+        vec![
+            "callGetGasLeft".to_string(),
+            "callSignalError".to_string(),
+            "doNothing".to_string()
+        ]
     );
 
     // All of the hooks the module imports, in one call.
@@ -256,9 +369,52 @@ fn lifecycle() {
             vm_exec2_instance_imported_function_names_length,
             vm_exec2_instance_imported_function_names,
         ),
-        vec!["getGasLeft".to_string()]
+        vec!["getGasLeft".to_string(), "signalError".to_string()]
     );
 
+    unsafe {
+        vm_exec2_instance_destroy(instance);
+        vm_exec2_executor_destroy(executor);
+    }
+}
+
+#[test]
+fn hook_dispatch() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+    let instance = new_instance(executor, &mut err);
+
+    // A hook that returns normally: execution continues, and the contract gets the value.
+    let result = call(instance, "callGetGasLeft", &mut err);
+    assert_eq!(
+        result.kind,
+        vm_exec2_call_result_kind_t::VM_EXEC2_CALL_OK,
+        "calling a hook that returns normally should not stop execution"
+    );
+
+    // A hook that asks to stop: the code travels out in the call result, and the sentinel
+    // keeps it distinct from "no early exit".
+    let result = call(instance, "callSignalError", &mut err);
+    assert_eq!(
+        result.kind,
+        vm_exec2_call_result_kind_t::VM_EXEC2_CALL_EARLY_EXIT
+    );
+    assert_eq!(result.early_exit_code, USER_ERROR_CODE);
+
+    let log = hook_log().lock().unwrap();
+    assert!(
+        log.failures.is_empty(),
+        "state op failures inside hooks:\n  {}",
+        log.failures.join("\n  ")
+    );
+    assert_eq!(log.get_gas_left_calls, 1);
+    assert_eq!(log.signal_error_calls, 1);
+
+    // Both hooks reached the contract's memory through the context they were handed.
+    assert_eq!(log.memory_seen.as_deref(), Some(&b"hello"[..]));
+    assert_eq!(log.signalled_message.as_deref(), Some(&b"hello"[..]));
+
+    drop(log);
     unsafe {
         vm_exec2_instance_destroy(instance);
         vm_exec2_executor_destroy(executor);
@@ -270,14 +426,13 @@ fn null_arguments_are_refused_without_a_message() {
     let mut err = ErrBuf::new();
     let mut executor: *mut vm_exec2_executor_t = std::ptr::null_mut();
 
-    // A null config cannot be reported through the error buffer, because the buffer itself
-    // may be the thing that is null, so these return a dedicated status instead.
+    // A null config cannot be reported through the error buffer, because the buffer itself may
+    // be the thing that is null, so these return a dedicated status instead.
     let status = unsafe {
         vm_exec2_new_executor(
             &mut executor,
             std::ptr::null(),
             std::ptr::null(),
-            0,
             err.ptr(),
             ERR_BUF_LEN,
         )
@@ -305,8 +460,7 @@ fn an_invalid_opcode_version_is_reported_through_the_buffer() {
         vm_exec2_new_executor(
             &mut executor,
             &config,
-            std::ptr::null(),
-            0,
+            mock_hook_table(),
             err.ptr(),
             ERR_BUF_LEN,
         )
@@ -341,6 +495,8 @@ fn a_context_is_rejected_when_no_call_is_active() {
         vm_exec2_status_t::VM_EXEC2_NULL_POINTER
     );
 }
+
+// --- The context lifecycle, reached through a mock hooks provider --------------------------
 
 /// What `state_ops` records from inside the host call, to be asserted after it returns.
 #[derive(Default)]
@@ -568,7 +724,7 @@ fn state_ops() {
     let outcome = Arc::new(Mutex::new(Outcome::default()));
     let builder = ProbingHooksBuilder {
         inner: CapiVMHooksBuilder::new(0xBEEFusize as *mut c_void, unsafe {
-            CapiHookTable::copy_from(std::ptr::null(), 0)
+            CapiVMHookTable::copy_from(mock_hook_table())
         }),
         outcome: outcome.clone(),
     };
@@ -588,7 +744,7 @@ fn state_ops() {
     .expect("instance creation failed");
 
     use multiversx_chain_vm_executor::Instance;
-    let result = instance.call("callHook", 1_000_000);
+    let result = instance.call("callGetGasLeft", 1_000_000);
     assert!(
         matches!(result, multiversx_chain_vm_executor::InstanceCallResult::Ok),
         "the probing call did not succeed"
@@ -605,9 +761,9 @@ fn state_ops() {
         outcome.failures.join("\n  ")
     );
 
-    // The context that escaped the host call must now be refused. Contexts are pooled for
-    // the instance's lifetime, so this reads live memory and fails the token check, rather
-    // than being undefined behaviour.
+    // The context that escaped the host call must now be refused. Contexts are pooled for the
+    // instance's lifetime, so this reads live memory and fails the token check, rather than
+    // being undefined behaviour.
     let escaped = outcome.escaped_context as *mut vm_exec2_hook_context_t;
     let mut length = 0u64;
     let status =

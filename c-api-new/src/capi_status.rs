@@ -31,7 +31,7 @@ pub enum vm_exec2_status_t {
     VM_EXEC2_NULL_POINTER = -2,
 
     /// A hook context was used outside the host call it belongs to. See
-    /// [`crate::capi_hook_context`].
+    /// [`crate::capi_vm_hook_context`].
     VM_EXEC2_STALE_CONTEXT = -3,
 
     /// A panic was caught at the boundary. Rust panics must never unwind into C, so every

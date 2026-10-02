@@ -1,7 +1,7 @@
 # Integrating the new executor traits into the Go VM
 
 Working plan for exposing `vm-executor/src/new_traits` over a C FFI and consuming it from
-the Go VM. Status as of 2026-10-01: Phase 1 items 1-5 and Phase 2 are implemented.
+the Go VM. Status as of 2026-10-02: Phase 1 items 1-5, Phase 2 and Phase 3 are implemented.
 
 ## Why
 
@@ -232,21 +232,95 @@ length, and the fact that a store is never truncated). It also delivers two of P
 checks early: a context used after its call is refused with `VM_EXEC2_STALE_CONTEXT`, and so
 is an outer context while a nested call is running.
 
-## Phase 3 — Generator
+## Phase 3 — Generator — **done**
 
-Lands before the Go adapter, since it drives both repos. New writers, modelled on the
-existing `eiGenWriteRustCapiVMHooks*.go` and `eiGenWriteCgo.go`:
+Three new writers in `mx-chain-vm-go/vmhost/vmhooks/generate`, registered in `eiGenMain.go`
+with their copy targets. All 277 hooks, generated into both repos.
 
-- the new hook-pointer struct (context first arg, `vm_exec_hook_result_t` return);
-- the new Rust capi `VMHooks` impl (call the pointer, compare against the sentinel, return
-  `Err`);
-- the new Go `//export` shims;
-- `eiGenMain.go`: register the writers and the copy targets.
+| Writer | Output |
+| --- | --- |
+| `WriteRustCapi2VMHooksPointers` | `c-api-new/src/capi_vm_hook_pointers.rs` |
+| `WriteRustCapi2VMHooks` | `c-api-new/src/capi_vm_hooks.rs` |
+| `WriteWasmer3Cgo` | `mx-chain-vm-go/wasmer3/wasmer3ImportsCgo.go` |
 
-**The 282 Go hook signatures in `executor/vmHooks.go` do not change.** The shim reads an
-`earlyExit` field off the hooks object after the call and packs it into the result struct.
-That works only if there is one hooks object per live instance, so it depends on the Phase 4
-provider change rather than on touching the interface.
+`capi_opcode_cost.rs` also gained a second copy target, so `c-api-new` no longer carries a
+hand-copied duplicate of it.
+
+### The `earlyExit` field is not needed after all
+
+The original sketch had the shim reading an `earlyExit` field off the hooks object after the
+call, and noted that this "depends on the Phase 4 provider change". That was written before
+the Go hook migration landed. Every hook now **returns** its error, so the shim converts it
+inline:
+
+```go
+//export w3_getGasLeft
+func w3_getGasLeft(ctx *C.vm_exec2_hook_context_t) C.vm_exec2_hook_result_t {
+	vmHooks := getVMHooksFromHookContext(ctx)
+	result, err := vmHooks.GetGasLeft()
+	if err != nil {
+		return hookEarlyExit(vmHooks, err)
+	}
+	return hookOk(int64(result))
+}
+```
+
+No field, no ordering hazard, and no dependency on Phase 4. The 277 Go hook signatures in
+`executor/vmHooks.go` still do not change.
+
+### Converting the error to a code
+
+Two small hand-written pieces, deliberately split so neither has to know the other's job:
+
+- `executor/earlyExit.go` — `EarlyExitError` (an error that knows its own code) and
+  `EarlyExitCodeOf`, a pure function that falls back to `vmcommon.ExecutionFailed`. It finds
+  the code through `errors.As`, so it survives the `fmt.Errorf("%w")` wrapping the hook
+  helpers do.
+- `vmhost.EarlyExit.EarlyExitCode()` — three lines, returning the `vmcommon.ReturnCode` it
+  already carries.
+
+The wire codes are `vmcommon.ReturnCode` values, matching the Rust VM's `ReturnCode::as_u64`.
+Nothing in the failure path produces `vmcommon.Ok`, which is what keeps code 0 free to mean
+"legacy async call", as `ASYNC_CALL_EARLY_EXIT_CODE` does on the Rust side.
+
+`hookEarlyExit` calls `HandleHookError` for the side effects and `EarlyExitCodeOf` for the
+code. Under this executor the breakpoint `HandleHookError` still sets is redundant — the early
+exit already stops the instance — and it goes away with `PLAN-go-breakpoint-removal.md`.
+
+### The generated shims check their own ABI
+
+cgo types the hook table's fields as `*[0]byte`, so the Go assignment in
+`populateCgoFunctionPointers` would accept a function of any shape, and a mismatch would only
+show up as a corrupted stack at the first call. The generated file therefore emits a C
+initializer assigning every shim to its field — the one place both types are visible at once:
+
+```c
+// static const vm_exec2_vm_hook_c_func_pointers w3_signature_check __attribute__((unused)) = {
+//     .get_gas_left_func_ptr = w3_getGasLeft,
+//     ...
+```
+
+Verified by deliberately widening one shim's argument and confirming the build fails on
+exactly that field.
+
+### Rust side wired up
+
+`CapiHookTable` now holds a copy of the generated table rather than opaque words, and
+`vm_exec2_new_executor` takes it typed, so the Phase 2 placeholder parameter pair
+`(hook_table, hook_table_len)` is gone. `CapiVMHooksBuilder` builds a `CapiVMHooks` around the
+activated context instead of yielding `VMHooksDefault`; the Phase 2 `TODO(Phase 3)` is closed.
+
+### Testing
+
+`hook_dispatch` in `c-api-new/tests/ffi_boundary.rs` runs a contract that calls two hooks
+through a mock table, covering the whole round trip in one test: wasm into Rust, out through a
+C function pointer, back into Rust through the state functions to read the contract's memory,
+and — for the hook that asks to stop — out again as `VM_EXEC2_CALL_EARLY_EXIT` carrying the
+code. It also pins the thing the whole ABI rests on: the sentinel keeps "returned normally"
+distinct from early-exit code 0.
+
+On the Go side, the package compiling *is* the check that a cgo `//export` function can return
+a C struct by value — now across all 277 shims rather than the original three-layout spike.
 
 ## Phase 4 — Go VM (new `wasmer3/` package, parallel to `wasmer2/`)
 
@@ -318,5 +392,6 @@ and the C ABI is parameter-form regardless, so the trait convergence was not a p
 after all — it is now better informed by Phase 2, which found the per-instance hooks argument
 the converged trait needs.
 
-Remaining path: **Phase 3 → Phase 4 → Phase 5**, with Phase 1.6/1.7 landing whenever G4 is
-settled across both backends. Phase 3 is now the only thing between here and a Go consumer.
+Remaining path: **Phase 4 → Phase 5**, with Phase 1.6/1.7 landing whenever G4 is settled
+across both backends. Both sides of the boundary now exist and are tested in isolation; what
+is left is the Go VM actually linking the library and driving it.
