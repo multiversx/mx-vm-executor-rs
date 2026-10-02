@@ -461,7 +461,7 @@ refactor.
 | `wasmer3InstanceState.go` | The inside view: the six state operations, over a hook context |
 | `vmHooksProvider.go` | `VMHooksProvider`, and the per-instance handle it is reached through |
 | `wasmer3ImportsCgoHelper.go` | What every generated shim calls on entry and on failure |
-| `opcodeCost.go` | Generated; new writer, see below |
+| *(no `opcodeCost.go`)* | The cost table moved to `executor`; see below |
 | `bridge3_test.go` | 20 tests (23 with subtests), the Phase 4a acceptance |
 | `dualbackend/` | The G5 experiment, behind a build tag |
 
@@ -532,10 +532,28 @@ Two things were decided here that the plan had left open:
   returns, never calling back into Go, so the buffer's live range contains no re-entry. A
   buffer per operation would be an allocation on every memory access a contract makes.
 
-Also added: a `WriteWasmer3OpcodeCost` generator writer, so `wasmer3/opcodeCost.go` comes from
-the same opcode list as its C counterpart rather than being hand-copied. It emits a
-package-level function instead of wasmer2's method on the executor, because this executor takes
-its configuration at construction and there is no executor to hang it off of.
+**The opcode cost table became shared rather than per-backend.** It started as a second
+generated copy for `wasmer3`, mirroring `wasmer2/opcodeCost.go`; that was then recognised as
+duplication with no cause. The opcodes a cost table covers are a property of the gas schedule
+and of the metering middleware, not of the runtime underneath, which is exactly why both C
+headers already declared an identical `vm_exec_opcode_cost_t`. So:
+
+- `executor/opcodeCost.go` now holds `OpcodeCost` and `ExtractOpcodeCost`, generated once;
+  `wasmer2/opcodeCost.go` and `wasmer3/opcodeCost.go` are deleted.
+- The two generator writers merged into one `WriteExecutorOpcodeCost`. The pre-existing writer
+  for the *full* WASM set became `WriteExecutorWASMOpcodeCost`, so each writer is now named
+  after the type it emits (`OpcodeCost` is the metered subset; `WASMOpcodeCost` is the whole
+  set as the gas schedule supplies it).
+- `ExtractOpcodeCost` is a package-level pure function rather than wasmer2's former method on
+  the executor, since nothing in the conversion depends on an executor.
+- **Each backend keeps its own size tripwire**, and they now carry more weight than before: one
+  shared Go struct has to match *two* independently generated C headers, and the backends
+  reinterpret one as the other to cross the boundary. Both assertions were confirmed to fire by
+  adding a field and watching each package fail to compile. wasmer2 previously had no such
+  check at all.
+
+Verified by the full `vmhost/hosttest` contract-execution suite, which exercises wasmer2's
+metering through the moved struct.
 
 Not done here, deliberately: the `reset`/cache entry points (Phase 6), and the three
 non-darwin platform libraries. **The missing libraries have a CI consequence**: `wasmer3` now
