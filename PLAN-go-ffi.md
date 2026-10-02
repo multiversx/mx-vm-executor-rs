@@ -2,7 +2,7 @@
 
 Working plan for exposing `vm-executor/src/new_traits` over a C FFI and consuming it from
 the Go VM. Status as of 2026-10-02: Phase 1 items 1-5, Phase 2, Phase 3 and Phase 4a are
-implemented.
+implemented; Phase 4b is in progress.
 
 ## Why
 
@@ -135,7 +135,7 @@ is what flips.
 | --- | --- | --- |
 | **G1** | Do the hooks hold the state, or take it as a parameter? | The C ABI passes the context as the first argument of every hook — that *is* the parameter form. If the Rust trait keeps the state bundled, the generator must emit and reconcile two shapes. Deciding after the ABI is frozen turns a refactor into a two-repo migration. The Wasmer 6 builder currently returns `Box<dyn VMHooks>`, so a per-hook allocation also rides on this. **Phase 2 found this already answered by the committed Wasmer 6 code**: `ExperimentalVMHooksBuilder::with_vm_hooks` hands the builder the state and lends the hooks back through a closure, so the state is *bundled* in Rust and *passed as a parameter* in C — the two are compatible, and the generator emits one shape, not two. The allocation question is also already resolved: the builder lends `&mut dyn VMHooks` on its own stack frame. |
 | **G2** | Does the new executor keep the Go VM's truncating load? | **Settled in Phase 2: yes, it clamps.** `vm_exec2_state_mem_load` writes into the caller's buffer and returns `min(requested, available)`, so the truncation is visible in the return value. Chosen to preserve behaviour contracts have already observed; the strict load stays available on the trait for a caller that wants it. The rule itself moved into `clamped_load_len` in `vm-executor/src/new_traits/memory.rs`, so the FFI and `InstanceState::memory_load_clamped` cannot drift apart. |
-| **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | Decides whether `OpcodeConfig` is `Arc<Mutex<_>>` (2.2 today) or plain (Wasmer 6 today), which decides the shape of the single config struct. **Phase 2 took the immutable branch for the new C API**: the version and the cost table arrive in `vm_exec2_executor_config_t` at `vm_exec2_new_executor` and are never mutated, so there is no `Arc<Mutex<_>>` on this path and no `set_opcode_config`. The gate stays open for Phase 1.6, which has to reconcile the 2.2 backend's `Arc<Mutex<_>>`. |
+| **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | **Resolved in Phase 4b: immutable, with the executor rebuilt on change.** Phase 2 had already taken the immutable branch for the new C API — version and costs arrive in `vm_exec2_executor_config_t`, with no `set_opcode_config`. The obstacle was `GasScheduleChange` (`vmhost/hostCore/host.go:375`), which re-applies both to the *live* executor at an epoch. It is reconcilable because that function already calls `ClearWarmInstanceCache()`, so no instance survives the change: recreating the executor is behaviour-preserving, and is what lets `SetOpcodeConfig` leave the `Executor` interface. Phase 1.6 still has to reconcile the 2.2 backend's `Arc<Mutex<_>>` if that path is ever built. |
 | **G5** | Does one C library carry both backends, selected by a flag? | **Answered: no — one library per backend, link the one you need.** That is already the pattern: a node links four wasmer runtimes today (v1.2/v1.3/v1.4 share one byte-identical `libwasmer`, v1.5 brings `libvmexeccapi`) with zero shared symbols between them. Bundling would make the 32 duplicate `wasmer_vm_*` libcalls a *static* collision the linker silently collapses, breaking one backend's `vmctx` layout; two libraries make it a *dynamic* one that `-Bsymbolic-functions` fixes. Duplication is near zero: one Rust crate with a backend feature, one Go bridge with a build tag. What remains is **verifying `-Bsymbolic-functions` on Linux, before anything links both** — see "Serving both backends" below. |
 
 
@@ -562,50 +562,104 @@ is absent. `go build ./...` is unaffected, because a non-main package is never l
 the four libraries land before the package is in the default test path, or `wasmer3` goes
 behind a build tag until they do.
 
-### Phase 4b — Converge the Go executor interfaces
+### Phase 4b — Converge the Go executor interfaces — **in progress**
 
 The Go side still speaks the legacy interface set, and this is where it stops. It is the Go
 mirror of the split the Rust side already made, and it is the bulk of Phase 4.
 
 The asymmetry to close: `executor.Instance` has 24 methods, against 8 on the new Rust
-`Instance` plus the 8 of an `InstanceState` the Go side does not have at all. The consumption is
-concentrated — almost all of it is `vmhost/contexts/runtime.go` and `instanceTracker.go`, and
-only three implementors matter (`wasmer2.Wasmer2Instance`, `mock.InstanceMock`,
-`executor/wrapper.WrapperInstance`) — so the change is wide but shallow.
+`Instance` plus the 8 of an `InstanceState` the Go side does not have at all. A census of the
+call sites confirmed the shape is wide but shallow — almost all consumption is
+`vmhost/contexts/runtime.go` and `instanceTracker.go`, and only three implementors matter
+(`wasmer2.Wasmer2Instance`, `mock.InstanceMock`, `executor/wrapper.WrapperInstance`).
 
-1. Add `executor.InstanceState`: `MemLoad`, `MemStore`, `MemLength`, `MemGrow`,
-   `GetPointsUsed`, `SetPointsUsed`. Implemented for wasmer3 by a struct wrapping the hook
-   context; implemented for wasmer2 by delegating to its existing instance.
-2. Shrink `executor.Instance` to the outside view, and **push the legacy-only methods down
-   into wasmer2's own types** rather than keeping them on the shared interface:
-   `SetBreakpointValue`/`GetBreakpointValue` (the new executor reports breakpoints in its call
-   result — see `PLAN-go-breakpoint-removal.md`), `SetVMHooksPtr`/`GetVMHooksPtr`,
-   `SetGasLimit`, `MemDump`, `HasMemory`. The census shows several of these have no caller in
-   the VM at all.
-3. `CallFunction` returns an `InstanceCallResult` rather than a bare `error`, which is the
-   hard prerequisite for the breakpoint removal and is described there.
-4. `executor.VMHooks` becomes a per-instance provider, since that is where the Go side keeps
-   the early-exit slot the shims read. Phase 2 found that the Rust `Executor` trait has
-   nowhere to put a per-instance host handle; **Phase 1.6 should add it**, at which point the
-   capi can go back through the trait and serve both backends uniformly.
-5. The contract validator switches to imported-function *names*, which the FFI already
-   exposes as a two-step pair.
-6. `MemLoadFromMemory` / `MemStoreToMemory` are bypassed for wasmer3 — bounds checking lives
-   in Rust — and kept for wasmer2.
-7. `SetOpcodeConfig` as a post-construction mutator goes away; config is passed once at
-   creation. Note Go is already stale here: `wasmer2/bridge2.go` calls
-   `vm_exec_set_opcode_costs` against a header that now exports `vm_exec_set_opcode_config`.
+#### Done: `executor.InstanceState` and the hooks provider
 
-Both executors then coexist behind `ExecutorAbstractFactory` speaking the *same* interfaces,
-which is what makes the Phase 5 differential run a matter of choosing a factory — or, if G5
-lands as expected, a flag.
+The backbone, and it turned out to be far smaller than the method counts suggest. Two
+measurements decided the shape:
 
-**Why not converge before 4a?** It would mean reshaping a 24-method interface, its three
-implementors and the mocks against an FFI nobody has executed yet. **Why not defer it past
-Phase 4?** Because then `wasmer3` has to implement the legacy 24 methods, including the
-breakpoint accessors the new executor deliberately does not have and the memory accessors that
-moved to `InstanceState` — an adapter whose only purpose is to fake the interface being
-deleted. Phase 4a is the cheap half and it de-risks the expensive one.
+- **`GetInstance()` has 8 call sites in the whole repo**, two of which are the memory seam.
+- **The `vmhooks` package needs exactly two things from an instance**: `MemLoad` and
+  `MemStore`, both funnelled through `VMHooksImpl` in `vmhost/vmhooks/vmHooksImpl.go`. Every
+  one of the 277 hook bodies goes through `context.MemLoad` / `context.MemStore` /
+  `context.MemLoadMultiple`, so re-pointing two one-line method bodies moves all of them.
+
+So `executor.InstanceState` is **two methods, not six**. Gas accounting and memory growth were
+candidates on symmetry with the Rust trait, but their Go callers (`contexts/metering.go`,
+`contexts/runtime.go`) sit outside a host call as often as inside one, and `MemLength`,
+`MemGrow` and `MemDump` are marked "only called directly in tests" in wasmer2 itself. Inventing
+state surface for symmetry would have been surface nothing uses.
+
+`executor.VMHooksProvider` has **two** methods, and the asymmetry is deliberate:
+
+- `VMHooksForCall(state)` — Wasmer 6, which hands each host call a context and nothing longer.
+- `VMHooksForInstanceLifetime()` — Wasmer 2.2, whose legacy C API sets the hooks pointer
+  **per executor, not per instance** (`vm_exec_executor_set_vm_hooks_ptr`; there is no
+  instance-level equivalent, which is also why `SetVMHooksPtr` on the Go interface never had a
+  caller). A hook therefore cannot be told which instance called it, so the provider resolves
+  that through the host's instance stack — which is what the VM has always done.
+
+This is the one place the Go side cannot mirror Rust, where 2.2's per-instance builder holds
+the instance weakly. It is forced by the legacy C API, not chosen, and naming both halves keeps
+it visible instead of hidden behind a nil convention.
+
+`VMHooksImpl` now takes its state at construction. `NewVMHooksImpl(host)` keeps its signature
+and supplies `hostInstanceState`, so the ten-odd test call sites were untouched;
+`NewVMHooksImplForCall(host, state)` is the call-scoped form. Verified by `vmhost/hosttest` and
+`vmhost/vmhookstest`, and checked for non-vacuity by breaking `hostInstanceState.MemLoad` and
+watching `vmhookstest` fail.
+
+#### Done: the validator's imported-function check
+
+Plan item 5 said the validator should switch to imported-function *names*. The census says
+otherwise, and the better answer is the reverse: **the VM keeps asking `IsFunctionImported`,
+and the backend answers from a cached set.**
+
+The validator checks a 21-name blocklist (`mapNewCryptoAPI` 6, `mapBarnardOpcodes` 15) against
+every contract. The legacy C API can only answer one name per call, so that is 21 cgo calls per
+validation; the new header is the only one with `imported_function_names` at all. So
+`Wasmer3Instance` reads the list once at creation — two cgo calls — and answers from a map.
+No interface change, identical semantics, and the consensus-relevant check stays exactly as
+written.
+
+#### Still to do
+
+1. Shrink `executor.Instance` to the outside view, pushing the legacy-only methods down into
+   wasmer2's own types: `SetBreakpointValue`/`GetBreakpointValue` (the new executor reports
+   breakpoints in its call result), `SetVMHooksPtr`/`GetVMHooksPtr` (no VM caller at all),
+   `SetGasLimit`, `MemDump`, `HasMemory`.
+2. `CallFunction` returns an `InstanceCallResult` rather than a bare `error` — the hard
+   prerequisite for `PLAN-go-breakpoint-removal.md`.
+3. `MemLoadFromMemory` / `MemStoreToMemory` bypassed for wasmer3, where bounds checking lives
+   in Rust, and kept for wasmer2.
+4. `SetOpcodeConfig` removal — see the G4 resolution below.
+5. `wasmer3` implements `executor.Executor` and `executor.Instance`, behind
+   `ExecutorAbstractFactory`.
+
+#### G4 resolved: the config can be immutable, if the executor is rebuilt
+
+The gate asked whether `OpcodeConfig` stays mutable. The new C API took the immutable branch in
+Phase 2 — version and costs arrive in `vm_exec2_executor_config_t` and there is no
+`set_opcode_config`. The obstacle was whether the Go VM needs to mutate it, and it does:
+`vmhost/hostCore/host.go:375`, in `GasScheduleChange`, re-applies the opcode version and costs
+to the **live** executor when the gas schedule changes at an epoch.
+
+That is reconcilable without making the config mutable, because `GasScheduleChange` already
+does the hard part: it calls `ClearWarmInstanceCache()`, so no instance survives the change
+anyway. **Recreating the executor rather than mutating it is therefore behaviour-preserving**,
+and it is what lets `SetOpcodeConfig` leave the `Executor` interface. The cost is that
+`RuntimeContext` needs a way to replace its executor, which is what item 4 above covers.
+
+#### An open gap worth recording: `SetPointsUsed` from outside a host call
+
+The new FFI exposes `vm_exec2_instance_get_points_used` on the outer instance but **no
+`set_points_used`** — writing gas is only reachable through a hook context. The VM does write
+it from outside a call, at `vmhost/contexts/runtime.go:311`, where reusing a warm instance
+resets its counter to zero.
+
+For now this is harmless, because warm instances are deferred to Phase 6 for wasmer3. It stops
+being harmless the moment they are not, and the fix is a Rust-side addition rather than a Go
+workaround. Recorded here so Phase 6 does not rediscover it.
 
 ## Phase 5 — Bring-up and validation
 
