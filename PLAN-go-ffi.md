@@ -212,7 +212,7 @@ implementation that calls into it are generated code, and belong to Phase 3 as o
 scoped. Everything they need is in place: the result and context ABI, the state operations,
 and `CapiVMHooksBuilder::with_hook_context_raw` as the seam. Until then the builder yields
 `VMHooksDefault` behind a single marked `TODO(Phase 3)`, and the table is copied as opaque
-pointer-sized words (`CapiHookTable`) so the ownership story does not change when the type
+pointer-sized words (`CapiVMHookTable`) so the ownership story does not change when the type
 does. The copy-rather-than-borrow decision is already made, matching the legacy API.
 
 **CI and release wiring.** `make capi2`, `capi2-linux-amd64`, `capi2-linux-arm`,
@@ -270,14 +270,24 @@ No field, no ordering hazard, and no dependency on Phase 4. The 277 Go hook sign
 
 ### Converting the error to a code
 
-Two small hand-written pieces, deliberately split so neither has to know the other's job:
+`executor/earlyExit.go` owns the `EarlyExit` struct — it is what crosses the boundary, so it
+belongs in the package the VM and the backends share rather than in the VM. Alongside it:
 
-- `executor/earlyExit.go` — `EarlyExitError` (an error that knows its own code) and
-  `EarlyExitCodeOf`, a pure function that falls back to `vmcommon.ExecutionFailed`. It finds
-  the code through `errors.As`, so it survives the `fmt.Errorf("%w")` wrapping the hook
-  helpers do.
-- `vmhost.EarlyExit.EarlyExitCode()` — three lines, returning the `vmcommon.ReturnCode` it
-  already carries.
+- `ExitExecutionFailed`, the one definition of what a plain error means (execution failed,
+  burn the remaining gas). Both the VM, which applies the side effects, and the executor,
+  which only reports a code, go through it.
+- `EarlyExitCodeOf`, a pure function finding the code with `errors.As`, so it survives the
+  `fmt.Errorf("%w")` wrapping the hook helpers do.
+
+`vmhost` keeps the two constructors that deviate from that default, `ExitUserError` and
+`ExitOutOfGas`, because they carry VM sentinel errors. `vmhooks.resolveEarlyExit` keeps its
+single call site and delegates its default branch to `ExitExecutionFailed`.
+
+An earlier iteration had `EarlyExit` stay in `vmhost` with an `EarlyExitError` interface in
+`executor` to reach it. That was dropped: the interface had exactly one implementor and no
+prospect of a second, and it is not what kept `wasmer3` from importing `vmhost` — a struct in
+`executor` preserves that property just as well, while letting the default live once instead
+of twice.
 
 The wire codes are `vmcommon.ReturnCode` values, matching the Rust VM's `ReturnCode::as_u64`.
 Nothing in the failure path produces `vmcommon.Ok`, which is what keeps code 0 free to mean
@@ -305,7 +315,7 @@ exactly that field.
 
 ### Rust side wired up
 
-`CapiHookTable` now holds a copy of the generated table rather than opaque words, and
+`CapiVMHookTable` now holds a copy of the generated table rather than opaque words, and
 `vm_exec2_new_executor` takes it typed, so the Phase 2 placeholder parameter pair
 `(hook_table, hook_table_len)` is gone. `CapiVMHooksBuilder` builds a `CapiVMHooks` around the
 activated context instead of yielding `VMHooksDefault`; the Phase 2 `TODO(Phase 3)` is closed.

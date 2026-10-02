@@ -104,7 +104,7 @@ pub fn early_exit_async_call() -> VMHooksEarlyExit { ... ASYNC_CALL_EARLY_EXIT_C
 
 The code is `ReturnCode::as_u64()`, and `0` is reused as the async-call sentinel because a hook
 never exits with `Ok`. Go has `vmcommon.ReturnCode` with `Ok = 0`, so **the same sentinel works
-unchanged**, and `vmhost.EarlyExit.Code` is already a `vmcommon.ReturnCode` — it was built for
+unchanged**, and `executor.EarlyExit.Code` is already a `vmcommon.ReturnCode` — it was built for
 this.
 
 The consumer to mirror is
@@ -268,7 +268,7 @@ The async-call branch is the one that returns `nil`, preserving
 
 ### 6.2 `ConsumeAllGas` does not cross the FFI
 
-`VMHooksEarlyExit` carries only `code` and `message`. `vmhost.EarlyExit.ConsumeAllGas` is a
+`VMHooksEarlyExit` carries only `code` and `message`. `executor.EarlyExit.ConsumeAllGas` is a
 Go-side concept, so the burn must stay in `HandleHookError`, executed before the hook returns.
 `applyEarlyExit` therefore keeps a gas responsibility even after it loses its breakpoint
 responsibility. Do not try to encode the flag in the exit code.

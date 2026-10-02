@@ -2,6 +2,10 @@
 
 **Repo:** `mx-chain-vm-go` (branch `wasmer6`)
 **Related:** `PLAN-go-ffi.md` in `mx-vm-executor-rs` — this document is the Go-side prerequisite for its Phase 3.
+**Status:** done, and left as the work order it was. One thing has since moved: the `EarlyExit`
+type now lives in `executor`, not `vmhost`, so that an executor reporting early exits through
+its own call result can read the code off it. Everything below still describes the shape
+accurately apart from that package. See Phase 3 of `PLAN-go-ffi.md`.
 
 ---
 
