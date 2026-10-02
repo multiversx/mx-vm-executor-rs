@@ -236,7 +236,7 @@ fn new_executor(err: &mut ErrBuf) -> *mut vm_exec2_executor_t {
 fn new_instance(executor: *mut vm_exec2_executor_t, err: &mut ErrBuf) -> *mut vm_exec2_instance_t {
     let options = compilation_options();
     let wasm = CONTRACT_WAT.as_bytes();
-    let go_vm_hooks = 0xBEEFusize as *mut c_void;
+    let go_vm_hooks = 0xBEEFusize;
 
     let mut instance: *mut vm_exec2_instance_t = std::ptr::null_mut();
     let status = unsafe {
@@ -723,7 +723,7 @@ fn probe_nesting(
 fn state_ops() {
     let outcome = Arc::new(Mutex::new(Outcome::default()));
     let builder = ProbingHooksBuilder {
-        inner: CapiVMHooksBuilder::new(0xBEEFusize as *mut c_void, unsafe {
+        inner: CapiVMHooksBuilder::new(0xBEEFusize, unsafe {
             CapiVMHookTable::copy_from(mock_hook_table())
         }),
         outcome: outcome.clone(),

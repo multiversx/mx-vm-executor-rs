@@ -1,7 +1,8 @@
 # Integrating the new executor traits into the Go VM
 
 Working plan for exposing `vm-executor/src/new_traits` over a C FFI and consuming it from
-the Go VM. Status as of 2026-10-02: Phase 1 items 1-5, Phase 2 and Phase 3 are implemented.
+the Go VM. Status as of 2026-10-02: Phase 1 items 1-5, Phase 2, Phase 3 and Phase 4a are
+implemented.
 
 ## Why
 
@@ -135,7 +136,7 @@ is what flips.
 | **G1** | Do the hooks hold the state, or take it as a parameter? | The C ABI passes the context as the first argument of every hook — that *is* the parameter form. If the Rust trait keeps the state bundled, the generator must emit and reconcile two shapes. Deciding after the ABI is frozen turns a refactor into a two-repo migration. The Wasmer 6 builder currently returns `Box<dyn VMHooks>`, so a per-hook allocation also rides on this. **Phase 2 found this already answered by the committed Wasmer 6 code**: `ExperimentalVMHooksBuilder::with_vm_hooks` hands the builder the state and lends the hooks back through a closure, so the state is *bundled* in Rust and *passed as a parameter* in C — the two are compatible, and the generator emits one shape, not two. The allocation question is also already resolved: the builder lends `&mut dyn VMHooks` on its own stack frame. |
 | **G2** | Does the new executor keep the Go VM's truncating load? | **Settled in Phase 2: yes, it clamps.** `vm_exec2_state_mem_load` writes into the caller's buffer and returns `min(requested, available)`, so the truncation is visible in the return value. Chosen to preserve behaviour contracts have already observed; the strict load stays available on the trait for a caller that wants it. The rule itself moved into `clamped_load_len` in `vm-executor/src/new_traits/memory.rs`, so the FFI and `InstanceState::memory_load_clamped` cannot drift apart. |
 | **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | Decides whether `OpcodeConfig` is `Arc<Mutex<_>>` (2.2 today) or plain (Wasmer 6 today), which decides the shape of the single config struct. **Phase 2 took the immutable branch for the new C API**: the version and the cost table arrive in `vm_exec2_executor_config_t` at `vm_exec2_new_executor` and are never mutated, so there is no `Arc<Mutex<_>>` on this path and no `set_opcode_config`. The gate stays open for Phase 1.6, which has to reconcile the 2.2 backend's `Arc<Mutex<_>>`. |
-| **G5** | Does one C library carry both backends, selected by a flag? | Decides whether `c-api-new` depends on both backend crates, whether the Go VM links one library or two, and whether the Phase 5 differential run is a runtime flag or a link-time choice. See "Serving both backends" below. |
+| **G5** | Does one C library carry both backends, selected by a flag? | Decides whether `c-api-new` depends on both backend crates, whether the Go VM links one library or two, and whether the Phase 5 differential run is a runtime flag or a link-time choice. **Phase 4a cleared the part everyone expected to be the problem and found a different one.** Both runtimes' trap handlers coexist and chain, in both initialisation orders (`wasmer3/dualbackend/`). But `wasmer-vm` 2.2 and 6 export the same 32 `#[no_mangle]` `wasmer_vm_*` libcall symbols, which collide, which the Apple linker reports as a *warning* while building the library anyway. The gate now rests on hiding every non-`vm_exec2_*` symbol and confirming it on Linux. See "Serving both backends" below. |
 
 
 ## Phase 1 — Close the trait gaps
@@ -367,18 +368,49 @@ What it buys:
 What it costs: roughly 5-6 MB (the current wasmer 2.2 library) on top of ~8 MB (wasmer 6),
 which is unremarkable for a shipped node dependency.
 
-Two things have to be settled before committing to it:
+Two things had to be settled before committing to it. Phase 4a settled the first and
+replaced the second with something sharper.
 
-- **Signal handlers.** Wasmer 2.2 installs trap handlers through `platform_init()` — exposed
-  as `vm_force_sighandler_reinstall` and called from `wasmer2/bridge2.go` — and Wasmer 6
-  installs its own. Both are expected to chain to the previous handler for faults outside
-  their own code, but that is process-global behaviour nobody here has verified, with Go's own
-  handlers already in the mix. The failure mode is a mishandled trap under load, not a test
-  failure. **This needs an experiment in Phase 4a, not an assumption.**
-- **Never link both libraries at once.** `libvmexeccapi` (legacy) already contains wasmer 2.2.
-  A process linking it *and* a `libvmexeccapi2` that also bundles 2.2 would hold two copies,
-  each with its own globals and trap handlers. The flag design implies the Go VM eventually
-  links only `libvmexeccapi2`; during migration, one or the other, never both.
+**Signal handlers: answered, and the answer is yes.** `wasmer3/dualbackend/` links both
+libraries into one test binary and traps on purpose in each backend, for both trap kinds that
+take different routes to the handler — an illegal instruction (`unreachable`) and an
+out-of-range load — in both initialisation orders. All four cases come back as a reported
+runtime error, and both backends keep working afterwards. The order that mattered most is
+wasmer 2.2 second, because `wasmer2.CreateExecutor` calls `vm_force_sighandler_reinstall`
+unconditionally and is therefore the one that can overwrite a handler wasmer 6 has already
+installed; it chains correctly. Caveat on the evidence: this was run on darwin/arm64 only, and
+it is the two-*library* case, not the bundled one.
+
+**Symbol collision is the real blocker, and it is not about signal handlers.** Probing the
+bundled case — adding the 2.2 backend as a dependency of `c-api-new` and linking — produced 32
+`ld: duplicate symbol` reports, all of the form `_wasmer_vm_f32_ceil`,
+`_wasmer_vm_memory32_grow`, `_wasmer_vm_table_init`: the libcalls that JIT-compiled wasm code
+calls back into. `wasmer-vm` declares them `#[no_mangle]`, so both versions export the same
+names, and both resolve a libcall address the same way, by taking the address of their own
+definition (`libcalls.rs`: `LibCall::CeilF32 => wasmer_vm_f32_ceil as usize`). Two things make
+this dangerous rather than cosmetic:
+
+- The Apple linker reported the duplicates as a **warning on the linker's stderr and built the
+  library anyway**, silently keeping one definition. Nothing fails; the problem would surface
+  as a wrong answer.
+- Whether each backend then gets *its own* address depends on the platform. Under macOS's
+  two-level namespace the local definition wins, which is why the two-library experiment above
+  passed. Under ELF's flat namespace a `#[no_mangle]` symbol in a shared object is
+  preemptible, so the address goes through the GOT and resolves to whichever definition the
+  dynamic linker picked first — for one of the two backends, the *other* one's libcalls, called
+  with its own incompatible `VMContext`. That is silent memory corruption, on the platform the
+  node actually runs on.
+
+There is a known mitigation, and it is one this library wants regardless: **export nothing but
+the `vm_exec2_*` surface.** Hiding the rest (a version script on ELF, `-exported_symbols_list`
+on Mach-O, or `-C default-symbol-visibility=hidden`) makes the `wasmer_vm_*` symbols local and
+non-preemptible, so each backend binds its own. Until that is in place and verified on Linux,
+the constraint stands: **never link `libvmexeccapi` and `libvmexeccapi2` into one binary**, and
+note that the reason is the shared `wasmer_vm_*` libcall names, not two copies of wasmer 2.2 —
+today's `libvmexeccapi2` contains only wasmer 6.
+
+So G5 is not closed, but what remains is a link-visibility question with a standard answer,
+not an open question about whether two runtimes can coexist.
 
 ### What the wasmer 2.2 path needs
 
@@ -404,30 +436,105 @@ not the instance:
 Split in two, because the two halves fail for different reasons and only the first one is
 cheap to undo.
 
-### Phase 4a — Make the FFI work, with the VM kept out of it
+### Phase 4a — Make the FFI work, with the VM kept out of it — **done**
 
 A `wasmer3/` package that links the library and drives it directly, with a Go-side test
 supplying a minimal hand-written `executor.VMHooks`. It does **not** implement
-`executor.Executor` or `executor.Instance` yet.
+`executor.Executor` or `executor.Instance`, so a wrong turn costs a package rather than a
+refactor.
 
-The point is to isolate everything that can only fail at the boundary:
+| File | What it is |
+| --- | --- |
+| `wasmer3.go` | Package doc and logger |
+| `bridge3.go` | cgo linkage and a thin wrapper per C entry point, all 18 of them |
+| `error3.go` | The caller-provided error buffer, and status → Go error |
+| `wasmer3Executor.go` | `ExecutorConfig`, `CompilationOptions`, executor and instance creation |
+| `wasmer3Instance.go` | The outside view: call, gas, introspection, `CallResult` |
+| `wasmer3InstanceState.go` | The inside view: the six state operations, over a hook context |
+| `vmHooksProvider.go` | `VMHooksProvider`, and the per-instance handle it is reached through |
+| `wasmer3ImportsCgoHelper.go` | What every generated shim calls on entry and on failure |
+| `opcodeCost.go` | Generated; new writer, see below |
+| `bridge3_test.go` | 20 tests (23 with subtests), the Phase 4a acceptance |
+| `dualbackend/` | The G5 experiment, behind a build tag |
 
-1. Linking: cgo `LDFLAGS`, the per-platform library names, the `rpath`/soname handling that
-   `wasmer2/bridge2.go` already does for the legacy library.
-2. **The struct-return ABI at runtime.** So far it is proven in two halves — Rust's view by
-   `hook_dispatch`, Go's view by the package compiling against the declared prototypes. Nobody
-   has yet executed a Go shim called from Rust. This is the first place that happens.
-3. The `go_vm_hooks` pointer: how the Go side pins an `executor.VMHooks` so the pointer handed
-   to `vm_exec2_new_instance` stays valid, under cgo's rule against storing Go pointers in C
-   memory. The legacy path sidesteps the checker by passing a `uintptr`; decide deliberately
-   rather than inheriting that.
-4. The state operations from inside a real hook, and the stale-context rejection, now with Go
-   on the other side.
-5. **The signal-handler experiment for G5** (see "Serving both backends"). It belongs here
-   because it needs a real process with both runtimes loaded, and because a bad answer changes
-   the shape of everything after it.
+What the five questions turned out to be:
 
-None of this touches the VM, so a wrong turn costs a package, not a refactor.
+1. **Linking.** The same `${SRCDIR}` rpath shape as `wasmer2/bridge2.go`, against
+   `libvmexeccapi2[_arm]`. The darwin/arm64 library is built and in place; the other three
+   platforms need a CI build before they link.
+2. **The struct-return ABI at runtime — confirmed.** `TestHookResultShapes` drives an `i64`,
+   an `i32` and a `void` hook from wasm, and the contract itself compares the value it got
+   back against what the Go hook promised, signalling an error if they differ. Checked for
+   non-vacuity by flipping one bit of the hook's return: the test fails, as an early exit with
+   the contract's own error code. Until this ran, the 16-byte result struct was proven in two
+   halves and never end to end.
+3. **The `go_vm_hooks` pointer — `runtime/cgo.Handle`,** which meant **changing the C type
+   from `void *` to `uintptr_t`.** The legacy path stores a Go pointer in C memory, which cgo
+   forbids and which works by luck; a handle is an integer index into a Go-side table, which
+   is what the rule leaves available. The type change was necessary rather than cosmetic:
+   with a `void *` field, Go has to convert the handle back with `unsafe.Pointer(uintptr(...))`,
+   which is exactly the pattern `go vet`'s `unsafeptr` check rejects. The field is also more
+   honestly typed now, since Rust only stores the word and hands it back. The whole package
+   passes `go vet` and `GOEXPERIMENT=cgocheck2`, the strictest pointer checking available —
+   verified to be live by making it catch a deliberate violation.
+4. **State operations from inside a hook, and stale-context rejection.** Both work from Go:
+   a hook writes wasm memory through `MemStore` and reads it through `MemLoad`, with the
+   contract verifying the bytes itself, and reads gas and memory size through the same
+   context. `TestStaleContextIsRejected` keeps the state past the hook's return and confirms
+   all six operations come back as `ErrStaleContext` rather than following a dead borrow.
+5. **The signal-handler experiment.** Done, in `dualbackend/`; it passed, and it turned up a
+   different G5 blocker. Both recorded under "Serving both backends".
+
+Two risks the phase closed on its own account:
+
+- **Nesting across the boundary works** (`TestHookReentersTheExecutor`). A hook runs a whole
+  other instance, which runs hooks of its own, and the outer hook's state is still usable
+  afterwards and unchanged. That is the property the per-call hooks decision below rests on,
+  so it is proven here rather than deferred to Phase 5.
+- **Re-entering the *same* instance is now an error rather than undefined behaviour.**
+  `ExperimentalInstance::call` takes `&mut self`, so a second call placed while the first is in
+  flight would alias a mutable borrow across C, with nothing to catch it. `Wasmer3Instance`
+  carries an `inCall` flag, so the hook gets `ErrInstanceReentered` and it travels out as an
+  ordinary early exit. The VM never does this — the instance tracker gives each stack level its
+  own instance — but it was available to do, and this is the same category of replacement as
+  the stale-context token: a guarantee the borrow checker used to give, reinstated by hand.
+
+Two things were decided here that the plan had left open:
+
+- **The hooks are built per call, not per instance** (`VMHooksProvider.VMHooksForCall`),
+  mirroring the Rust side exactly: `ExperimentalVMHooksBuilder::with_vm_hooks` builds its
+  hooks around the state for the duration of one call and lends them out.
+
+  The alternative — one hooks object per instance with a mutable "current state" slot — is
+  *workable*, and it is worth being straight about why, because the obvious objection to it
+  turns out to be wrong. A nested call reaches a *different* instance and therefore a
+  different slot, so the outer hook's slot survives, and re-entering the same instance is now
+  refused outright. It would not be clobbered.
+
+  The reasons to prefer the parameter anyway are smaller but real. It needs no slot, so there
+  is no question of when to clear one, and no window in which the hooks object holds a context
+  belonging to a call that has ended. It makes the state a parameter, which is the shape the C
+  ABI already has — G1's answer — so the generator emits one shape rather than reconciling
+  two. And it does not lean on the re-entry guard for a property that construction gives for
+  free. The cost is one small allocation per hook call, and no generator change at all: the
+  generated shim still calls `getVMHooksFromHookContext(ctx)` and nothing else.
+- **Who holds the error buffer.** Outer calls allocate one per call, which is free at their
+  frequency. State operations share one buffer per instance, which is sound and not merely
+  convenient: a state operation is a single cgo call into Rust that touches memory and
+  returns, never calling back into Go, so the buffer's live range contains no re-entry. A
+  buffer per operation would be an allocation on every memory access a contract makes.
+
+Also added: a `WriteWasmer3OpcodeCost` generator writer, so `wasmer3/opcodeCost.go` comes from
+the same opcode list as its C counterpart rather than being hand-copied. It emits a
+package-level function instead of wasmer2's method on the executor, because this executor takes
+its configuration at construction and there is no executor to hang it off of.
+
+Not done here, deliberately: the `reset`/cache entry points (Phase 6), and the three
+non-darwin platform libraries. **The missing libraries have a CI consequence**: `wasmer3` now
+links `libvmexeccapi2`, so `go test ./...` fails at the link step on any platform whose library
+is absent. `go build ./...` is unaffected, because a non-main package is never linked. Either
+the four libraries land before the package is in the default test path, or `wasmer3` goes
+behind a build tag until they do.
 
 ### Phase 4b — Converge the Go executor interfaces
 
@@ -467,9 +574,9 @@ Both executors then coexist behind `ExecutorAbstractFactory` speaking the *same*
 which is what makes the Phase 5 differential run a matter of choosing a factory — or, if G5
 lands as expected, a flag.
 
-**Why not converge before 4a?** It would mean reshaping a 26-method interface, its three
+**Why not converge before 4a?** It would mean reshaping a 24-method interface, its three
 implementors and the mocks against an FFI nobody has executed yet. **Why not defer it past
-Phase 4?** Because then `wasmer3` has to implement the legacy 26 methods, including the
+Phase 4?** Because then `wasmer3` has to implement the legacy 24 methods, including the
 breakpoint accessors the new executor deliberately does not have and the memory accessors that
 moved to `InstanceState` — an adapter whose only purpose is to fake the interface being
 deleted. Phase 4a is the cheap half and it de-risks the expensive one.
@@ -519,12 +626,13 @@ and the C ABI is parameter-form regardless, so the trait convergence was not a p
 after all — it is now better informed by Phase 2, which found the per-instance hooks argument
 the converged trait needs.
 
-Remaining path: **Phase 4a → Phase 4b → Phase 5**.
+Remaining path: **Phase 4b → Phase 5**.
 
-Phase 4a is independent of everything else and answers two questions that gate the rest: does
-the struct-return ABI work at runtime, and can both backends share a process (G5). Phase 4b
-depends on G5 only for how the backend is chosen, not for the interface shape — that is already
-determined by the Rust side.
+Phase 4a was independent of everything else and answered the two questions that gated the
+rest. The struct-return ABI works end to end. Both backends share a process, and what is left
+of G5 is a link-visibility question rather than a runtime one. Phase 4b never depended on G5
+for the interface *shape* — that was already determined by the Rust side — only for how the
+backend gets chosen, so it is unblocked either way.
 
 **Phase 1.6/1.7 is now on the critical path rather than beside it.** Serving wasmer 2.2 through
 the new FFI needs the two `RuntimeRef` traits converged, and Phase 4b needs the hooks provider

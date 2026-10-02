@@ -106,8 +106,14 @@ impl vm_exec2_hook_result_t {
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec2_hook_context_t {
-    /// The Go VM hooks object for this instance. Read by the Go side, never by Rust.
-    pub go_vm_hooks: *mut c_void,
+    /// The caller's VM hooks handle for this instance. Read by the caller, never by Rust.
+    ///
+    /// An opaque word rather than a pointer, deliberately: Rust only stores it and hands it
+    /// back, and the Go side needs it to be an integer. cgo forbids storing a Go pointer in
+    /// C memory, so what Go puts here is a `runtime/cgo.Handle`, which is a `uintptr` by
+    /// construction. Typing the field as a pointer would force Go to convert it back with
+    /// `unsafe.Pointer(uintptr(...))`, exactly the pattern `go vet` rejects.
+    pub go_vm_hooks: usize,
 
     /// Erased `&mut ExperimentalInstanceState<'_>`; null while no call is active.
     state: *mut c_void,
@@ -129,7 +135,7 @@ type ErasedInstanceState = ExperimentalInstanceState<'static>;
 impl vm_exec2_hook_context_t {
     fn inactive() -> Self {
         vm_exec2_hook_context_t {
-            go_vm_hooks: std::ptr::null_mut(),
+            go_vm_hooks: 0,
             state: std::ptr::null_mut(),
             pool: std::ptr::null(),
             token: 0,
@@ -208,13 +214,13 @@ pub struct CapiVMHookContextPool {
 
 /// Builds the VM hooks for one host call, and owns the context lifecycle.
 pub struct CapiVMHooksBuilder {
-    go_vm_hooks: *mut c_void,
+    go_vm_hooks: usize,
     hook_table: CapiVMHookTable,
     pool: RefCell<CapiVMHookContextPool>,
 }
 
 impl CapiVMHooksBuilder {
-    pub fn new(go_vm_hooks: *mut c_void, hook_table: CapiVMHookTable) -> Self {
+    pub fn new(go_vm_hooks: usize, hook_table: CapiVMHookTable) -> Self {
         CapiVMHooksBuilder {
             go_vm_hooks,
             hook_table,

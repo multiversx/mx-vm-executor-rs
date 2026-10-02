@@ -10,7 +10,7 @@ use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::{BreakpointValue, Instance, InstanceCallResult};
 use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalInstance;
-use std::ffi::{CStr, c_void};
+use std::ffi::CStr;
 use std::slice;
 
 use crate::capi_config::vm_exec2_compilation_options_t;
@@ -82,8 +82,10 @@ impl vm_exec2_call_result_t {
 
 /// Creates an instance.
 ///
-/// `go_vm_hooks` is the Go VM hooks object for *this* instance; it is handed back to every
-/// VM hook as field 0 of the hook context. It must stay alive for the instance's lifetime.
+/// `go_vm_hooks` is the caller's VM hooks handle for *this* instance; it is handed back to
+/// every VM hook as field 0 of the hook context, and is otherwise opaque here. Whatever it
+/// refers to must stay alive for the instance's lifetime. From Go it is a `cgo.Handle`,
+/// which is why it is an integer and not a pointer.
 ///
 /// # Safety
 ///
@@ -98,7 +100,7 @@ pub unsafe extern "C" fn vm_exec2_new_instance(
     wasm_bytes: *const u8,
     wasm_bytes_len: u32,
     options: *const vm_exec2_compilation_options_t,
-    go_vm_hooks: *mut c_void,
+    go_vm_hooks: usize,
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec2_status_t {
