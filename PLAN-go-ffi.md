@@ -136,7 +136,7 @@ is what flips.
 | **G1** | Do the hooks hold the state, or take it as a parameter? | The C ABI passes the context as the first argument of every hook — that *is* the parameter form. If the Rust trait keeps the state bundled, the generator must emit and reconcile two shapes. Deciding after the ABI is frozen turns a refactor into a two-repo migration. The Wasmer 6 builder currently returns `Box<dyn VMHooks>`, so a per-hook allocation also rides on this. **Phase 2 found this already answered by the committed Wasmer 6 code**: `ExperimentalVMHooksBuilder::with_vm_hooks` hands the builder the state and lends the hooks back through a closure, so the state is *bundled* in Rust and *passed as a parameter* in C — the two are compatible, and the generator emits one shape, not two. The allocation question is also already resolved: the builder lends `&mut dyn VMHooks` on its own stack frame. |
 | **G2** | Does the new executor keep the Go VM's truncating load? | **Settled in Phase 2: yes, it clamps.** `vm_exec2_state_mem_load` writes into the caller's buffer and returns `min(requested, available)`, so the truncation is visible in the return value. Chosen to preserve behaviour contracts have already observed; the strict load stays available on the trait for a caller that wants it. The rule itself moved into `clamped_load_len` in `vm-executor/src/new_traits/memory.rs`, so the FFI and `InstanceState::memory_load_clamped` cannot drift apart. |
 | **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | Decides whether `OpcodeConfig` is `Arc<Mutex<_>>` (2.2 today) or plain (Wasmer 6 today), which decides the shape of the single config struct. **Phase 2 took the immutable branch for the new C API**: the version and the cost table arrive in `vm_exec2_executor_config_t` at `vm_exec2_new_executor` and are never mutated, so there is no `Arc<Mutex<_>>` on this path and no `set_opcode_config`. The gate stays open for Phase 1.6, which has to reconcile the 2.2 backend's `Arc<Mutex<_>>`. |
-| **G5** | Does one C library carry both backends, selected by a flag? | Decides whether `c-api-new` depends on both backend crates, whether the Go VM links one library or two, and whether the Phase 5 differential run is a runtime flag or a link-time choice. **Phase 4a cleared the part everyone expected to be the problem and found a different one.** Both runtimes' trap handlers coexist and chain, in both initialisation orders (`wasmer3/dualbackend/`). But `wasmer-vm` 2.2 and 6 export the same 32 `#[no_mangle]` `wasmer_vm_*` libcall symbols, which collide, which the Apple linker reports as a *warning* while building the library anyway. The gate now rests on hiding every non-`vm_exec2_*` symbol and confirming it on Linux. See "Serving both backends" below. |
+| **G5** | Does one C library carry both backends, selected by a flag? | **Answered: no — one library per backend, link the one you need.** That is already the pattern: a node links four wasmer runtimes today (v1.2/v1.3/v1.4 share one byte-identical `libwasmer`, v1.5 brings `libvmexeccapi`) with zero shared symbols between them. Bundling would make the 32 duplicate `wasmer_vm_*` libcalls a *static* collision the linker silently collapses, breaking one backend's `vmctx` layout; two libraries make it a *dynamic* one that `-Bsymbolic-functions` fixes. Duplication is near zero: one Rust crate with a backend feature, one Go bridge with a build tag. What remains is **verifying `-Bsymbolic-functions` on Linux, before anything links both** — see "Serving both backends" below. |
 
 
 ## Phase 1 — Close the trait gaps
@@ -352,65 +352,73 @@ instance — but it satisfies the stricter contract trivially. Writing the Go si
 tighter contract therefore costs nothing on 2.2 and makes it impossible for the VM to
 accidentally depend on a lifetime only 2.2 offers.
 
-### One library, a backend flag
+### Two libraries, not one — G5 answered "no"
 
-The target is a single `libvmexeccapi2` carrying both backends, chosen by a field in
-`vm_exec2_executor_config_t` — configured once, at creation, like everything else in this API.
+The original target was a single `libvmexeccapi2` carrying both backends, chosen by a field in
+`vm_exec2_executor_config_t`. **That is dropped.** What replaces it is one library per backend,
+with the node linking the one it needs — which is not a compromise but the pattern this
+codebase has always used.
 
-What it buys:
+**The established pattern.** A production node already links *four* wasmer runtimes:
+`mx-chain-vm-v1_2-go`, `-v1_3-go` and `-v1_4-go` each ship `wasmer/libwasmer_*`, and
+`mx-chain-vm-go v1.5` ships `wasmer2/libvmexeccapi*`. The three older copies are
+byte-identical (same sha256, same size), and the old `libwasmer` and `libvmexeccapi` share
+**zero** symbol names. So the invariant that has quietly held is not "one runtime per process"
+— it is **no two *different* runtimes with colliding symbol names**.
 
-- **The Phase 5 differential run becomes a runtime flag**, in one process, over one harness,
-  rather than two builds linked against different libraries. That is the acceptance criterion
-  for the whole effort, so making it cheap matters more than it looks.
-- One FFI surface, one header, one shipped artifact matrix. The platform matrix is already
-  four libraries; doubling it is worse than doubling one library's size.
+**Why one library is the worse option.** Bundling makes the collision a *static* one: both
+`wasmer-vm` versions define the same 32 `#[no_mangle]` libcalls, the linker collapses them to
+one definition, and the context-taking ones then reinterpret `vmctx` under the wrong layout.
+Fixing that means renaming symbols in one version's rlib or patching `wasmer-vm`. Two
+libraries make it a *dynamic* one, which is a link flag — see below.
 
-What it costs: roughly 5-6 MB (the current wasmer 2.2 library) on top of ~8 MB (wasmer 6),
-which is unremarkable for a shipped node dependency.
+**What the duplication actually costs: almost nothing.** `c-api-new` touches its backend in
+**three type names across two of thirteen files** — `ExperimentalInstance` in
+`capi_instance.rs`, `ExperimentalInstanceState` and `ExperimentalVMHooksBuilder` in
+`capi_vm_hook_context.rs`. Status codes, strings, config, opcode cost, the hook context
+machinery and the 908-line generated hooks implementation are all backend-agnostic. So the
+shape is **one crate with a Cargo feature selecting a backend alias module, built twice**, not
+two crates. The one snag is that the aliases are not drop-in: `ExperimentalInstanceState<'a>`
+is a borrow of the host-call frame while `WasmerProdInstanceState` is owned, so the lifetime
+shapes have to agree first — which is Phase 1.6's job regardless.
 
-Two things had to be settled before committing to it. Phase 4a settled the first and
-replaced the second with something sharper.
+Likewise on the Go side: if both libraries keep the same `vm_exec2_*` ABI, there is **one**
+bridge, with a build tag choosing between the `LDFLAGS` lines, and the 3,631-line generated
+cgo file stays single-copy. Two Go bridges would only be needed if the libraries were
+deliberately given different symbol prefixes, and there is no reason to.
 
-**Signal handlers: answered, and the answer is yes.** `wasmer3/dualbackend/` links both
-libraries into one test binary and traps on purpose in each backend, for both trap kinds that
-take different routes to the handler — an illegal instruction (`unreachable`) and an
-out-of-range load — in both initialisation orders. All four cases come back as a reported
-runtime error, and both backends keep working afterwards. The order that mattered most is
-wasmer 2.2 second, because `wasmer2.CreateExecutor` calls `vm_force_sighandler_reinstall`
-unconditionally and is therefore the one that can overwrite a handler wasmer 6 has already
-installed; it chains correctly. Caveat on the evidence: this was run on darwin/arm64 only, and
-it is the two-*library* case, not the bundled one.
+### The symbol problem does not go away, and it is on the Phase 5 path
 
-**Symbol collision is the real blocker, and it is not about signal handlers.** Probing the
-bundled case — adding the 2.2 backend as a dependency of `c-api-new` and linking — produced 32
-`ld: duplicate symbol` reports, all of the form `_wasmer_vm_f32_ceil`,
-`_wasmer_vm_memory32_grow`, `_wasmer_vm_table_init`: the libcalls that JIT-compiled wasm code
-calls back into. `wasmer-vm` declares them `#[no_mangle]`, so both versions export the same
-names, and both resolve a libcall address the same way, by taking the address of their own
-definition (`libcalls.rs`: `LibCall::CeilF32 => wasmer_vm_f32_ceil as usize`). Two things make
-this dangerous rather than cosmetic:
+Two libraries does *not* dodge the collision, because the deployment that matters links both.
+The migration shape here is the v1.2–v1.4 one: ship the new VM module version alongside the
+old, so a node syncing from genesis can re-execute historical blocks under the backend that
+produced them. At that point the node links `libvmexeccapi` (wasmer 2.2) **and**
+`libvmexeccapi2` (wasmer 6) — and those two shipped libraries have **32 overlapping exported
+symbol names, every one of them `wasmer_vm_*`** (measured directly:
+`llvm-nm --dynamic` on the shipped `.so`, `nm -gU` on the new dylib). Under ELF's flat
+namespace either library's libcall references can bind to the other's definition. macOS's
+two-level namespace is why `wasmer3/dualbackend/` passes locally and tells us nothing about
+Linux.
 
-- The Apple linker reported the duplicates as a **warning on the linker's stderr and built the
-  library anyway**, silently keeping one definition. Nothing fails; the problem would surface
-  as a wrong answer.
-- Whether each backend then gets *its own* address depends on the platform. Under macOS's
-  two-level namespace the local definition wins, which is why the two-library experiment above
-  passed. Under ELF's flat namespace a `#[no_mangle]` symbol in a shared object is
-  preemptible, so the address goes through the GOT and resolves to whichever definition the
-  dynamic linker picked first — for one of the two backends, the *other* one's libcalls, called
-  with its own incompatible `VMContext`. That is silent memory corruption, on the platform the
-  node actually runs on.
+The candidate fix is **`-Wl,-Bsymbolic-functions` on both libraries**: it binds each library's
+intra-library references at link time, so each backend reaches its own libcalls regardless of
+what else is loaded. It composes with the version script rustc already passes, unlike an
+export list (see above). **It needs a Linux verification, and that verification belongs before
+anything links both** — which means before the Phase 5 differential harness, not after.
 
-There is a known mitigation, and it is one this library wants regardless: **export nothing but
-the `vm_exec2_*` surface.** Hiding the rest (a version script on ELF, `-exported_symbols_list`
-on Mach-O, or `-C default-symbol-visibility=hidden`) makes the `wasmer_vm_*` symbols local and
-non-preemptible, so each backend binds its own. Until that is in place and verified on Linux,
-the constraint stands: **never link `libvmexeccapi` and `libvmexeccapi2` into one binary**, and
-note that the reason is the shared `wasmer_vm_*` libcall names, not two copies of wasmer 2.2 —
-today's `libvmexeccapi2` contains only wasmer 6.
+### The second new-FFI library may not be needed at all
 
-So G5 is not closed, but what remains is a link-visibility question with a standard answer,
-not an open question about whether two runtimes can coexist.
+Worth stating plainly, because it removes work from the critical path. The reason to want
+wasmer 2.2 behind the *new* FFI is to delete the legacy C API. It is **not** needed for the
+differential run: after Phase 4b, `wasmer2` presents the new Go interfaces over the legacy
+`libvmexeccapi`, because 2.2 hands out an instance-lifetime state and a Go-side
+`InstanceState` for it is a thin wrapper over the existing instance — which is what Phase 4b
+item 1 already says. So the differential run is `wasmer2` against `wasmer3`, both speaking the
+new Go interfaces, with no second Rust artifact.
+
+That makes **Phase 1.6 and the `VMHooksLegacyAdapter` activation trick cleanup rather than
+migration**: worth doing when the legacy interface set is retired, not before wasmer 6 is live.
+The `-Bsymbolic-functions` work is what takes its place on the critical path.
 
 ### What the wasmer 2.2 path needs
 
@@ -626,14 +634,22 @@ and the C ABI is parameter-form regardless, so the trait convergence was not a p
 after all — it is now better informed by Phase 2, which found the per-instance hooks argument
 the converged trait needs.
 
-Remaining path: **Phase 4b → Phase 5**.
+Remaining path: **Phase 4b → Phase 5**, with the `-Bsymbolic-functions` verification
+alongside 4b rather than after it.
 
 Phase 4a was independent of everything else and answered the two questions that gated the
-rest. The struct-return ABI works end to end. Both backends share a process, and what is left
-of G5 is a link-visibility question rather than a runtime one. Phase 4b never depended on G5
-for the interface *shape* — that was already determined by the Rust side — only for how the
-backend gets chosen, so it is unblocked either way.
+rest. The struct-return ABI works end to end, and the backends coexist. Phase 4b never
+depended on G5 for the interface *shape* — that was already determined by the Rust side — only
+for how the backend gets chosen, so G5's answer does not change it.
 
-**Phase 1.6/1.7 is now on the critical path rather than beside it.** Serving wasmer 2.2 through
-the new FFI needs the two `RuntimeRef` traits converged, and Phase 4b needs the hooks provider
-to take a per-instance handle. G4 has to be settled for that, and G1 is already answered.
+**Phase 1.7 is on the critical path; Phase 1.6 came off it.** Phase 4b needs the hooks
+provider to take a per-instance handle, which is 1.7, and G4 has to be settled for that. Phase
+1.6 — converging the two `RuntimeRef` traits — was only needed in order to serve wasmer 2.2
+through the *new* FFI, and G5's answer removed that need: the differential run uses `wasmer2`
+over the legacy library, presenting the new Go interfaces. 1.6 is now cleanup for when the
+legacy interface set is retired.
+
+**What took its place:** verifying `-Wl,-Bsymbolic-functions` on Linux. Any binary linking both
+`libvmexeccapi` and `libvmexeccapi2` — the Phase 5 harness, and later a node that keeps the old
+VM module for historical re-execution — has 32 colliding `wasmer_vm_*` symbols between them.
+This is the one item that has to land before Phase 5 runs anywhere but macOS.
