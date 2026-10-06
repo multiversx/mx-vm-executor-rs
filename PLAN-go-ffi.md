@@ -722,19 +722,74 @@ The test is skipped unless `VMEXECUTOR_DIFF=1`, since it cannot pass until Phase
 original purpose: wasmer2, wasmer2, wasmer3, wasmer3, wasmer2 in one process, which passes and
 exercises backend coexistence through the real VM rather than through a trap-handler probe.
 
+#### Done: the instance interface shrunk, and the call reports its own outcome
+
+`executor.Instance` went from 24 methods to 19, and `CallFunction` now returns a result
+instead of a bare error.
+
+**Four methods removed as provably dead**, not merely unused:
+
+- `HasMemory()` — every implementation answered an unconditional `true`, so
+  `verifyMemoryDeclaration` could not fire. It and `ErrMemoryDeclarationMissing` are gone with
+  it; the executors already reject a contract without exactly one memory when they instantiate
+  it, which happens first.
+- `MemDump()` — exactly `MemLoad(0, MemLength())`, which is how the wasmer6 adapter already
+  implemented it. The two tests that used it say so directly now.
+- `SetVMHooksPtr` / `GetVMHooksPtr` — no VM caller at all, and every implementation of the
+  getter returned zero. That made `TestExecution_MultipleInstances_SameVMHooks` vacuous (it
+  asserted a one-element set of zeros) and `TestExecution_MultipleVMs_OverlappingDifferentVMHooks`
+  unrevivable (it asserted those zeros were *distinct*, which is why it carried a `t.Skip()`).
+  The first keeps its execution loop without the dead assertion; the second is deleted. Under
+  G6 the property they were reaching for holds by construction: the hooks belong to the
+  executor, so every instance it creates shares them.
+
+**`CallFunction(name) InstanceCallResult`.** The new type lives in
+`executor/executorInstanceCallResult.go` and carries `Kind`, the original `Err`, the
+early-exit code and the breakpoint. `Err` is the error itself rather than its text, so
+`errors.Is` and `errors.As` keep working across the boundary — the thing a value-typed result
+would otherwise have quietly broken.
+
+The translation moved **up**, into `runtimeContext.CallSCFunction`, where it is written once
+for both backends instead of once per adapter:
+
+- wasmer6 reports what actually happened and no longer stashes the breakpoint itself;
+- wasmer2legacy can only say ok-or-failed — its C API cannot tell a trap from a breakpoint,
+  and its middlewares set the global themselves — so it never reports `CallBreakpoint`, and
+  the VM's existing readers are undisturbed;
+- `CallSCFunction` records a reported breakpoint where those readers look, then returns
+  `result.Err`.
+
+This is the hard prerequisite `PLAN-go-breakpoint-removal.md` was waiting on.
+
+**Verified.** The full suite passes on the default backend. Under `$VMEXECUTOR=wasmer6` the
+failure set is **byte-identical before and after** (25 failures, compared by stashing the
+change and re-running), so nothing regressed. The hook-sequence differential on `erc20-c`
+reproduces its recorded baseline exactly: **9,135 lines, 96 differing, every one of them
+instance lifecycle** — `Reset`/`Clean` and the `SetPointsUsed`/`SetGasLimit`/`SetBreakpointValue`
+triple that follows a warm reuse. Every VM hook call and every gas value still agree.
+
 #### Still to do
 
-1. Shrink `executor.Instance` to the outside view, pushing the legacy-only methods down into
-   wasmer2's own types: `SetBreakpointValue`/`GetBreakpointValue` (the new executor reports
-   breakpoints in its call result), `SetVMHooksPtr`/`GetVMHooksPtr` (no VM caller at all),
-   `SetGasLimit`, `MemDump`, `HasMemory`.
-2. `CallFunction` returns an `InstanceCallResult` rather than a bare `error` — the hard
-   prerequisite for `PLAN-go-breakpoint-removal.md`.
-3. `MemLoadFromMemory` / `MemStoreToMemory` bypassed for wasmer3, where bounds checking lives
-   in Rust, and kept for wasmer2.
-4. `SetOpcodeConfig` removal — see the G4 resolution below.
-5. ~~`wasmer3` implements `executor.Executor` and `executor.Instance`~~ — **done**, as a
-   transitional adapter; it is item 1 that lets the adapter go away.
+1. `SetGasLimit` off the interface. It was on the original list for this tranche and came off
+   on inspection: the limit is sampled once, at `StartWasmerInstance`, from
+   `metering.GetGasForExecution()`, and **must not be re-sampled** at call time or the gas
+   semantics change. For wasmer 2.2 it then lives in a per-instance wasm global, which nesting
+   restores for free. Folding it into `CallFunction` therefore means carrying the sampled
+   value on the instance tracker alongside the instance — a small change, but a
+   gas-sensitive one that deserves its own step rather than riding along with the call-result
+   conversion.
+2. `SetBreakpointValue` / `GetBreakpointValue` off the interface. Blocked on
+   `PLAN-go-breakpoint-removal.md`, which item 2 above has now unblocked: while the VM still
+   polls the breakpoint slot, the methods have to stay.
+3. `MemLoad` / `MemStore` off the interface, which is what finally removes
+   `instanceHooks.activeState` and lets the C API's runtime handle move to per-executor
+   (G6). The census says this is nearly done already: **the only non-test caller in VM code is
+   `hostInstanceState`** in `vmhost/vmhooks/vmHooksImpl.go`, which is the Wasmer 2.2 path
+   resolving the instance through the host stack. What remains is the eight
+   `vmhost/contexts` tests that address memory through `Instance` from outside a host call.
+4. `SetOpcodeConfig` removal — now folded into the G6 companion decision: the opcode config
+   leaves the executor entirely and becomes part of `CompilationOptions`, passed per instance.
+   Blocked on the Rust-side C ABI change.
 
 #### G4 resolved: the config can be immutable, if the executor is rebuilt
 
