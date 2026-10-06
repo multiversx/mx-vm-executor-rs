@@ -159,10 +159,11 @@ is what flips.
 
 | # | Decision | Why it blocks |
 | --- | --- | --- |
-| **G1** | Do the hooks hold the state, or take it as a parameter? | The C ABI passes the context as the first argument of every hook — that *is* the parameter form. If the Rust trait keeps the state bundled, the generator must emit and reconcile two shapes. Deciding after the ABI is frozen turns a refactor into a two-repo migration. The Wasmer 6 builder currently returns `Box<dyn VMHooks>`, so a per-hook allocation also rides on this. **Phase 2 found this already answered by the committed Wasmer 6 code**: `ExperimentalVMHooksBuilder::with_vm_hooks` hands the builder the state and lends the hooks back through a closure, so the state is *bundled* in Rust and *passed as a parameter* in C — the two are compatible, and the generator emits one shape, not two. The allocation question is also already resolved: the builder lends `&mut dyn VMHooks` on its own stack frame. |
+| **G1** | Do the hooks hold the state, or take it as a parameter? | The C ABI passes the context as the first argument of every hook — that *is* the parameter form. If the Rust trait keeps the state bundled, the generator must emit and reconcile two shapes. Deciding after the ABI is frozen turns a refactor into a two-repo migration. The Wasmer 6 builder currently returns `Box<dyn VMHooks>`, so a per-hook allocation also rides on this. **Phase 2 found this already answered by the committed Wasmer 6 code**: `ExperimentalVMHooksBuilder::with_vm_hooks` hands the builder the state and lends the hooks back through a closure, so the state is *bundled* in Rust and *passed as a parameter* in C — the two are compatible, and the generator emits one shape, not two. The allocation question is also already resolved: the builder lends `&mut dyn VMHooks` on its own stack frame. **Superseded in scope by G6**, which decides where that builder is attached. |
 | **G2** | Does the new executor keep the Go VM's truncating load? | **Settled in Phase 2: yes, it clamps.** `vm_exec2_state_mem_load` writes into the caller's buffer and returns `min(requested, available)`, so the truncation is visible in the return value. Chosen to preserve behaviour contracts have already observed; the strict load stays available on the trait for a caller that wants it. The rule itself moved into `clamped_load_len` in `vm-executor/src/new_traits/memory.rs`, so the FFI and `InstanceState::memory_load_clamped` cannot drift apart. |
-| **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | **Resolved in Phase 4b: immutable, with the executor rebuilt on change.** Phase 2 had already taken the immutable branch for the new C API — version and costs arrive in `vm_exec2_executor_config_t`, with no `set_opcode_config`. The obstacle was `GasScheduleChange` (`vmhost/hostCore/host.go:375`), which re-applies both to the *live* executor at an epoch. It is reconcilable because that function already calls `ClearWarmInstanceCache()`, so no instance survives the change: recreating the executor is behaviour-preserving, and is what lets `SetOpcodeConfig` leave the `Executor` interface. Phase 1.6 still has to reconcile the 2.2 backend's `Arc<Mutex<_>>` if that path is ever built. |
+| **G4** | Which `OpcodeVersion` does each host declare, and does the config stay mutable? | **Resolved in Phase 4b: immutable, with the executor rebuilt on change.** Phase 2 had already taken the immutable branch for the new C API — version and costs arrive in `vm_exec2_executor_config_t`, with no `set_opcode_config`. The obstacle was `GasScheduleChange` (`vmhost/hostCore/host.go:375`), which re-applies both to the *live* executor at an epoch. It is reconcilable because that function already calls `ClearWarmInstanceCache()`, so no instance survives the change: recreating the executor is behaviour-preserving, and is what lets `SetOpcodeConfig` leave the `Executor` interface. Phase 1.6 still has to reconcile the 2.2 backend's `Arc<Mutex<_>>` if that path is ever built. **Extended by G6's companion decision**: the opcode config is not executor state at all — it folds into `CompilationOptions`, passed per instance, which removes the setter rather than replacing it with a rebuild. |
 | **G5** | Does one C library carry both backends, selected by a flag? | **Answered: no — one library per backend, link the one you need.** That is already the pattern: a node links four wasmer runtimes today (v1.2/v1.3/v1.4 share one byte-identical `libwasmer`, v1.5 brings `libvmexeccapi`) with zero shared symbols between them. Bundling would make the 32 duplicate `wasmer_vm_*` libcalls a *static* collision the linker silently collapses, breaking one backend's `vmctx` layout; two libraries make it a *dynamic* one that `-Bsymbolic-functions` fixes. Duplication is near zero: one Rust crate with a backend feature, one Go bridge with a build tag. What remains is **verifying `-Bsymbolic-functions` on Linux, before anything links both** — see "Serving both backends" below. |
+| **G6** | Are the VM hooks attached per executor or per instance, and when is the execution context resolved? | **Closed: per executor, resolved at call time.** The two are independent axes, and only the second decides whether a cached instance is safe — an instance keeps its hooks object for life (`reset()` never rebuilds the import object), so reuse is sound iff the hooks find the current execution when called rather than when created. Attaching them per executor makes that structural: instances carry no host identity, so there is nowhere for a stale context to hide. It is also what the Go VM already does (`vmHooksProvider { host }`), which is why *its* warm cache is sound and the Rust VM's capture-at-creation design could never have one. The per-instance alternative buys stateless instantiation at the price of foreclosing instance reuse, and needs an `Any` downcast for non-wasm executors that this option does not. Full reasoning, with measurements, in `PLAN-rust-vm-caching.md`. |
 
 
 ## Phase 1 — Close the trait gaps
@@ -174,8 +175,8 @@ is what flips.
 | 3 | Bounds-check `WasmerInstance::memory_load`/`memory_store`, which sliced with an unchecked, overflow-prone `mem_ptr + mem_length` | **done** |
 | 4 | Remove every panic from `Result`-returning paths: instance init in both executors (needs `rc_new_cyclic_fallible` for the 2.2 backend), `new_instance_from_cache`, `reset`, the breakpoint read in `call`, the prod state setters, `get_memory_view` | **done** |
 | 5 | `BreakpointValue` discriminants aligned to the wire values 4/5 so `as_u64` and `TryFrom<u64>` are inverses | **done** (separate commit) |
-| 6 | Converge the two `RuntimeRef` traits into one config plus one hooks-provider trait, dropping the `Mutex` | gated on **G1**, **G4** |
-| 7 | Apply G1: if the state becomes a hook parameter, the builder trait disappears and `VMHooksWrapper` holds one `Box<dyn VMHooks>` per instance | gated on **G1** |
+| 6 | Converge the two `RuntimeRef` traits into one `ExecutorRuntime`, dropping the `Mutex` and folding `OpcodeConfig` into `CompilationOptions` | **decided**, see G6; ready to build |
+| 7 | Create instances through the `Executor` trait rather than around it | **decided**, see G6; the per-instance handle it was waiting for turns out not to exist — the runtime reference is per executor |
 
 The bounds rules are deliberately shared by all backends — they are observable by contracts,
 so there is one implementation, not one per backend. Ten tests pin the edge cases, including
@@ -223,6 +224,14 @@ shim reads — and there is nowhere in that signature to put it. So `vm_exec2_ne
 takes `go_vm_hooks` and builds the instance directly against the Wasmer 6 backend. **Phase
 1.6's converged hooks-provider trait should take a per-instance host handle**, otherwise the
 `Executor` trait cannot serve the C API on either backend.
+
+*Resolved by G6, and not the way this predicted.* There is no per-instance host handle,
+because there is no per-instance host state: Go's provider holds nothing but the host, and the
+per-instance `cgo.Handle` carries only `activeState` (a Phase 4b item 1 workaround) and an
+error buffer. So the handle becomes **per executor**, passed once to
+`vm_exec_w6_new_executor`, and `vm_exec_w6_new_instance` loses its `go_vm_hooks` argument
+entirely. That is what lets this file go back through the `Executor` trait and serve both
+backends — once 4b item 1 has removed `activeState`.
 
 **The hook context is pooled, not stack-allocated.** The original sketch called for a
 stack-allocated context per invocation. That is unsafe as specified: a Go side holding the
@@ -864,25 +873,54 @@ against `wasmer6` is Wasmer's doing and not the new FFI's.
 - Stale-handle test: keep a `ctx` past the hook return and confirm the token check rejects it
   rather than faulting. **Done in Phase 2** (`state_ops`).
 
-## Phase 6 — Deferred
+## Phase 6 — Caching — **re-scoped, see `PLAN-rust-vm-caching.md`**
 
-- `reset()` on the Wasmer 6 instance — prerequisite for Go's warm-instance tracker.
-- `new_instance_from_cache` and the `cache` path.
-- Only then wire warm instances into wasmer3.
+Was: `reset()` on the Wasmer 6 instance, as a prerequisite for Go's warm-instance tracker,
+then `new_instance_from_cache`, then warm instances for wasmer6.
 
-## Cross-repo note
+**`reset()` is off the list.** Measured on a 55 KB contract: compiling costs ~6 ms and
+instantiating from a module already in memory ~30–50 µs, so reusing a live instance saves
+under 1% over instantiating a cached module afresh. And it is not cheap to get — Wasmer 6
+*and* 7.4 have no instance reset (`Memory::reset` only zeroes and shrinks memory; no
+data-segment or global restore), so it would mean forking Wasmer 6, which is consumed
+unmodified from crates.io unlike the 2.2 fork. Re-instantiating is behaviourally identical to
+resetting.
 
-`mx-sdk-rs` pins `multiversx-chain-vm-executor* = "=0.5.1"` from crates.io, so it picks up
-none of this until a version bump. At that bump, three accumulated breaks need resolving
-together:
+So for this backend the warm instance cache **collapses into the module cache**. The cheapest
+route for the Go VM is for `Wasmer6Executor` to hold compiled modules in memory and let
+`Reset()` keep returning false, which the instance tracker already handles by evicting and
+recreating. `NewInstanceFromCompiledCodeWithOptions` is already the Wasmer-6-compatible form
+of reuse.
 
-- `ExperimentalExecutorRuntimeRef::opcode_cost` → `opcode_config` (carries the G4 decision);
-- `VMHooksDispatcher` is missing five newer hooks (`activate_unsafe_mode`,
-  `deactivate_unsafe_mode`, `managed_get_num_errors`, `managed_get_error_with_index`,
-  `managed_get_last_error`) — the `VMHooks` trait has 282 required methods and no defaults,
-  so every addition is a hard break;
-- `WasmerProdInstanceState::set_breakpoint_value_legacy` / `set_early_exit` now return
-  `Result`, so `InstanceStateSetEarlyExit` in `chain/wasmer-prod` must handle them.
+Remaining here: the serialized-artifact path. Note that artifacts carry an ABI version that
+`deserialize` rejects on mismatch — it moved from 11 (Wasmer 6.1) to 24 (Wasmer 7.4) — so a
+persisted cache needs the Wasmer version in its key or a purge on upgrade.
+
+## Cross-repo note — `mx-sdk-rs`
+
+**The working copy is `/Users/andreim/multiversx/rs/mx-sdk-rs-w1`, and its `Cargo.toml` now
+patches the three executor crates to this checkout** — both `[patch.crates-io]` and
+`[patch."https://github.com/multiversx/mx-vm-executor-rs"]`, because `chain/wasmer-prod`
+reaches `multiversx-chain-vm-executor` through crates.io by design while the rest of the
+workspace reaches it by git rev. Patching one table and not the other leaves cargo with two
+incompatible copies in the graph. A trait change and its only Rust consumer can therefore be
+compiled together, with no push-and-bump round trip. Both tables come out, and the `rev =`
+pins move to the pushed commit, before publishing.
+
+Accumulated breaks, with status:
+
+- `ExperimentalExecutorRuntimeRef::opcode_cost` → `opcode_config` — superseded again by G6:
+  the opcode config leaves the runtime reference altogether and folds into
+  `CompilationOptions`;
+- `VMHooksDispatcher` carried five methods the `VMHooks` trait no longer declares
+  (`activate_unsafe_mode`, `deactivate_unsafe_mode`, `managed_get_num_errors`,
+  `managed_get_error_with_index`, `managed_get_last_error`) — stale stubs that only
+  `panic!`ed. **Removed**; this was what stopped the workspace compiling against the local
+  checkout at all. Note `vh_dispatcher.rs` is hand-maintained, not generated, so nothing was
+  going to fix it for us;
+- `WasmerProdInstanceState::set_breakpoint_value_legacy` / `set_early_exit` returning
+  `Result` — to be handled when the 2.2 backend is reworked, if it is: that integration is
+  kept only to validate that the refactor preserved behaviour, and is then deleted.
 
 ## Critical path
 
@@ -900,12 +938,20 @@ rest. The struct-return ABI works end to end, and the backends coexist. Phase 4b
 depended on G5 for the interface *shape* — that was already determined by the Rust side — only
 for how the backend gets chosen, so G5's answer does not change it.
 
-**Phase 1.7 is on the critical path; Phase 1.6 came off it.** Phase 4b needs the hooks
-provider to take a per-instance handle, which is 1.7, and G4 has to be settled for that. Phase
-1.6 — converging the two `RuntimeRef` traits — was only needed in order to serve wasmer 2.2
-through the *new* FFI, and G5's answer removed that need: the differential run uses `wasmer2`
-over the legacy library, presenting the new Go interfaces. 1.6 is now cleanup for when the
-legacy interface set is retired.
+**G6 reordered 1.6/1.7 against 4b.** The earlier reading was that Phase 4b needed the hooks
+provider to take a per-instance handle (1.7). G6 found there is no per-instance host state to
+hand it — so the dependency runs the other way: **4b item 1 is now a prerequisite for the FFI
+half of 1.6/1.7**, because moving the runtime handle to per-executor leaves Go's per-instance
+`activeState` slot with nowhere to live, and that slot exists only because the VM still
+reaches wasm memory through `executor.Instance` instead of through the state it was handed.
+
+The Rust half of 1.6/1.7 — one `ExecutorRuntime` on the executor, `OpcodeConfig` folded into
+`CompilationOptions`, instances created through the trait — is **not** blocked by 4b and can
+land first. Only the C ABI change waits.
+
+Phase 1.6 also stopped being optional: it was cleanup while the plan was to serve wasmer 2.2
+through the legacy library, but G6's shape is what both backends now share, and it is the
+precondition for the caching work in `PLAN-rust-vm-caching.md`.
 
 **What took its place:** verifying `-Wl,-Bsymbolic-functions` on Linux. Any binary linking both
 `libvmexeccapi` and `libvmexeccapi2` — the Phase 5 harness, and later a node that keeps the old
