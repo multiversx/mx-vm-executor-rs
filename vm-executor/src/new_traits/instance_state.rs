@@ -1,4 +1,7 @@
-use crate::{ExecutorError, MemLength, MemPtr, clamped_load_len};
+use crate::{
+    BreakpointValueLegacy, ExecutorError, MemLength, MemPtr, ServiceError, VMHooksEarlyExit,
+    clamped_load_len,
+};
 
 /// The interface through which VM hooks update the instance state.
 ///
@@ -63,6 +66,33 @@ pub trait InstanceState {
 
         self.memory_load_owned(mem_ptr, to_load as MemLength)
     }
+
+    /// Halts the instance on an early exit raised by a *legacy* hook, and stashes the exit
+    /// where the caller will find it once the call unwinds.
+    ///
+    /// **Only the Wasmer 2.2 backend implements this**, and only because its hooks return
+    /// plain values: a [`crate::VMHooksLegacy`] method has no channel for an early exit, so
+    /// the exit has to be put somewhere and the instance stopped by tripping its breakpoint
+    /// global. Wasmer 6 hooks return the early exit directly and never come through here.
+    ///
+    /// Both halves belong to the instance — it owns the stash and it owns the global — which
+    /// is why they are one method on the state rather than two capabilities a backend has to
+    /// surface separately. Which breakpoint, though, is the host's call: the code carried by
+    /// an early exit is the host VM's own return code and means nothing to the executor, so
+    /// it arrives already mapped, from
+    /// [`crate::ExecutorRuntime::early_exit_breakpoint`].
+    ///
+    /// The default is a failure, because for every other backend reaching this point means
+    /// the early exit is about to be silently dropped.
+    fn handle_early_exit_legacy(
+        &mut self,
+        _early_exit: VMHooksEarlyExit,
+        _breakpoint: BreakpointValueLegacy,
+    ) -> Result<(), ExecutorError> {
+        Err(Box::new(ServiceError::new(
+            "early exit via breakpoint is only supported by the legacy Wasmer 2.2 backend",
+        )))
+    }
 }
 
 /// A mutable reference to an instance state is itself an instance state.
@@ -115,5 +145,15 @@ impl<T: InstanceState + ?Sized> InstanceState for &mut T {
         mem_length: MemLength,
     ) -> Result<Vec<u8>, ExecutorError> {
         (**self).memory_load_clamped(mem_ptr, mem_length)
+    }
+
+    /// Forwarded for the same reason: a backend that handles early exits must keep doing so
+    /// when reached through a reference, rather than fall back to the failing default.
+    fn handle_early_exit_legacy(
+        &mut self,
+        early_exit: VMHooksEarlyExit,
+        breakpoint: BreakpointValueLegacy,
+    ) -> Result<(), ExecutorError> {
+        (**self).handle_early_exit_legacy(early_exit, breakpoint)
     }
 }

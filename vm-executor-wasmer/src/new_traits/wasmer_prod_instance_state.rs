@@ -24,19 +24,6 @@ impl WasmerProdInstanceState {
             .map_or_else(|| Err(WasmerExecutorError::BadInstancePointer.into()), Ok)
     }
 
-    pub fn set_breakpoint_value_legacy(
-        &self,
-        value: BreakpointValueLegacy,
-    ) -> Result<(), ExecutorError> {
-        self.instance_rc()?
-            .set_breakpoint_value(value)
-            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
-    }
-
-    pub fn set_early_exit(&self, early_exit: VMHooksEarlyExit) -> Result<(), ExecutorError> {
-        self.instance_rc()?.set_early_exit(early_exit);
-        Ok(())
-    }
 }
 
 impl InstanceState for WasmerProdInstanceState {
@@ -81,5 +68,25 @@ impl InstanceState for WasmerProdInstanceState {
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
         self.instance_rc()?.memory_store(mem_ptr, data)
+    }
+
+    /// The only backend that implements this: 2.2 is where legacy hooks run.
+    fn handle_early_exit_legacy(
+        &mut self,
+        early_exit: VMHooksEarlyExit,
+        breakpoint: BreakpointValueLegacy,
+    ) -> Result<(), ExecutorError> {
+        let instance_rc = self.instance_rc()?;
+
+        // Trip the breakpoint global first: under 2.2 that is the mechanical halt, and it is
+        // what stops the contract after the current instruction.
+        instance_rc
+            .set_breakpoint_value(breakpoint)
+            .map_err(WasmerExecutorError::WrappedInstance)?;
+
+        // Then stash the exit, for the error handler to pick up once the call unwinds.
+        instance_rc.set_early_exit(early_exit);
+
+        Ok(())
     }
 }

@@ -460,22 +460,44 @@ The `-Bsymbolic-functions` work is what takes its place on the critical path.
 
 ### What the wasmer 2.2 path needs
 
-`WasmerProdExecutor` already implements the new `Executor` trait, so the gap is in the hooks,
-not the instance:
+**Resolved by Stage 0.** `WasmerProdExecutor` already implemented the new `Executor` trait;
+the gap was in the hooks, and it is now closed. For the record, what it took:
 
-- `WasmerProdRuntimeRef::vm_hooks` returns `Box<dyn VMHooksLegacy>` and `opcode_config()`
-  returns `Arc<Mutex<OpcodeConfig>>`, where the Wasmer 6 side returns a hooks *builder* and a
-  plain `Arc`. Converging the two (**Phase 1.6**) is therefore a prerequisite for this path,
-  not an optional tidy-up.
-- The generated `CapiVMHooks` is new-style and borrows a per-call context. Wasmer 2.2 asks for
-  the hooks once per instance. Rather than generating a second 277-method implementation, the
-  capi should reuse the one it has behind `VMHooksLegacyAdapter`: that adapter already wraps
-  every hook call, so a capi-specific `VMHooksSetEarlyExit` can **activate a hook context
-  around each call** and build `CapiVMHooks` there. One generated implementation, two
-  activation paths, and the Go side cannot tell which backend it is talking to.
-- `set_early_exit` on that path must do what `mx-sdk-rs/chain/wasmer-prod/src/wasmer_prod.rs`
-  does: store the exit *and* trip the breakpoint global, because under 2.2 the global is still
-  the mechanical halt. See `PLAN-go-breakpoint-removal.md` §3.
+- `WasmerProdRuntimeRef` is **deleted**. Both backends take `Arc<dyn ExecutorRuntime>`. Its
+  two divergences went separately: `opcode_config()` left with the fold into
+  `CompilationOptions`, and `vm_hooks()` with the adapter below.
+- The generated `CapiVMHooks` is new-style and borrows a per-call context, while Wasmer 2.2
+  asks for the hooks once per instance. Rather than generate a second 277-method
+  implementation, `VMHooksLegacyAdapter` was **regenerated over the two interfaces that
+  already exist**: it holds an `R: ExecutorRuntime` and an `S: InstanceState`, and activates a
+  hook context around *each* call instead of holding one hooks object for the instance. Only
+  the generator's header template changed — all 277 generated bodies are byte-identical. One
+  generated implementation, two activation paths, and the Go side cannot tell which backend
+  it is talking to.
+
+  An intermediate `VMHooksLegacyLender` trait was tried first and **removed**: it described a
+  capability the backend already had, so every backend owed a newtype implementing it. Taking
+  the runtime and the state directly costs two blanket impls instead — `Arc<T>` is an
+  `ExecutorRuntime`, `&mut T` is an `InstanceState` — which are reusable, and `WasmerProdLender`
+  vanished with it.
+- Early exit on that path stores the exit *and* trips the breakpoint global, because under
+  2.2 the global is still the mechanical halt. Both halves are owned by the instance, so they
+  are one defaulted method on `InstanceState` — `handle_early_exit_legacy` — whose default is
+  a failure, since for any other backend reaching it means an early exit is about to be
+  dropped. The **stash moved into the executor**; only the mapping stayed with the host, as
+  the defaulted `ExecutorRuntime::early_exit_breakpoint`, because the code in a
+  `VMHooksEarlyExit` is the
+  host VM's own `ReturnCode`. Go implements nothing — its hooks set the breakpoint themselves.
+  See `PLAN-go-breakpoint-removal.md` §3.
+
+**One finding worth carrying forward.** The breakpoint *value* on this path is currently
+unobservable: `WasmerProdInstance::call` checks `take_early_exit()` before it ever reads the
+global, the breakpoints middleware traps on `!= None` without inspecting the value, and the
+legacy capi never goes through the adapter at all. Verified by deliberately flattening the
+mapping to `ExecutionFailed` — the prod gas tests, including the OutOfGas and UserError cases,
+still pass. The mapping was kept anyway, because 2.2's remaining job is to be an *unchanged*
+reference and the differential that would validate the change does not exist yet. Deleting
+`early_exit_breakpoint` is a safe follow-up once 2.2-vs-2.2 is green.
 
 ## Phase 4 — Go VM
 
@@ -902,12 +924,15 @@ opaque handles and functions → `vm_exec_w6_*`.**
    `capi_instance_state.rs`, ~700 lines) are still per-backend, because each needs its own
    symbol prefix. `c-api-wasmer2` will duplicate them unless they are generated from a macro
    parameterised by prefix — worth deciding when that crate is written, not before.
-2. **`c-api-wasmer2`.** Wasmer 2.2 through the new interfaces. This is what puts **Phase 1.6
-   back on the critical path**: `WasmerProdRuntimeRef::vm_hooks` returns
-   `Box<dyn VMHooksLegacy>` and `Arc<Mutex<OpcodeConfig>>` where the Wasmer 6 side returns a
-   builder and a plain `Arc`, and the two have to converge before one crate body can serve
-   both. The `VMHooksLegacyAdapter` activation path described under "What the wasmer 2.2 path
-   needs" is the other half.
+2. **`c-api-wasmer2`.** Wasmer 2.2 through the new interfaces. **No longer blocked** — Stage 0
+   closed both halves: `WasmerProdRuntimeRef` is gone and `VMHooksLegacyAdapter` is
+   built directly on `ExecutorRuntime` + `InstanceState`, so one crate body can serve both
+   backends. What is left is mechanical: the
+   three `#[no_mangle]` entry-point files under a `vm_exec_w2_` prefix plus the one-line
+   `capi_logger` re-export. `capi_instance_state.rs` is now *character-identical* to the
+   Wasmer 6 copy apart from the prefix, since neither names a backend any more — which is what
+   makes generating the three from a prefix-parameterised macro worth deciding now rather than
+   duplicating a third time.
 3. **`wasmercommon` in Go**, wrapping the common header: the error buffer, the status mapping,
    the call result and the hook result, so `wasmer2` and `wasmer6` share them instead of each
    carrying a copy. Worth doing *after* `c-api-common`, since the Go types mirror it.

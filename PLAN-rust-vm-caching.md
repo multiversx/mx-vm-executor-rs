@@ -365,6 +365,21 @@ the sketch:
 - **The C API stopped naming a backend entirely.** `capi_backend.rs` is deleted and
   `CapiVMHooksBuilder` implements `ExecutorRuntime` directly; see `PLAN-go-ffi.md` Phase 4c.
 
+- **Both backends converged, not just Wasmer 6.** `WasmerProdRuntimeRef` is deleted;
+  `WasmerProdExecutor` takes the same `Arc<dyn ExecutorRuntime>`. The obstacle was that legacy
+  `VMHooksLegacy` is an *object* built once per instance, with nowhere to report an early exit,
+  while the runtime *lends* hooks per call. Resolved by regenerating `VMHooksLegacyAdapter`
+  over `R: ExecutorRuntime` + `S: InstanceState` — header template only, all 277 bodies
+  byte-identical — so 2.2 now resolves the execution when the hook runs, exactly as Wasmer 6
+  does. The stash-and-halt half is a defaulted `InstanceState::handle_early_exit_legacy`,
+  which fails for every backend that does not implement it; a probe removing the 2.2 override
+  fails exactly the OutOfGas and UserError tests and leaves the no-early-exit one passing. This was not optional tidying:
+  `c-api-common`'s shared runtime *is* an `ExecutorRuntime`, so a 2.2 capi built on it could
+  not have existed otherwise. In the Rust VM it deleted `RuntimeRefAdapter`,
+  `WasmerProdInstanceStateAdapter` and the whole `InstanceStateSetEarlyExit` /
+  `VMHooksSetEarlyExit` pair, and `impl ExecutorRuntime for RuntimeWeakRef` moved out of the
+  `wasmer-experimental` feature gate to serve both.
+
 - **The arming slot had to become a stack, early.** This was Stage 3's item, but Stage 0
   forced its core: resolving the execution per hook call means the slot must stay armed for
   the whole call, where it used to be cleared as soon as the instance was built. Widening the
@@ -379,7 +394,8 @@ the sketch:
   the runtime-handle move rather than going separately.
 
 **Verification.** Executor workspace: 19 test binaries green, clippy clean, the C header diff
-comment-only. Rust VM: the gas tests pass on both backends with their exact gas assertions
+comment-only. The 2.2 backend passes its gas tests unchanged, including the OutOfGas and
+UserError early-exit cases that exercise the new adapter path. Rust VM: the gas tests pass on both backends with their exact gas assertions
 (`gas_used == 2045`), and 250 `basic-features` tests pass against compiled wasm through the
 experimental executor. Go VM: the rebuilt dylib drops in with no Go changes and the
 `VMEXECUTOR=wasmer6` failure set is identical before and after — 33 failures, same set,

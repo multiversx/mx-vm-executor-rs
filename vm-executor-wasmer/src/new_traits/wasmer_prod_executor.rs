@@ -1,6 +1,7 @@
 use crate::WasmerInstance;
 use crate::executor_interface::{
-    CompilationOptions, Executor, ExecutorError, Instance, VMHooksLegacy, check_missing_wasm,
+    CompilationOptions, Executor, ExecutorError, ExecutorRuntime, Instance, VMHooksLegacyAdapter,
+    check_missing_wasm,
 };
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use std::{
@@ -11,29 +12,9 @@ use std::{
 
 use super::{WasmerExecutorError, WasmerProdInstance, WasmerProdInstanceState};
 
-/// The host behind a Wasmer 2.2 executor.
-///
-/// This is deliberately **not** [`multiversx_chain_vm_executor::ExecutorRuntime`], and the
-/// difference is in the shape of the legacy hooks rather than in the design. `ExecutorRuntime`
-/// *lends* hooks per host call; the legacy `VMHooksLegacy` is an **object**, built once and
-/// installed in the import object for the instance's life, because its methods return plain
-/// values and have nowhere to report an early exit — the hooks must therefore own a place to
-/// stash one. So the runtime hands over a built object here, and the execution it serves is
-/// whatever was current when the instance was created.
-///
-/// The practical consequence is that instances from this backend **cannot be reused across
-/// executions**, which is exactly what Wasmer 6 is being converged for and why that backend
-/// gets the lending trait. Closing the gap would mean regenerating `VMHooksLegacyAdapter`
-/// around a lender and giving the early-exit slot a home outside the hooks; it is not worth
-/// doing to a backend that is scheduled for deletion, and whose value until then is being an
-/// unchanged reference for the differential tests.
-pub trait WasmerProdRuntimeRef: Send + Sync {
-    fn vm_hooks(&self, instance_state: WasmerProdInstanceState) -> Box<dyn VMHooksLegacy>;
-}
-
 /// Executor implementation that produces wasmer instances with correctly injected VM hooks from runtime.
 pub struct WasmerProdExecutor {
-    runtime_ref: Box<dyn WasmerProdRuntimeRef>,
+    runtime: Arc<dyn ExecutorRuntime>,
 }
 
 impl fmt::Debug for WasmerProdExecutor {
@@ -43,8 +24,8 @@ impl fmt::Debug for WasmerProdExecutor {
 }
 
 impl WasmerProdExecutor {
-    pub fn new(runtime_ref: Box<dyn WasmerProdRuntimeRef>) -> Self {
-        WasmerProdExecutor { runtime_ref }
+    pub fn new(runtime: Arc<dyn ExecutorRuntime>) -> Self {
+        WasmerProdExecutor { runtime }
     }
 
     fn new_instance_from_bytes(
@@ -59,11 +40,18 @@ impl WasmerProdExecutor {
         let opcode_config = Arc::new(Mutex::new((*compilation_options.opcode_config).clone()));
 
         let inner_instance_ref = rc_new_cyclic_fallible(|weak| {
-            let instance_state = WasmerProdInstanceState::new(weak.clone());
-            let vm_hooks = self.runtime_ref.vm_hooks(instance_state);
+            // The legacy import object wants a hooks object for the instance's life, while
+            // the runtime lends hooks per call; the adapter is the join. The hooks an
+            // instance calls are therefore built fresh each time, around this instance's
+            // state, so they serve whichever execution the host has current — never the one
+            // that happened to be current when the instance was created.
+            let vm_hooks = VMHooksLegacyAdapter::new(
+                self.runtime.clone(),
+                WasmerProdInstanceState::new(weak.clone()),
+            );
 
             WasmerInstance::try_new_instance(
-                Rc::from(vm_hooks),
+                Rc::new(vm_hooks),
                 opcode_config.clone(),
                 wasm_bytes,
                 &compilation_options.to_legacy(),
