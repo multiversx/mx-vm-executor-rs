@@ -5,14 +5,16 @@
 //! `vm_exec_set_opcode_config` and `vm_exec_executor_set_vm_hooks_ptr` setters have no
 //! counterpart.
 //!
-//! Note that it does not wrap a `dyn Executor`. The new `Executor` trait's `new_instance`
-//! takes only the wasm bytes and the compilation options, with the hooks coming from the
-//! executor's own runtime reference — but this API needs one Go hooks object *per instance*,
-//! because that is where the Go side keeps the per-instance early-exit slot. So instances are
-//! built directly against the Wasmer 6 backend, and the per-instance pointer is supplied at
-//! `vm_exec_w6_new_instance`. Converging the two backends' runtime-reference traits (Phase 1.6)
-//! should give the hooks provider that per-instance argument, at which point this can go back
-//! through the trait and serve both backends.
+//! Note that it does not yet wrap a `dyn Executor`. An executor is built around one runtime
+//! reference, for its whole life, and this API's runtime handle is still supplied per
+//! instance at `vm_exec_w6_new_instance` — so the executor is built there, per instance, and
+//! this struct holds the configuration it will be built from. The handle becomes
+//! per-executor, and the `dyn Executor` moves here, once the Go VM stops reaching wasm memory
+//! through `executor.Instance`; see `PLAN-go-ffi.md`.
+//!
+//! The opcode config is held here for the same reason. On the Rust side it has moved into
+//! `CompilationOptions`, and this API merges the two at instance creation rather than
+//! changing the C struct ahead of the Go VM.
 
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;

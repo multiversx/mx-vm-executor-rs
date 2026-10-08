@@ -5,6 +5,8 @@
 //! `vm_exec_executor_set_vm_hooks_ptr` / `vm_exec_set_opcode_config` pair does not come
 //! along.
 
+use std::sync::Arc;
+
 use multiversx_chain_vm_executor::{CompilationOptions, OpcodeConfig, OpcodeVersion};
 
 use crate::capi_opcode_cost::vm_exec_opcode_cost_t;
@@ -13,6 +15,14 @@ use crate::capi_opcode_cost::vm_exec_opcode_cost_t;
 ///
 /// The opcode cost table is referenced rather than inlined, because it is large and the
 /// caller already holds one. It is read during the call and not retained.
+///
+/// On the Rust side the opcode config has moved off the executor and into
+/// `CompilationOptions`, where it belongs: it is execution logic, and it is half of what
+/// determines a compiled module. This struct survives because moving it across the ABI is a
+/// coordinated change with the Go VM, gated on the same step that makes the runtime handle
+/// per-executor. Until then the executor holds the config it is given and merges it into the
+/// options of every instance it creates, which is behaviour-identical — the Go VM already
+/// rebuilds the executor rather than mutating it when the gas schedule changes.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_executor_config_t {
@@ -63,12 +73,16 @@ pub struct vm_exec_compilation_options_t {
 }
 
 impl vm_exec_compilation_options_t {
-    pub fn to_compilation_options(&self) -> CompilationOptions {
+    /// Completes the options with the opcode config the executor was created with.
+    ///
+    /// The config is not in the C struct yet; see `vm_exec_executor_config_t`.
+    pub fn to_compilation_options(&self, opcode_config: Arc<OpcodeConfig>) -> CompilationOptions {
         CompilationOptions {
             unmetered_locals: self.unmetered_locals as usize,
             max_memory_grow: self.max_memory_grow as usize,
             max_memory_grow_delta: self.max_memory_grow_delta as usize,
             opcode_trace: self.opcode_trace,
+            opcode_config,
         }
     }
 }

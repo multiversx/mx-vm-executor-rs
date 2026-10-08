@@ -12,13 +12,12 @@
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
 use multiversx_chain_vm_executor::{
-    ExecutorError, InstanceState, MemLength, MemPtr, ServiceError, clamped_load_len,
+    ExecutorError, MemLength, MemPtr, ServiceError, clamped_load_len,
 };
 use std::slice;
 
-use crate::capi_backend::BackendInstanceState;
 use crate::capi_status::{vm_exec_status_t, write_error, write_error_count};
-use crate::capi_vm_hook_context::{vm_exec_hook_context_t, with_instance_state};
+use crate::capi_vm_hook_context::{ErasedInstanceState, vm_exec_hook_context_t, with_instance_state};
 
 /// Loads from instance memory into a caller-provided buffer, **truncating** at the end of
 /// the memory.
@@ -46,7 +45,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_load(
     err_buf_len: c_int,
 ) -> i64 {
     let loaded = unsafe {
-        with_instance_state::<BackendInstanceState, _>(
+        with_instance_state::<ErasedInstanceState, _>(
             ctx,
             |state| -> Result<usize, ExecutorError> {
                 let memory_length = state.memory_length()?;
@@ -97,7 +96,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_store(
     }
 
     let stored = unsafe {
-        with_instance_state::<BackendInstanceState, _>(ctx, |state| {
+        with_instance_state::<ErasedInstanceState, _>(ctx, |state| {
             let data = if src_len == 0 {
                 &[][..]
             } else {
@@ -132,7 +131,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_length(
     }
 
     let length = unsafe {
-        with_instance_state::<BackendInstanceState, _>(ctx, |state| state.memory_length())
+        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.memory_length())
     };
 
     match length {
@@ -168,7 +167,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_grow(
     }
 
     let grown = unsafe {
-        with_instance_state::<BackendInstanceState, _>(ctx, |state| state.memory_grow(by_num_pages))
+        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.memory_grow(by_num_pages))
     };
 
     match grown {
@@ -201,7 +200,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_get_points_used(
     }
 
     let points = unsafe {
-        with_instance_state::<BackendInstanceState, _>(ctx, |state| state.get_points_used())
+        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.get_points_used())
     };
 
     match points {
@@ -230,7 +229,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_set_points_used(
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
     let set = unsafe {
-        with_instance_state::<BackendInstanceState, _>(ctx, |state| state.set_points_used(points))
+        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.set_points_used(points))
     };
 
     match set {

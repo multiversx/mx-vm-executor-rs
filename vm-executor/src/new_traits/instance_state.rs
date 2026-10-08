@@ -64,3 +64,56 @@ pub trait InstanceState {
         self.memory_load_owned(mem_ptr, to_load as MemLength)
     }
 }
+
+/// A mutable reference to an instance state is itself an instance state.
+///
+/// This is what lets [`crate::ExecutorRuntime::with_vm_hooks`] hand the state over as
+/// `&mut dyn InstanceState` and have the host pass it straight on to code that is generic
+/// over `S: InstanceState`. Without it, every host would need its own forwarding wrapper, and
+/// the backend's concrete state type would leak back into the host — which is the thing the
+/// erased state exists to prevent.
+///
+/// `?Sized` so that `&mut dyn InstanceState` is covered, not merely `&mut ConcreteState`.
+impl<T: InstanceState + ?Sized> InstanceState for &mut T {
+    fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
+        (**self).get_points_used()
+    }
+
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
+        (**self).set_points_used(points)
+    }
+
+    fn memory_length(&self) -> Result<u64, ExecutorError> {
+        (**self).memory_length()
+    }
+
+    fn memory_grow(&mut self, by_num_pages: u32) -> Result<u32, ExecutorError> {
+        (**self).memory_grow(by_num_pages)
+    }
+
+    fn memory_load_to_slice(&self, mem_ptr: MemPtr, dest: &mut [u8]) -> Result<(), ExecutorError> {
+        (**self).memory_load_to_slice(mem_ptr, dest)
+    }
+
+    fn memory_load_owned(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError> {
+        (**self).memory_load_owned(mem_ptr, mem_length)
+    }
+
+    fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
+        (**self).memory_store(mem_ptr, data)
+    }
+
+    /// Forwarded rather than left to the default, so that a state which overrides the
+    /// clamping rules keeps its own behaviour when reached through a reference.
+    fn memory_load_clamped(
+        &self,
+        mem_ptr: MemPtr,
+        mem_length: MemLength,
+    ) -> Result<Vec<u8>, ExecutorError> {
+        (**self).memory_load_clamped(mem_ptr, mem_length)
+    }
+}

@@ -21,7 +21,6 @@
 
 mod capi_logger;
 
-pub mod capi_backend;
 pub mod capi_executor;
 pub mod capi_instance;
 pub mod capi_instance_state;

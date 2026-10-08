@@ -340,7 +340,7 @@ supertrait, no escape hatch — which was the weak point of the rejected per-ins
 
 | Stage | Work | Depends on |
 | --- | --- | --- |
-| 0 | `ExecutorRuntime` on the executor; `OpcodeConfig` folded into `CompilationOptions`; `new_instance(wasm, options)` | — |
+| 0 | ~~`ExecutorRuntime` on the executor; `OpcodeConfig` folded into `CompilationOptions`; `new_instance(wasm, options)`~~ — **done**, see below | — |
 | 1 | Executor: split compile from instantiate; `CompiledModule` | 0 |
 | 2 | Executor: module cache, keyed on wasm + options | 1 |
 | 3 | Rust VM: context stack, `impl ExecutorRuntime for RuntimeWeakRef`, delete the slot | 0 |
@@ -349,13 +349,58 @@ supertrait, no escape hatch — which was the weak point of the rejected per-ins
 
 Stages 1–2 and 3 are independent once 0 lands.
 
+### Stage 0 as built
+
+`ExecutorRuntime` landed as drafted above, with one method. What the implementation added to
+the sketch:
+
+- **`impl<T: InstanceState + ?Sized> InstanceState for &mut T`.** Without it a host that is
+  generic over `S: InstanceState` cannot accept the `&mut dyn InstanceState` the runtime lends
+  it, and every host needs its own forwarding wrapper — which puts the backend's concrete
+  state type back into the host, the one thing the erased state exists to prevent. The Rust
+  VM's `WasmerProdInstanceStateAdapter` is exactly that wrapper, written out by hand.
+  `ExperimentalInstanceState` now implements `InstanceState` on the struct rather than on
+  `&mut` itself, so the blanket impl covers the reference.
+
+- **The C API stopped naming a backend entirely.** `capi_backend.rs` is deleted and
+  `CapiVMHooksBuilder` implements `ExecutorRuntime` directly; see `PLAN-go-ffi.md` Phase 4c.
+
+- **The arming slot had to become a stack, early.** This was Stage 3's item, but Stage 0
+  forced its core: resolving the execution per hook call means the slot must stay armed for
+  the whole call, where it used to be cleared as soon as the instance was built. Widening the
+  window naively breaks nesting — a nested `execute` would clear its caller's slot on the way
+  out — so `RuntimeRef::execute` now saves the previous value and restores it on `Drop`. The
+  saved values form the stack, held on the Rust call stack. What remains for Stage 3 is
+  deleting the slot in favour of reading the stack directly.
+
+- **The C ABI is unchanged, deliberately.** The opcode config has left the executor in Rust,
+  but `vm_exec_executor_config_t` stays and the executor merges it into every instance's
+  options. Moving it across the ABI is a coordinated change with the Go VM, and it rides with
+  the runtime-handle move rather than going separately.
+
+**Verification.** Executor workspace: 19 test binaries green, clippy clean, the C header diff
+comment-only. Rust VM: the gas tests pass on both backends with their exact gas assertions
+(`gas_used == 2045`), and 250 `basic-features` tests pass against compiled wasm through the
+experimental executor. Go VM: the rebuilt dylib drops in with no Go changes and the
+`VMEXECUTOR=wasmer6` failure set is identical before and after — 33 failures, same set,
+compared by stashing the dylib.
+
+One check worth recording, because it nearly produced a false pass: the composability suite
+(332 tests, contract-to-contract and recursive callers) runs on the **Debugger** by default,
+not the experimental executor, so it stays green even with the context guard deliberately
+broken. The suites that actually exercise this path are the ones calling
+`ExecutorConfig::full_suite()` or `::Experimental`, and then only with `compiled-sc-tests`
+active. Dropping the guard early makes `scenario-tester` fail with *no executor context
+configured*, which is what establishes the guard is load-bearing.
+
 **One cross-repo constraint on the C API.** Moving the runtime handle from per-instance to
-per-executor requires **`PLAN-go-ffi.md` Phase 4b item 1** to land first. Go's per-instance
+per-executor requires **`PLAN-go-ffi.md` Phase 4b's `MemLoad`/`MemStore` removal** to land
+first. Go's per-instance
 `cgo.Handle` resolves to `instanceHooks`, which holds `activeState`; that slot's own comment
 says the nesting argument depends on it being per instance ("a nested call runs on a different
 instance"). It exists only because the VM still reaches wasm memory through
-`executor.Instance` rather than through the state it was handed, which is exactly what 4b item
-1 removes. Until then the C API keeps its per-instance handle and the capi keeps bypassing the
+`executor.Instance` rather than through the state it was handed, which is exactly what that
+item removes. Until then the C API keeps its per-instance handle and the capi keeps bypassing the
 `Executor` trait. The Rust-side stages above are not blocked by this; only the FFI change is.
 
 ## What this means for the Go VM

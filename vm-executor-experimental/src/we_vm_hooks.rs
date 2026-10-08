@@ -1,12 +1,14 @@
-use std::rc::Weak;
+use std::{rc::Weak, sync::Arc};
 
-use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks, VMHooksEarlyExit};
+use multiversx_chain_vm_executor::{
+    ExecutorRuntime, MemLength, MemPtr, VMHooks, VMHooksEarlyExit, with_vm_hooks_once,
+};
 use wasmer::FunctionEnvMut;
 
-use crate::{ExperimentalInstanceInner, ExperimentalInstanceState, ExperimentalVMHooksBuilder};
+use crate::{ExperimentalInstanceInner, ExperimentalInstanceState};
 
 pub struct VMHooksWrapper {
-    pub vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
+    pub runtime: Arc<dyn ExecutorRuntime>,
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
 }
 
@@ -36,16 +38,8 @@ where
         store_mut: &mut store_mut,
     };
 
-    // The builder lends the hooks through an `FnMut`, while `f` is an `FnOnce`,
-    // so it gets moved out on the (single) call.
-    let mut f = Some(f);
-    let mut result = None;
-
-    data.vm_hooks_builder
-        .with_vm_hooks(&mut instance_state, &mut |vm_hooks| {
-            let f = f.take().expect("VM hooks builder called the closure twice");
-            result = Some(f(vm_hooks));
-        });
-
-    result.expect("VM hooks builder did not call the closure")
+    with_vm_hooks_once(
+        |lend| data.runtime.with_vm_hooks(&mut instance_state, lend),
+        f,
+    )
 }

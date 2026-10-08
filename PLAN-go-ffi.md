@@ -227,11 +227,12 @@ takes `go_vm_hooks` and builds the instance directly against the Wasmer 6 backen
 
 *Resolved by G6, and not the way this predicted.* There is no per-instance host handle,
 because there is no per-instance host state: Go's provider holds nothing but the host, and the
-per-instance `cgo.Handle` carries only `activeState` (a Phase 4b item 1 workaround) and an
+per-instance `cgo.Handle` carries only `activeState` (a workaround for the VM still reaching
+wasm memory through `executor.Instance`) and an
 error buffer. So the handle becomes **per executor**, passed once to
 `vm_exec_w6_new_executor`, and `vm_exec_w6_new_instance` loses its `go_vm_hooks` argument
 entirely. That is what lets this file go back through the `Executor` trait and serve both
-backends — once 4b item 1 has removed `activeState`.
+backends — once 4b's `MemLoad`/`MemStore` removal has removed `activeState`.
 
 **The hook context is pooled, not stack-allocated.** The original sketch called for a
 stack-allocated context per invocation. That is unsafe as specified: a Go side holding the
@@ -407,15 +408,17 @@ one definition, and the context-taking ones then reinterpret `vmctx` under the w
 Fixing that means renaming symbols in one version's rlib or patching `wasmer-vm`. Two
 libraries make it a *dynamic* one, which is a link flag — see below.
 
-**What the duplication actually costs: almost nothing.** `c-api-new` touches its backend in
-**three type names across two of thirteen files** — `ExperimentalInstance` in
-`capi_instance.rs`, `ExperimentalInstanceState` and `ExperimentalVMHooksBuilder` in
-`capi_vm_hook_context.rs`. Status codes, strings, config, opcode cost, the hook context
-machinery and the 908-line generated hooks implementation are all backend-agnostic. So the
-shape is **one crate with a Cargo feature selecting a backend alias module, built twice**, not
-two crates. The one snag is that the aliases are not drop-in: `ExperimentalInstanceState<'a>`
-is a borrow of the host-call frame while `WasmerProdInstanceState` is owned, so the lifetime
-shapes have to agree first — which is Phase 1.6's job regardless.
+**What the duplication actually costs: almost nothing.** This was first measured as *three*
+backend type names across two of thirteen files. **Stage 0 cut it to one**: with the hook
+dispatch behind `ExecutorRuntime` and `&mut dyn InstanceState`, the only name left is
+`ExperimentalExecutor` in `capi_instance.rs`. Status codes, strings, config, opcode cost, the
+whole hook context machinery and the generated hooks implementation are backend-agnostic. So
+the shape is **one crate with a Cargo feature selecting a backend alias, built twice**, not two
+crates.
+
+The snag recorded here — that `ExperimentalInstanceState<'a>` borrows the host-call frame while
+`WasmerProdInstanceState` is owned, so the alias was not drop-in — **no longer applies**:
+neither type is named at the boundary, and both reach it through the same `dyn InstanceState`.
 
 Likewise on the Go side: if both libraries keep the same `vm_exec2_*` ABI, there is **one**
 bridge, with a build tag choosing between the `LDFLAGS` lines, and the 3,631-line generated
@@ -545,8 +548,9 @@ Two risks the phase closed on its own account:
 Two things were decided here that the plan had left open:
 
 - **The hooks are built per call, not per instance** (`VMHooksProvider.VMHooksForCall`),
-  mirroring the Rust side exactly: `ExperimentalVMHooksBuilder::with_vm_hooks` builds its
-  hooks around the state for the duration of one call and lends them out.
+  mirroring the Rust side exactly: `ExecutorRuntime::with_vm_hooks` (then named
+  `ExperimentalVMHooksBuilder`) builds its hooks around the state for the duration of one call
+  and lends them out.
 
   The alternative — one hooks object per instance with a mutable "current state" slot — is
   *workable*, and it is worth being straight about why, because the obvious objection to it
@@ -864,15 +868,19 @@ because one output fed both the legacy crate and the new one.
 The hook dispatch moved because the context carries the instance state as an **erased pointer**:
 nothing in the pool, the table or the 900-odd generated lines ever names a backend type. Making
 `with_instance_state` and `with_hook_context` generic over `S` was enough, and the backend crate
-now names its state type in exactly one place — `capi_backend.rs`, which defines
-`BackendInstanceState` and wraps the shared builder to implement its own builder trait. So
-`c-api-wasmer2` will not duplicate the generated hooks; it gets a `capi_backend.rs` of its own.
+named its state type in exactly one place — `capi_backend.rs`.
 
-Two things the compiler forced, both worth keeping:
+**Stage 0 removed even that.** With one `ExecutorRuntime` taking `&mut dyn InstanceState`, the
+erased pointer is a thin pointer *to the fat pointer*, so the vtable travels with the value
+instead of being recovered by naming a concrete type. `capi_backend.rs` is deleted,
+`CapiVMHooksBuilder` implements `ExecutorRuntime` directly in `c-api-common`, and the one
+type alias left — `ErasedInstanceState` — is backend-independent. `c-api-wasmer2` therefore
+needs *no* backend file at all, not merely a small one.
 
-- **The orphan rule.** With the builder in `c-api-common`, both it and `ExperimentalVMHooksBuilder`
-  are foreign to the backend crate, so the trait cannot be implemented directly. A newtype
-  (`BackendVMHooksBuilder`) fixes it and makes the seam explicit rather than incidental.
+- **The orphan rule stopped applying.** It forced a `BackendVMHooksBuilder` newtype while the
+  builder trait was the backend's own. Now the trait is foreign but the type
+  (`CapiVMHooksBuilder`) is local to `c-api-common`, so the impl is legal where it belongs and
+  the newtype is gone.
 - **`capi_logger` has to exist in every crate**, because `meta::capi_safe_unwind` expands to
   `crate::capi_logger::set_panic_handler()`. Each backend crate carries a one-line re-export.
 
@@ -995,7 +1003,8 @@ for how the backend gets chosen, so G5's answer does not change it.
 
 **G6 reordered 1.6/1.7 against 4b.** The earlier reading was that Phase 4b needed the hooks
 provider to take a per-instance handle (1.7). G6 found there is no per-instance host state to
-hand it — so the dependency runs the other way: **4b item 1 is now a prerequisite for the FFI
+hand it — so the dependency runs the other way: **taking `MemLoad`/`MemStore` off
+`executor.Instance` (4b, "Still to do") is now a prerequisite for the FFI
 half of 1.6/1.7**, because moving the runtime handle to per-executor leaves Go's per-instance
 `activeState` slot with nowhere to live, and that slot exists only because the VM still
 reaches wasm memory through `executor.Instance` instead of through the state it was handed.

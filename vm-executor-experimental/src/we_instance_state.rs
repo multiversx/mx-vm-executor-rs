@@ -36,7 +36,7 @@ impl ExperimentalInstanceState<'_> {
     }
 }
 
-impl InstanceState for &'_ mut ExperimentalInstanceState<'_> {
+impl InstanceState for ExperimentalInstanceState<'_> {
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         let wasmer_inner = self.get_wasmer_inner()?;
         let points_used = get_points_used(&wasmer_inner.wasmer_instance, &mut self.store_mut)?;

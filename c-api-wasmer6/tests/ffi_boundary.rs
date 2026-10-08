@@ -14,7 +14,9 @@
 use std::ffi::{CString, c_char, c_int, c_void};
 use std::sync::{Arc, Mutex, OnceLock};
 
-use multiversx_chain_vm_executor::{VMHooks, VMHooksDefault};
+use multiversx_chain_vm_executor::{
+    Executor, ExecutorRuntime, InstanceState, VMHooks, VMHooksDefault,
+};
 use multiversx_chain_vm_executor_c_api_wasmer6::capi_call_result::{
     vm_exec_call_result_kind_t, vm_exec_call_result_t,
 };
@@ -33,9 +35,7 @@ use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_context::{
 };
 use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
 use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_table::CapiVMHookTable;
-use multiversx_chain_vm_executor_wasmer_experimental::{
-    ExperimentalInstance, ExperimentalInstanceState, ExperimentalVMHooksBuilder,
-};
+use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalExecutor;
 
 /// One memory page, five known bytes at offset 0, and endpoints that call VM hooks.
 const CONTRACT_WAT: &str = r#"
@@ -527,13 +527,18 @@ struct ProbingHooksBuilder {
     outcome: Arc<Mutex<Outcome>>,
 }
 
-impl ExperimentalVMHooksBuilder for ProbingHooksBuilder {
+impl ExecutorRuntime for ProbingHooksBuilder {
     fn with_vm_hooks(
         &self,
-        instance_state_ref: &mut ExperimentalInstanceState,
+        instance_state: &mut dyn InstanceState,
         f: &mut dyn FnMut(&mut dyn VMHooks),
     ) {
-        let state_ptr = (instance_state_ref as *mut ExperimentalInstanceState<'_>).cast::<c_void>();
+        // Erased exactly as `CapiVMHooksBuilder` erases it — a thin pointer to the fat
+        // pointer — since the state functions under test reconstitute it as
+        // `ErasedInstanceState`.
+        let mut erased: &mut dyn InstanceState = instance_state;
+        let state_ptr = (&mut erased as *mut &mut dyn InstanceState).cast::<c_void>();
+
         let mut outcome = self.outcome.lock().unwrap();
         outcome.hook_calls += 1;
 
@@ -736,21 +741,18 @@ fn state_ops() {
         outcome: outcome.clone(),
     };
 
-    let mut instance = ExperimentalInstance::try_new_instance(
-        Box::new(builder),
-        Arc::new(Default::default()),
-        CONTRACT_WAT.as_bytes(),
-        // The same options as the C path, built directly: the FFI mirror is crate-private.
-        &multiversx_chain_vm_executor::CompilationOptions {
-            unmetered_locals: 0,
-            max_memory_grow: 10,
-            max_memory_grow_delta: 10,
-            opcode_trace: false,
-        },
-    )
-    .expect("instance creation failed");
+    let mut instance = ExperimentalExecutor::new(Arc::new(builder))
+        .new_instance(
+            CONTRACT_WAT.as_bytes(),
+            // The same options as the C path, built directly: the FFI mirror is crate-private.
+            &multiversx_chain_vm_executor::CompilationOptions {
+                max_memory_grow: 10,
+                max_memory_grow_delta: 10,
+                ..Default::default()
+            },
+        )
+        .expect("instance creation failed");
 
-    use multiversx_chain_vm_executor::Instance;
     let result = instance.call("callGetGasLeft", 1_000_000);
     assert!(
         matches!(result, multiversx_chain_vm_executor::InstanceCallResult::Ok),

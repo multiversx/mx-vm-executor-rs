@@ -8,17 +8,18 @@
 
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::Instance;
-use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalInstance;
+use multiversx_chain_vm_executor::{Executor, Instance};
+use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalExecutor;
 use std::ffi::CStr;
 use std::slice;
+use std::sync::Arc;
 
-use crate::capi_backend::BackendVMHooksBuilder;
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
 use crate::capi_executor::{CapiExecutor, vm_exec_w6_executor_t};
 use crate::capi_status::{vm_exec_status_t, write_error};
 use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
+use crate::capi_vm_hook_context::CapiVMHooksBuilder;
 
 /// Opaque handle to an instance.
 #[allow(non_camel_case_types)]
@@ -26,7 +27,7 @@ use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
 pub struct vm_exec_w6_instance_t;
 
 pub struct CapiInstance {
-    pub(crate) content: ExperimentalInstance,
+    pub(crate) content: Box<dyn Instance>,
 }
 
 /// Creates an instance.
@@ -59,20 +60,22 @@ pub unsafe extern "C" fn vm_exec_w6_new_instance(
 
     let capi_executor = unsafe { &*(executor as *const CapiExecutor) };
     let wasm_bytes = unsafe { slice::from_raw_parts(wasm_bytes, wasm_bytes_len as usize) };
-    let compilation_options = unsafe { (*options).to_compilation_options() };
+    let compilation_options =
+        unsafe { (*options).to_compilation_options(capi_executor.opcode_config.clone()) };
 
-    if let Err(err) = multiversx_chain_vm_executor::check_missing_wasm(wasm_bytes) {
-        return write_error(err, err_buf, err_buf_len);
-    }
+    // One executor per instance, for as long as the runtime handle is per instance: the
+    // handle is what the executor is built around, so it cannot outlive the instance that
+    // owns it. Building it here costs nothing — an executor holds only the runtime — and it
+    // means this file goes through the `Executor` trait rather than around it. When the
+    // handle moves to `vm_exec_w6_new_executor`, the executor moves to `CapiExecutor` with
+    // it and this becomes a plain `new_instance` call.
+    let runtime = Arc::new(CapiVMHooksBuilder::new(
+        go_vm_hooks,
+        capi_executor.hook_table.clone(),
+    ));
+    let backend_executor = ExperimentalExecutor::new(runtime);
 
-    let builder = BackendVMHooksBuilder::new(go_vm_hooks, capi_executor.hook_table.clone());
-
-    let instance = match ExperimentalInstance::try_new_instance(
-        Box::new(builder),
-        capi_executor.opcode_config.clone(),
-        wasm_bytes,
-        &compilation_options,
-    ) {
+    let instance = match backend_executor.new_instance(wasm_bytes, &compilation_options) {
         Ok(instance) => instance,
         Err(err) => return write_error(err, err_buf, err_buf_len),
     };

@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use multiversx_chain_vm_executor::{
-    CompilationOptions, Instance, InstanceCallResult, OpcodeConfig, OpcodeCost, OpcodeVersion,
+    CompilationOptions, Executor, ExecutorRuntimeDefault, InstanceCallResult, OpcodeConfig,
+    OpcodeCost, OpcodeVersion,
 };
-use multiversx_chain_vm_executor_wasmer_experimental::{
-    ExperimentalInstance, ExperimentalVMHooksBuilderDefault,
-};
+use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalExecutor;
 use wasmer::wat2wasm;
 
 const BULK_MEMORY_WAT: &[u8] = include_bytes!("bulk-memory.wat");
@@ -15,13 +14,6 @@ const MEMORY_COPY_COST: u32 = 300;
 const MEMORY_COPY_PER_BYTE_COST: u32 = 7;
 const MEMORY_FILL_COST: u32 = 400;
 const MEMORY_FILL_PER_BYTE_COST: u32 = 11;
-
-const COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
-    unmetered_locals: 0,
-    max_memory_grow: 0,
-    max_memory_grow_delta: 0,
-    opcode_trace: false,
-};
 
 /// All opcodes are free, except the bulk memory ones, so that `points_used` after a call
 /// is exactly the cost of the single `memory.copy`/`memory.fill` in the called function.
@@ -42,13 +34,14 @@ fn points_used_by(func_name: &str) -> u64 {
         },
     };
 
-    let mut instance = ExperimentalInstance::try_new_instance(
-        Box::new(ExperimentalVMHooksBuilderDefault),
-        Arc::new(opcode_config),
-        &wasm_bytes,
-        &COMPILATION_OPTIONS,
-    )
-    .unwrap();
+    let compilation_options = CompilationOptions {
+        opcode_config: Arc::new(opcode_config),
+        ..Default::default()
+    };
+
+    let mut instance = ExperimentalExecutor::new(Arc::new(ExecutorRuntimeDefault))
+        .new_instance(&wasm_bytes, &compilation_options)
+        .unwrap();
 
     assert!(matches!(
         instance.call(func_name, POINTS_LIMIT),

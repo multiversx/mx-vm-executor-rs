@@ -18,7 +18,7 @@ pub struct CapiVMHookTable {
 }
 
 // The table is a block of plain function pointers with no interior mutability, and is only
-// ever read. The `ExperimentalExecutorRuntimeRef` it ends up behind is `Send + Sync`, so this
+// ever read. The `ExecutorRuntime` it ends up behind is `Send + Sync`, so this
 // has to be too.
 unsafe impl Send for CapiVMHookTable {}
 unsafe impl Sync for CapiVMHookTable {}

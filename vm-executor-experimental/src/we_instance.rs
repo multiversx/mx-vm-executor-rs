@@ -2,12 +2,12 @@ use crate::middlewares::{
     Breakpoints, Metering, OpcodeControl, OpcodeTracer, ProtectedGlobals, get_breakpoint_value,
     get_points_used, set_points_limit,
 };
-use crate::{ExperimentalError, ExperimentalVMHooksBuilder};
+use crate::ExperimentalError;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
-    BreakpointValue, CompilationOptions, ExecutorError, Instance, InstanceCallResult, OpcodeConfig,
-    ServiceError, VMHooksEarlyExit,
+    BreakpointValue, CompilationOptions, ExecutorError, ExecutorRuntime, Instance,
+    InstanceCallResult, ServiceError, VMHooksEarlyExit,
 };
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use std::{rc::Rc, rc::Weak, sync::Arc};
@@ -37,7 +37,7 @@ impl ExperimentalInstanceInner {
 }
 
 fn prepare_wasmer_instance_inner(
-    vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
+    runtime: Arc<dyn ExecutorRuntime>,
     module: &Module,
     store: &mut Store,
     weak: &Weak<ExperimentalInstanceInner>,
@@ -45,7 +45,7 @@ fn prepare_wasmer_instance_inner(
     // Create an empty import object.
     trace!("Generating imports ...");
     let vm_hooks_wrapper = VMHooksWrapper {
-        vm_hooks_builder,
+        runtime,
         wasmer_inner: weak.clone(),
     };
     let import_object = generate_import_object(store, vm_hooks_wrapper);
@@ -73,8 +73,7 @@ fn prepare_wasmer_instance_inner(
 
 impl ExperimentalInstance {
     pub fn try_new_instance(
-        vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
-        opcode_config: Arc<OpcodeConfig>,
+        runtime: Arc<dyn ExecutorRuntime>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Self, ExecutorError> {
@@ -82,7 +81,7 @@ impl ExperimentalInstance {
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, opcode_config);
+        push_middlewares(&mut compiler, compilation_options);
 
         // Create the store
         let mut store: Store = Store::new(compiler);
@@ -91,7 +90,7 @@ impl ExperimentalInstance {
         let module = Module::new(&store, wasm_bytes)?;
 
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(vm_hooks_builder, &module, &mut store, weak)
+            prepare_wasmer_instance_inner(runtime, &module, &mut store, weak)
         })?;
 
         Ok(ExperimentalInstance {
@@ -148,11 +147,7 @@ fn validate_memory(memory: &wasmer::Memory, store: &wasmer::Store) -> Result<(),
     Ok(())
 }
 
-fn push_middlewares(
-    compiler: &mut Singlepass,
-    compilation_options: &CompilationOptions,
-    opcode_config: Arc<OpcodeConfig>,
-) {
+fn push_middlewares(compiler: &mut Singlepass, compilation_options: &CompilationOptions) {
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
 
@@ -167,7 +162,7 @@ fn push_middlewares(
     // Create metering middleware
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.unmetered_locals,
-        opcode_config,
+        compilation_options.opcode_config.clone(),
         breakpoints_middleware.clone(),
     ));
 

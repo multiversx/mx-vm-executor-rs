@@ -34,7 +34,7 @@
 use std::cell::RefCell;
 use std::ffi::c_void;
 
-use multiversx_chain_vm_executor::VMHooks;
+use multiversx_chain_vm_executor::{ExecutorRuntime, InstanceState, VMHooks};
 
 use crate::capi_status::vm_exec_status_t;
 
@@ -135,6 +135,18 @@ impl vm_exec_hook_context_t {
     }
 }
 
+/// What the instance state is erased to, and reconstituted as.
+///
+/// `&mut dyn InstanceState` is a fat pointer; what travels through the context is a thin
+/// pointer *to* it, so the vtable goes along with the value instead of having to be recovered
+/// by naming a backend's concrete state type. That is what lets this crate, and every state
+/// function built on it, name no backend at all.
+///
+/// The `'static` is a deliberate lie — the real state borrows the host-call frame and is
+/// valid for exactly one hook invocation. Nothing may rely on it and nothing does: the token
+/// check in [`with_instance_state`] is what establishes that the state is still alive.
+pub type ErasedInstanceState = &'static mut (dyn InstanceState + 'static);
+
 /// Borrows the instance state out of a context, after checking that the context is live.
 ///
 /// This is the one place the erased pointer is reconstituted, so it is the one place the
@@ -169,8 +181,8 @@ pub unsafe fn with_instance_state<S, R>(
     }
 
     // The caller names `S`, and is responsible for naming the same type the matching
-    // `with_hook_context` erased. Within one backend crate there is only one such type, which
-    // is what makes that obligation checkable by reading a single file.
+    // `with_hook_context` erased. There is exactly one such type — `ErasedInstanceState` —
+    // and it is backend-independent, so the obligation is discharged in one place.
     let mut state: &mut S = unsafe { &mut *(ctx.state as *mut S) };
     Ok(f(&mut state))
 }
@@ -219,16 +231,25 @@ pub struct CapiVMHookContextPool {
     active_token: u64,
 }
 
-/// Builds the VM hooks for one host call, and owns the context lifecycle.
+/// The executor runtime behind the C API: builds the VM hooks for one host call, and owns
+/// the context lifecycle.
 ///
-/// Backend-independent: the state pointer it stores is erased, so nothing here names the
-/// backend's state type. Each backend crate supplies the `with_vm_hooks` implementation that
-/// its builder trait requires, naming its own state type at that one point.
+/// Fully backend-independent. The state pointer it stores is erased and the caller hands it
+/// in as `&mut dyn InstanceState`, so no backend type is named here or anywhere downstream.
 pub struct CapiVMHooksBuilder {
     go_vm_hooks: usize,
     hook_table: CapiVMHookTable,
     pool: RefCell<CapiVMHookContextPool>,
 }
+
+// Safety: `ExecutorRuntime` is `Send + Sync` because an executor is, and the only non-`Sync`
+// field is the context pool. The pool is touched exactly where guarantee 3 at the top of this
+// module already requires single-threaded access — inside a hook invocation, on the thread
+// cgo has pinned the calling goroutine to — and a goroutine spawned inside a hook is
+// forbidden from touching the context at all. This mirrors the same unsafe impl the Wasmer 6
+// backend puts on its own hooks wrapper, for the same reason.
+unsafe impl Send for CapiVMHooksBuilder {}
+unsafe impl Sync for CapiVMHooksBuilder {}
 
 impl CapiVMHooksBuilder {
     pub fn new(go_vm_hooks: usize, hook_table: CapiVMHookTable) -> Self {
@@ -325,19 +346,22 @@ impl CapiVMHooksBuilder {
     }
 }
 
-impl CapiVMHooksBuilder {
+impl ExecutorRuntime for CapiVMHooksBuilder {
     /// Activates a context around `instance_state` and lends the generated hooks to `f`.
     ///
-    /// This is the whole of hook dispatch, and it names no backend: the state is erased on the
-    /// way in and reconstituted by `with_instance_state` on the way back. A backend crate
-    /// wraps this in the builder trait its executor expects, which is the one place its state
-    /// type appears.
-    pub fn with_vm_hooks_for_state<S>(
+    /// This is the whole of hook dispatch. The state is erased on the way in and
+    /// reconstituted by [`with_instance_state`] on the way back; neither direction names a
+    /// backend.
+    fn with_vm_hooks(
         &self,
-        instance_state: &mut S,
+        instance_state: &mut dyn InstanceState,
         f: &mut dyn FnMut(&mut dyn VMHooks),
     ) {
-        self.with_hook_context(instance_state, |ctx| {
+        // Reborrowed into a local so that what gets erased is a thin pointer to the fat
+        // pointer, which is what `ErasedInstanceState` names on the way back out.
+        let mut erased: &mut dyn InstanceState = instance_state;
+
+        self.with_hook_context(&mut erased, |ctx| {
             // The hooks borrow the context, so they live exactly as long as this activation
             // — which is also exactly as long as the instance state they reach through it.
             f(&mut CapiVMHooks::new(ctx, self.hook_table.func_pointers()));
