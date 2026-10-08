@@ -373,7 +373,10 @@ the sketch:
   byte-identical — so 2.2 now resolves the execution when the hook runs, exactly as Wasmer 6
   does. The stash-and-halt half is a defaulted `InstanceState::handle_early_exit_legacy`,
   which fails for every backend that does not implement it; a probe removing the 2.2 override
-  fails exactly the OutOfGas and UserError tests and leaves the no-early-exit one passing. This was not optional tidying:
+  fails exactly the OutOfGas and UserError tests and leaves the no-early-exit one passing.
+  The code-to-breakpoint mapping it needs turned out to be universal rather than host-specific
+  — the Go VM's `applyEarlyExit` is the same switch on the same numbering — so it is
+  `VMHooksEarlyExit::breakpoint_legacy`, and no host implements anything. This was not optional tidying:
   `c-api-common`'s shared runtime *is* an `ExecutorRuntime`, so a 2.2 capi built on it could
   not have existed otherwise. In the Rust VM it deleted `RuntimeRefAdapter`,
   `WasmerProdInstanceStateAdapter` and the whole `InstanceStateSetEarlyExit` /

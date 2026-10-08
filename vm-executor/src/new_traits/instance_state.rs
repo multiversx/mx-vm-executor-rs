@@ -1,7 +1,4 @@
-use crate::{
-    BreakpointValueLegacy, ExecutorError, MemLength, MemPtr, ServiceError, VMHooksEarlyExit,
-    clamped_load_len,
-};
+use crate::{ExecutorError, MemLength, MemPtr, ServiceError, VMHooksEarlyExit, clamped_load_len};
 
 /// The interface through which VM hooks update the instance state.
 ///
@@ -77,17 +74,14 @@ pub trait InstanceState {
     ///
     /// Both halves belong to the instance — it owns the stash and it owns the global — which
     /// is why they are one method on the state rather than two capabilities a backend has to
-    /// surface separately. Which breakpoint, though, is the host's call: the code carried by
-    /// an early exit is the host VM's own return code and means nothing to the executor, so
-    /// it arrives already mapped, from
-    /// [`crate::ExecutorRuntime::early_exit_breakpoint`].
+    /// surface separately. Which breakpoint to trip comes from
+    /// [`VMHooksEarlyExit::breakpoint_legacy`], the same for every host.
     ///
     /// The default is a failure, because for every other backend reaching this point means
     /// the early exit is about to be silently dropped.
     fn handle_early_exit_legacy(
         &mut self,
         _early_exit: VMHooksEarlyExit,
-        _breakpoint: BreakpointValueLegacy,
     ) -> Result<(), ExecutorError> {
         Err(Box::new(ServiceError::new(
             "early exit via breakpoint is only supported by the legacy Wasmer 2.2 backend",
@@ -152,8 +146,7 @@ impl<T: InstanceState + ?Sized> InstanceState for &mut T {
     fn handle_early_exit_legacy(
         &mut self,
         early_exit: VMHooksEarlyExit,
-        breakpoint: BreakpointValueLegacy,
     ) -> Result<(), ExecutorError> {
-        (**self).handle_early_exit_legacy(early_exit, breakpoint)
+        (**self).handle_early_exit_legacy(early_exit)
     }
 }

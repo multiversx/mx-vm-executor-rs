@@ -32,7 +32,8 @@ pub struct VMHooksLegacyAdapter<R: ExecutorRuntime, S: InstanceState + Clone> {
 // runtime nor the instance state has to be Debug just to be held here.
 impl<R: ExecutorRuntime, S: InstanceState + Clone> fmt::Debug for VMHooksLegacyAdapter<R, S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("VMHooksLegacyAdapter").finish_non_exhaustive()
+        f.debug_struct("VMHooksLegacyAdapter")
+            .finish_non_exhaustive()
     }
 }
 
@@ -59,10 +60,9 @@ impl<R: ExecutorRuntime, S: InstanceState + Clone> VMHooksLegacyAdapter<R, S> {
         result.unwrap_or_else(|early_exit| {
             // A legacy hook returns a plain value and has nowhere to report an early exit,
             // so the instance has to be stopped and the exit stashed for the caller to pick
-            // up once the call unwinds. Which breakpoint stops it is the host's call.
-            let breakpoint = self.runtime.early_exit_breakpoint(&early_exit);
+            // up once the call unwinds.
             instance_state
-                .handle_early_exit_legacy(early_exit, breakpoint)
+                .handle_early_exit_legacy(early_exit)
                 .expect("could not record early exit");
 
             T::default()

@@ -1,7 +1,6 @@
 use crate::WasmerInstance;
 use crate::executor_interface::{
-    BreakpointValueLegacy, ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr,
-    VMHooksEarlyExit,
+    ExecutorError, InstanceLegacy, InstanceState, MemLength, MemPtr, VMHooksEarlyExit,
 };
 
 use std::rc::{Rc, Weak};
@@ -23,7 +22,6 @@ impl WasmerProdInstanceState {
             .upgrade()
             .map_or_else(|| Err(WasmerExecutorError::BadInstancePointer.into()), Ok)
     }
-
 }
 
 impl InstanceState for WasmerProdInstanceState {
@@ -74,14 +72,13 @@ impl InstanceState for WasmerProdInstanceState {
     fn handle_early_exit_legacy(
         &mut self,
         early_exit: VMHooksEarlyExit,
-        breakpoint: BreakpointValueLegacy,
     ) -> Result<(), ExecutorError> {
         let instance_rc = self.instance_rc()?;
 
         // Trip the breakpoint global first: under 2.2 that is the mechanical halt, and it is
         // what stops the contract after the current instruction.
         instance_rc
-            .set_breakpoint_value(breakpoint)
+            .set_breakpoint_value(early_exit.breakpoint_legacy())
             .map_err(WasmerExecutorError::WrappedInstance)?;
 
         // Then stash the exit, for the error handler to pick up once the call unwinds.

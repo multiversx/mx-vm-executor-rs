@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::{BreakpointValueLegacy, InstanceState, VMHooks, VMHooksDefault, VMHooksEarlyExit};
+use crate::{InstanceState, VMHooks, VMHooksDefault};
 
 /// The host behind an executor: one reference, for the executor's whole life.
 ///
@@ -30,25 +30,6 @@ pub trait ExecutorRuntime: Send + Sync {
         instance_state: &mut dyn InstanceState,
         f: &mut dyn FnMut(&mut dyn VMHooks),
     );
-
-    /// Which breakpoint should halt the instance when a hook signals an early exit.
-    ///
-    /// **Only the legacy Wasmer 2.2 backend asks.** Its hooks return plain values, with no
-    /// channel for an early exit, so the executor has to stash the exit and trip the
-    /// instance's breakpoint global to stop it. Wasmer 6 hooks return the early exit directly
-    /// and never call this.
-    ///
-    /// Stashing is the executor's job; only the mapping is the host's, and it has to be,
-    /// because the code inside a [`VMHooksEarlyExit`] is the host VM's own return code and
-    /// means nothing to the executor. A host whose hooks already set the breakpoint
-    /// themselves — the Go VM does — wants the default and implements nothing.
-    ///
-    /// Defaulted rather than split into a second, legacy-only trait so that one `impl` serves
-    /// both backends. A separate trait would be foreign to `c-api-common`, where the shared
-    /// runtime lives, and the orphan rule would force a newtype back into every backend crate.
-    fn early_exit_breakpoint(&self, _early_exit: &VMHooksEarlyExit) -> BreakpointValueLegacy {
-        BreakpointValueLegacy::ExecutionFailed
-    }
 }
 
 /// A shared handle to a runtime is itself a runtime.
@@ -67,10 +48,6 @@ impl<T: ExecutorRuntime + ?Sized> ExecutorRuntime for Arc<T> {
         f: &mut dyn FnMut(&mut dyn VMHooks),
     ) {
         (**self).with_vm_hooks(instance_state, f)
-    }
-
-    fn early_exit_breakpoint(&self, early_exit: &VMHooksEarlyExit) -> BreakpointValueLegacy {
-        (**self).early_exit_breakpoint(early_exit)
     }
 }
 

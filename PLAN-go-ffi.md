@@ -484,20 +484,40 @@ the gap was in the hooks, and it is now closed. For the record, what it took:
   2.2 the global is still the mechanical halt. Both halves are owned by the instance, so they
   are one defaulted method on `InstanceState` — `handle_early_exit_legacy` — whose default is
   a failure, since for any other backend reaching it means an early exit is about to be
-  dropped. The **stash moved into the executor**; only the mapping stayed with the host, as
-  the defaulted `ExecutorRuntime::early_exit_breakpoint`, because the code in a
-  `VMHooksEarlyExit` is the
-  host VM's own `ReturnCode`. Go implements nothing — its hooks set the breakpoint themselves.
-  See `PLAN-go-breakpoint-removal.md` §3.
+  dropped. The whole thing **moved into the executor**, mapping included.
+- The mapping was briefly a host responsibility (`ExecutorRuntime::early_exit_breakpoint`),
+  on the reasoning that the code in a `VMHooksEarlyExit` is the host VM's own `ReturnCode`
+  and so only a host could read it. **That was wrong, and it is now
+  `VMHooksEarlyExit::breakpoint_legacy`** — a plain method, no trait, no host implementing
+  anything. The two VMs do not merely agree, they are the same switch: compare `applyEarlyExit`
+  in `vmhost/vmhooks/earlyExit.go` with what the Rust VM had, on the same numbering
+  (`UserError = 4`, `OutOfGas = 5`, breakpoints `0..5` in the same order), and code 0 is
+  reserved for the legacy async call on both sides of the ABI — which is why the C hook result
+  carries a separate "no early exit" sentinel rather than using 0. The Rust VM's version was
+  also *incomplete*: it mapped code 0 to `ExecutionFailed` instead of `AsyncCall`, which no
+  test could catch for the reason below.
 
-**One finding worth carrying forward.** The breakpoint *value* on this path is currently
-unobservable: `WasmerProdInstance::call` checks `take_early_exit()` before it ever reads the
-global, the breakpoints middleware traps on `!= None` without inspecting the value, and the
-legacy capi never goes through the adapter at all. Verified by deliberately flattening the
-mapping to `ExecutionFailed` — the prod gas tests, including the OutOfGas and UserError cases,
-still pass. The mapping was kept anyway, because 2.2's remaining job is to be an *unchanged*
-reference and the differential that would validate the change does not exist yet. Deleting
-`early_exit_breakpoint` is a safe follow-up once 2.2-vs-2.2 is green.
+**Two findings worth carrying forward.**
+
+1. The breakpoint *value* on this path is currently unobservable:
+   `WasmerProdInstance::call` checks `take_early_exit()` before it ever reads the global, the
+   breakpoints middleware traps on `!= None` without inspecting the value, and the legacy capi
+   never goes through the adapter at all. Verified by deliberately flattening the mapping to
+   `ExecutionFailed` — the prod gas tests, including the OutOfGas and UserError cases, still
+   pass. It becomes observable the moment the Go VM runs 2.2 through the new C API, because
+   there `handleBreakpointIfAny` turns the value back into the error the VM returns. So the
+   mapping is pinned by a unit test rather than left to a suite that cannot fail.
+
+2. **Who sets the breakpoint on the Go 2.2-new path is still open.** Go's hook sets it itself
+   (`HandleHookError` → `applyEarlyExit`) and *then* returns the code, so the executor's
+   `handle_early_exit_legacy` would set it a second time. Agreeing on the value makes the
+   second write harmless in every case but one: `FailExecution` upgrades to `BreakpointOutOfGas`
+   when the cause wraps `ErrNotEnoughGas` while the code stays `ExecutionFailed`, and the cause
+   does not cross the ABI. The known gas sites already route through `ExitOutOfGas()` (code 5),
+   so this is a narrow residual, not systematic — but it is a decision for `c-api-wasmer2`:
+   either the Go hook stops setting the breakpoint (which is where
+   `PLAN-go-breakpoint-removal.md` is heading anyway) or the executor skips the write when one
+   is already set.
 
 ## Phase 4 — Go VM
 
