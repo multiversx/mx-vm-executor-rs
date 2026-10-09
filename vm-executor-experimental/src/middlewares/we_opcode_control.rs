@@ -74,10 +74,10 @@ unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
 
 impl ModuleMiddleware for OpcodeControl {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionOpcodeControl {
             total_memory_grow_count: self.total_memory_grow_count.clone(),
             max_memory_grow_count: self.max_memory_grow_count,
@@ -181,11 +181,11 @@ impl FunctionOpcodeControl {
     }
 }
 
-impl FunctionMiddleware for FunctionOpcodeControl {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionOpcodeControl {
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
         if matches!(operator, Operator::MemoryGrow { .. }) {
             let mut grow_count = self

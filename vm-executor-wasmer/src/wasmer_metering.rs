@@ -1,4 +1,4 @@
-use crate::executor_interface::OpcodeCost;
+use crate::executor_interface::{OpcodeCost, WASM_LOCALS_LIMIT};
 use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
     MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
@@ -17,7 +17,6 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
-const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
@@ -218,10 +217,10 @@ pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
 }
 
 fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {
-    if count > MAX_LOCAL_COUNT {
+    if count > WASM_LOCALS_LIMIT {
         return Err(MiddlewareError::new(
             "metering_middleware",
-            format!("maximum number of locals({MAX_LOCAL_COUNT}) exceeded({count})"),
+            format!("maximum number of locals({WASM_LOCALS_LIMIT}) exceeded({count})"),
         ));
     }
 

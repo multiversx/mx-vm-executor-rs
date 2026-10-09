@@ -1,23 +1,16 @@
-#![allow(unused)] // TODO: until we activate the local count mechanism
-
-use super::{
-    BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, MiddlewareWithProtectedGlobals, get_local_cost,
-    get_opcode_cost,
-};
+use super::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints, get_local_cost, get_opcode_cost};
 use crate::we_helpers::{
     create_global_index, get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use multiversx_chain_vm_executor::{ExecutorError, OpcodeCost};
-use std::mem;
+use multiversx_chain_vm_executor::{ExecutorError, OpcodeCost, WASM_LOCALS_LIMIT};
 use std::sync::{Arc, Mutex};
 use wasmer::sys::{FunctionMiddleware, MiddlewareReaderState, ModuleMiddleware};
-use wasmer::wasmparser::Operator;
+use wasmer::wasmparser::{Operator, ValType};
 use wasmer::{AsStoreMut, Instance, LocalFunctionIndex};
 use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
-const MAX_LOCAL_COUNT: u32 = 4000;
 const POINTS_LIMIT_INIT: i64 = 0;
 
 #[derive(Clone, Debug)]
@@ -71,12 +64,13 @@ unsafe impl Send for Metering {}
 unsafe impl Sync for Metering {}
 
 impl ModuleMiddleware for Metering {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
+            locals_error: None,
             unmetered_locals: self.unmetered_locals,
             opcode_cost: self.opcode_cost.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
@@ -103,6 +97,8 @@ impl ModuleMiddleware for Metering {
 #[derive(Debug)]
 struct FunctionMetering {
     accumulated_cost: u64,
+    /// `locals_info` cannot fail, so the error is deferred to the first `feed`.
+    locals_error: Option<MiddlewareError>,
     unmetered_locals: usize,
     opcode_cost: Arc<OpcodeCost>,
     breakpoints_middleware: Arc<Breakpoints>,
@@ -140,12 +136,30 @@ impl FunctionMetering {
     }
 }
 
-impl FunctionMiddleware for FunctionMetering {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionMetering {
+    fn locals_info(&mut self, locals: &[ValType]) {
+        let count = locals.len() as u32;
+        if let Err(err) = check_local_count_exceeded(count) {
+            self.locals_error = Some(err);
+            return;
+        }
+        let unmetered_locals = self.unmetered_locals as u32;
+        if count > unmetered_locals {
+            let metered_locals = count - unmetered_locals;
+            let local_cost = get_local_cost(&self.opcode_cost);
+            self.accumulated_cost += metered_locals as u64 * local_cost as u64;
+        }
+    }
+
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
+        if let Some(err) = self.locals_error.take() {
+            return Err(err);
+        }
+
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
@@ -171,25 +185,9 @@ impl FunctionMiddleware for FunctionMetering {
 
         Ok(())
     }
-
-    // TODO: local count not available in Wasmer, options are:
-    // a. find alternative
-    // b. PR to Wasmer that gets accepted
-    // c. fork Wasmer
-
-    // fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
-    //     check_local_count_exceeded(count)?;
-    //     let unmetered_locals = self.unmetered_locals as u32;
-    //     if count > unmetered_locals {
-    //         let metered_locals = count - unmetered_locals;
-    //         let local_cost = get_local_cost(&self.opcode_cost.lock().unwrap());
-    //         let metered_locals_cost = metered_locals * local_cost;
-    //         self.accumulated_cost += metered_locals_cost as u64;
-    //     }
-    //     Ok(())
-    // }
 }
 
+#[allow(dead_code)]
 pub(crate) fn get_points_limit(
     instance: &Instance,
     store: &mut impl AsStoreMut,
@@ -221,10 +219,10 @@ pub(crate) fn set_points_used(
 }
 
 fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {
-    if count > MAX_LOCAL_COUNT {
+    if count > WASM_LOCALS_LIMIT {
         return Err(MiddlewareError::new(
             "metering_middleware",
-            format!("maximum number of locals({MAX_LOCAL_COUNT}) exceeded({count})"),
+            format!("maximum number of locals({WASM_LOCALS_LIMIT}) exceeded({count})"),
         ));
     }
 
