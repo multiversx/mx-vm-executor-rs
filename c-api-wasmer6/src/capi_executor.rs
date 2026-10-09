@@ -15,26 +15,23 @@
 //! The opcode config is held here for the same reason. On the Rust side it has moved into
 //! `CompilationOptions`, and this API merges the two at instance creation rather than
 //! changing the C struct ahead of the Go VM.
+//!
+//! The bodies are in `c-api-common`, shared with the Wasmer 2.2 library. What is here is the
+//! prefixed symbol and the C contract.
 
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::OpcodeConfig;
-use std::sync::Arc;
 
 use crate::capi_config::vm_exec_executor_config_t;
-use crate::capi_status::{vm_exec_status_t, write_error};
+use crate::capi_executor_ops;
+use crate::capi_handles::CapiExecutor;
+use crate::capi_status::vm_exec_status_t;
 use crate::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
-use crate::capi_vm_hook_table::CapiVMHookTable;
 
 /// Opaque handle to an executor.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_w6_executor_t;
-
-pub struct CapiExecutor {
-    pub(crate) opcode_config: Arc<OpcodeConfig>,
-    pub(crate) hook_table: CapiVMHookTable,
-}
 
 /// Creates an executor from one configuration struct and one hook table.
 ///
@@ -57,25 +54,15 @@ pub unsafe extern "C" fn vm_exec_w6_new_executor(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if executor_out.is_null() || config.is_null() || hook_table.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let opcode_config = match unsafe { (*config).to_opcode_config() } {
-        Ok(opcode_config) => opcode_config,
-        Err(message) => return write_error(message, err_buf, err_buf_len),
-    };
-
-    let capi_executor = CapiExecutor {
-        opcode_config: Arc::new(opcode_config),
-        hook_table: unsafe { CapiVMHookTable::copy_from(hook_table) },
-    };
-
     unsafe {
-        *executor_out = Box::into_raw(Box::new(capi_executor)) as *mut vm_exec_w6_executor_t;
+        capi_executor_ops::new_executor(
+            executor_out as *mut *mut CapiExecutor,
+            config,
+            hook_table,
+            err_buf,
+            err_buf_len,
+        )
     }
-
-    vm_exec_status_t::VM_EXEC_OK
 }
 
 /// Destroys an executor. Does nothing if `executor` is null.
@@ -89,7 +76,5 @@ pub unsafe extern "C" fn vm_exec_w6_new_executor(
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_exec_w6_executor_destroy(executor: *mut vm_exec_w6_executor_t) {
-    if !executor.is_null() {
-        drop(unsafe { Box::from_raw(executor as *mut CapiExecutor) });
-    }
+    unsafe { capi_executor_ops::executor_destroy(executor as *mut CapiExecutor) }
 }

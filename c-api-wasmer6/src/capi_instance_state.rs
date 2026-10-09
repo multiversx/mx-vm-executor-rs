@@ -8,16 +8,17 @@
 //! side that knows the real extent of the instance memory, and the rules are observable by
 //! contracts, so there is one implementation of them — shared with the other backends in
 //! `vm-executor/src/new_traits/memory.rs` — rather than one per caller.
+//!
+//! The bodies are in `c-api-common`, shared verbatim with the other backend's library: the
+//! state arrives through the context as an erased `&mut dyn InstanceState`, so none of this
+//! names a backend. What is here is the prefixed symbols and the C contract.
 
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{
-    ExecutorError, MemLength, MemPtr, ServiceError, clamped_load_len,
-};
-use std::slice;
 
-use crate::capi_status::{vm_exec_status_t, write_error, write_error_count};
-use crate::capi_vm_hook_context::{ErasedInstanceState, vm_exec_hook_context_t, with_instance_state};
+use crate::capi_state_ops;
+use crate::capi_status::vm_exec_status_t;
+use crate::capi_vm_hook_context::vm_exec_hook_context_t;
 
 /// Loads from instance memory into a caller-provided buffer, **truncating** at the end of
 /// the memory.
@@ -44,33 +45,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_load(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> i64 {
-    let loaded = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(
-            ctx,
-            |state| -> Result<usize, ExecutorError> {
-                let memory_length = state.memory_length()?;
-                let to_load =
-                    clamped_load_len(mem_ptr as MemPtr, dest_len as MemLength, memory_length)?;
-                if to_load == 0 {
-                    return Ok(0);
-                }
-
-                if dest.is_null() {
-                    return Err(Box::new(ServiceError::new("destination buffer is null")));
-                }
-
-                let dest = slice::from_raw_parts_mut(dest, to_load);
-                state.memory_load_to_slice(mem_ptr as MemPtr, dest)?;
-                Ok(to_load)
-            },
-        )
-    };
-
-    match loaded {
-        Err(context_err) => context_err.as_status().as_i64(),
-        Ok(Err(err)) => write_error_count(err, err_buf, err_buf_len),
-        Ok(Ok(to_load)) => to_load as i64,
-    }
+    unsafe { capi_state_ops::state_mem_load(ctx, mem_ptr, dest, dest_len, err_buf, err_buf_len) }
 }
 
 /// Writes to instance memory. The range must fit entirely inside the memory.
@@ -88,29 +63,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_store(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if src_len < 0 {
-        return write_error("negative length", err_buf, err_buf_len);
-    }
-    if src.is_null() && src_len > 0 {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let stored = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(ctx, |state| {
-            let data = if src_len == 0 {
-                &[][..]
-            } else {
-                slice::from_raw_parts(src, src_len as usize)
-            };
-            state.memory_store(mem_ptr as MemPtr, data)
-        })
-    };
-
-    match stored {
-        Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(())) => vm_exec_status_t::VM_EXEC_OK,
-    }
+    unsafe { capi_state_ops::state_mem_store(ctx, mem_ptr, src, src_len, err_buf, err_buf_len) }
 }
 
 /// Returns the size in bytes of the instance memory.
@@ -126,24 +79,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_length(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if length_out.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let length = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.memory_length())
-    };
-
-    match length {
-        Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(length)) => {
-            unsafe {
-                *length_out = length;
-            }
-            vm_exec_status_t::VM_EXEC_OK
-        }
-    }
+    unsafe { capi_state_ops::state_mem_length(ctx, length_out, err_buf, err_buf_len) }
 }
 
 /// Grows the instance memory by `by_num_pages` pages of 64Kb each.
@@ -162,23 +98,8 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_grow(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if prev_pages_out.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let grown = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.memory_grow(by_num_pages))
-    };
-
-    match grown {
-        Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(prev_pages)) => {
-            unsafe {
-                *prev_pages_out = prev_pages;
-            }
-            vm_exec_status_t::VM_EXEC_OK
-        }
+    unsafe {
+        capi_state_ops::state_mem_grow(ctx, by_num_pages, prev_pages_out, err_buf, err_buf_len)
     }
 }
 
@@ -195,24 +116,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_get_points_used(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if points_out.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let points = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.get_points_used())
-    };
-
-    match points {
-        Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(points)) => {
-            unsafe {
-                *points_out = points;
-            }
-            vm_exec_status_t::VM_EXEC_OK
-        }
-    }
+    unsafe { capi_state_ops::state_get_points_used(ctx, points_out, err_buf, err_buf_len) }
 }
 
 /// Sets the number of points (gas) used by the instance.
@@ -228,13 +132,5 @@ pub unsafe extern "C" fn vm_exec_w6_state_set_points_used(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    let set = unsafe {
-        with_instance_state::<ErasedInstanceState, _>(ctx, |state| state.set_points_used(points))
-    };
-
-    match set {
-        Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
-        Ok(Ok(())) => vm_exec_status_t::VM_EXEC_OK,
-    }
+    unsafe { capi_state_ops::state_set_points_used(ctx, points, err_buf, err_buf_len) }
 }

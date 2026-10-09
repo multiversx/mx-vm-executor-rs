@@ -21,6 +21,7 @@
 
 mod capi_logger;
 
+pub mod capi_backend;
 pub mod capi_executor;
 pub mod capi_instance;
 pub mod capi_instance_state;
@@ -28,6 +29,7 @@ pub mod capi_instance_state;
 // The shared C vocabulary, re-exported so that this crate's modules — and the cbindgen run
 // that produces its header — reach the same definitions the common header publishes.
 pub use multiversx_chain_vm_executor_c_api_common::{
-    capi_call_result, capi_config, capi_opcode_cost, capi_status, capi_strings,
-    capi_vm_hook_context, capi_vm_hook_pointers, capi_vm_hook_table, capi_vm_hooks,
+    capi_call_result, capi_config, capi_executor_ops, capi_handles, capi_instance_ops,
+    capi_opcode_cost, capi_state_ops, capi_status, capi_strings, capi_vm_hook_context,
+    capi_vm_hook_pointers, capi_vm_hook_table, capi_vm_hooks,
 };

@@ -5,30 +5,25 @@
 //! `capi_instance_state`, reached through a hook context rather than through this handle.
 //! Keeping the split is what makes the Go side match the Rust trait pair instead of merely
 //! wrapping it.
+//!
+//! The bodies are in `c-api-common`, shared with the other backend's library; `capi_backend`
+//! is the only thing that differs. What is here is the prefixed symbols and the C contract.
 
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{Executor, Instance};
-use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalExecutor;
-use std::ffi::CStr;
-use std::slice;
-use std::sync::Arc;
 
+use crate::capi_backend::Backend;
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
-use crate::capi_executor::{CapiExecutor, vm_exec_w6_executor_t};
-use crate::capi_status::{vm_exec_status_t, write_error};
-use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
-use crate::capi_vm_hook_context::CapiVMHooksBuilder;
+use crate::capi_executor::vm_exec_w6_executor_t;
+use crate::capi_handles::{CapiExecutor, CapiInstance};
+use crate::capi_instance_ops;
+use crate::capi_status::vm_exec_status_t;
 
 /// Opaque handle to an instance.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_w6_instance_t;
-
-pub struct CapiInstance {
-    pub(crate) content: Box<dyn Instance>,
-}
 
 /// Creates an instance.
 ///
@@ -54,38 +49,18 @@ pub unsafe extern "C" fn vm_exec_w6_new_instance(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if executor.is_null() || instance_out.is_null() || wasm_bytes.is_null() || options.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let capi_executor = unsafe { &*(executor as *const CapiExecutor) };
-    let wasm_bytes = unsafe { slice::from_raw_parts(wasm_bytes, wasm_bytes_len as usize) };
-    let compilation_options =
-        unsafe { (*options).to_compilation_options(capi_executor.opcode_config.clone()) };
-
-    // One executor per instance, for as long as the runtime handle is per instance: the
-    // handle is what the executor is built around, so it cannot outlive the instance that
-    // owns it. Building it here costs nothing — an executor holds only the runtime — and it
-    // means this file goes through the `Executor` trait rather than around it. When the
-    // handle moves to `vm_exec_w6_new_executor`, the executor moves to `CapiExecutor` with
-    // it and this becomes a plain `new_instance` call.
-    let runtime = Arc::new(CapiVMHooksBuilder::new(
-        go_vm_hooks,
-        capi_executor.hook_table.clone(),
-    ));
-    let backend_executor = ExperimentalExecutor::new(runtime);
-
-    let instance = match backend_executor.new_instance(wasm_bytes, &compilation_options) {
-        Ok(instance) => instance,
-        Err(err) => return write_error(err, err_buf, err_buf_len),
-    };
-
     unsafe {
-        *instance_out = Box::into_raw(Box::new(CapiInstance { content: instance }))
-            as *mut vm_exec_w6_instance_t;
+        capi_instance_ops::new_instance::<Backend>(
+            executor as *mut CapiExecutor,
+            instance_out as *mut *mut CapiInstance,
+            wasm_bytes,
+            wasm_bytes_len,
+            options,
+            go_vm_hooks,
+            err_buf,
+            err_buf_len,
+        )
     }
-
-    vm_exec_status_t::VM_EXEC_OK
 }
 
 /// Destroys an instance. Does nothing if `instance` is null.
@@ -96,9 +71,7 @@ pub unsafe extern "C" fn vm_exec_w6_new_instance(
 #[allow(clippy::cast_ptr_alignment)]
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vm_exec_w6_instance_destroy(instance: *mut vm_exec_w6_instance_t) {
-    if !instance.is_null() {
-        drop(unsafe { Box::from_raw(instance as *mut CapiInstance) });
-    }
+    unsafe { capi_instance_ops::instance_destroy(instance as *mut CapiInstance) }
 }
 
 /// Calls an exported function, with a gas limit for this call.
@@ -121,29 +94,16 @@ pub unsafe extern "C" fn vm_exec_w6_instance_call(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if instance.is_null() || func_name.is_null() || result_out.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let capi_instance = unsafe { &mut *(instance as *mut CapiInstance) };
-
-    let Ok(func_name) = unsafe { CStr::from_ptr(func_name) }.to_str() else {
-        return write_error("function name is not valid UTF-8", err_buf, err_buf_len);
-    };
-
-    let result = unsafe {
-        vm_exec_call_result_t::from_call_result(
-            capi_instance.content.call(func_name, points_limit),
+    unsafe {
+        capi_instance_ops::instance_call(
+            instance as *mut CapiInstance,
+            func_name,
+            points_limit,
+            result_out,
             err_buf,
             err_buf_len,
         )
-    };
-
-    unsafe {
-        *result_out = result;
     }
-
-    vm_exec_status_t::VM_EXEC_OK
 }
 
 /// Returns the number of points (gas) used so far.
@@ -160,19 +120,13 @@ pub unsafe extern "C" fn vm_exec_w6_instance_get_points_used(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
-    if instance.is_null() || points_out.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
-    }
-
-    let capi_instance = unsafe { &mut *(instance as *mut CapiInstance) };
-    match capi_instance.content.get_points_used() {
-        Ok(points) => {
-            unsafe {
-                *points_out = points;
-            }
-            vm_exec_status_t::VM_EXEC_OK
-        }
-        Err(err) => write_error(err, err_buf, err_buf_len),
+    unsafe {
+        capi_instance_ops::instance_get_points_used(
+            instance as *mut CapiInstance,
+            points_out,
+            err_buf,
+            err_buf_len,
+        )
     }
 }
 
@@ -189,12 +143,7 @@ pub unsafe extern "C" fn vm_exec_w6_instance_get_points_used(
 pub unsafe extern "C" fn vm_exec_w6_instance_check_signatures(
     instance: *const vm_exec_w6_instance_t,
 ) -> c_int {
-    if instance.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
-    }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
-    c_int::from(capi_instance.content.check_signatures())
+    unsafe { capi_instance_ops::instance_check_signatures(instance as *const CapiInstance) }
 }
 
 /// Checks whether the contract exports a function with the given name.
@@ -211,16 +160,7 @@ pub unsafe extern "C" fn vm_exec_w6_instance_has_function(
     instance: *const vm_exec_w6_instance_t,
     func_name: *const c_char,
 ) -> c_int {
-    if instance.is_null() || func_name.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
-    }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
-    let Ok(func_name) = unsafe { CStr::from_ptr(func_name) }.to_str() else {
-        return vm_exec_status_t::VM_EXEC_ERROR.as_c_int();
-    };
-
-    c_int::from(capi_instance.content.has_function(func_name))
+    unsafe { capi_instance_ops::instance_has_function(instance as *const CapiInstance, func_name) }
 }
 
 /// Buffer length needed by `vm_exec_w6_instance_exported_function_names`.
@@ -234,12 +174,9 @@ pub unsafe extern "C" fn vm_exec_w6_instance_has_function(
 pub unsafe extern "C" fn vm_exec_w6_instance_exported_function_names_length(
     instance: *const vm_exec_w6_instance_t,
 ) -> c_int {
-    if instance.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
+    unsafe {
+        capi_instance_ops::instance_exported_function_names_length(instance as *const CapiInstance)
     }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
-    pipe_joined_length(&capi_instance.content.get_exported_function_names())
 }
 
 /// Writes the exported function names, pipe-separated, e.g. `"init|endpoint1|endpoint2"`.
@@ -258,14 +195,9 @@ pub unsafe extern "C" fn vm_exec_w6_instance_exported_function_names(
     dest: *mut c_char,
     dest_len: c_int,
 ) -> c_int {
-    if instance.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
-    }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
     unsafe {
-        copy_pipe_joined(
-            &capi_instance.content.get_exported_function_names(),
+        capi_instance_ops::instance_exported_function_names(
+            instance as *const CapiInstance,
             dest,
             dest_len,
         )
@@ -283,12 +215,9 @@ pub unsafe extern "C" fn vm_exec_w6_instance_exported_function_names(
 pub unsafe extern "C" fn vm_exec_w6_instance_imported_function_names_length(
     instance: *const vm_exec_w6_instance_t,
 ) -> c_int {
-    if instance.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
+    unsafe {
+        capi_instance_ops::instance_imported_function_names_length(instance as *const CapiInstance)
     }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
-    pipe_joined_length(&capi_instance.content.get_imported_function_names())
 }
 
 /// Writes the names of the VM hooks the contract imports, pipe-separated.
@@ -307,14 +236,9 @@ pub unsafe extern "C" fn vm_exec_w6_instance_imported_function_names(
     dest: *mut c_char,
     dest_len: c_int,
 ) -> c_int {
-    if instance.is_null() {
-        return vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int();
-    }
-
-    let capi_instance = unsafe { &*(instance as *const CapiInstance) };
     unsafe {
-        copy_pipe_joined(
-            &capi_instance.content.get_imported_function_names(),
+        capi_instance_ops::instance_imported_function_names(
+            instance as *const CapiInstance,
             dest,
             dest_len,
         )

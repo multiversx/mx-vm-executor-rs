@@ -458,6 +458,16 @@ That makes **Phase 1.6 and the `VMHooksLegacyAdapter` activation trick cleanup r
 migration**: worth doing when the legacy interface set is retired, not before wasmer 6 is live.
 The `-Bsymbolic-functions` work is what takes its place on the critical path.
 
+**Superseded — it was needed, for a reason this section missed.** The argument above is sound
+about the *differential*: `wasmer2` over the legacy library would indeed have isolated the
+interface migration. What it misses is that the Go-side interfaces are not the only thing being
+migrated. The legacy library reaches 2.2 through the legacy *Rust* traits, so a `wasmer2`
+built on it would have left the new Rust traits, the C ABI and the hook-dispatch path
+exercised by one backend only. Building `c-api-wasmer2` put the same runtime behind all of
+that, and the first thing it found was a bug in the new Rust path that no amount of
+Go-side comparison could have reached: the breakpoint global was never cleared, making a 2.2
+instance single-use after an early exit. See Phase 4c.
+
 ### What the wasmer 2.2 path needs
 
 **Resolved by Stage 0.** `WasmerProdExecutor` already implemented the new `Executor` trait;
@@ -936,33 +946,110 @@ Shared types are published under the neutral `vm_exec_*` prefix. The rule that f
 worth stating, because it is what the next crate follows: **types shared → `vm_exec_*`;
 opaque handles and functions → `vm_exec_w6_*`.**
 
+### Done: `c-api-wasmer2`, and how the duplication was resolved
+
+Both libraries now exist, and the open question from item 1 below is answered: **not a macro**.
+cbindgen reads the source syntactically, so an entry point produced by `macro_rules!` yields no
+header entry at all — the `#[no_mangle]` functions have to be written out literally. What does
+*not* have to be duplicated is their bodies, so those moved into `c-api-common`
+(`capi_executor_ops`, `capi_instance_ops`, `capi_state_ops`, over the shared `capi_handles`),
+and each backend crate keeps a file of thin wrappers whose documentation is the header.
+
+The one point of variation is `capi_handles::CapiBackend`, a trait with a single function:
+which `Executor` an instance is built from. Because the entry points reach it through a name
+that is the same in both crates (`capi_backend::Backend`), **all three entry-point files are
+character-identical apart from the prefix** — `c-api-wasmer2/tests/prefix_parity.rs` asserts
+exactly that, and the two generated headers are identical under the same substitution. Adding a
+backend now costs one `CapiBackend` impl plus three derived files.
+
+Sizes: the three files went from ~700 lines of logic per backend to ~450 lines of wrappers,
+most of it the C contract, over one shared body.
+
+### Done: the Go `wasmer2` package
+
+A copy of `wasmer6` with the prefix changed — it has to be, because a cgo `//export` name is a
+C symbol and two packages cannot export the same one; that is also the entire reason the
+prefixes exist. The generated shims come from the generator (item 4 below, done:
+`WriteWasmer2NewCgo`, prefix `w2_`). `testexecutor.ExecWasmer2` is wired up, so
+`VMEXECUTOR=wasmer2` runs the whole suite through it.
+
+**One real bug, found by the ported boundary test.** Under 2.2 an early exit trips the
+breakpoint global to halt the contract, and nothing cleared it afterwards — so an instance was
+single-use after any early exit, and the next call trapped immediately on `unreachable`. Under
+the legacy interface clearing it was the *host's* job (`runtimeContext.UseWarmInstance` →
+`SetRuntimeBreakpointValue(BreakpointNone)`), and the new C API deliberately does not expose
+the global, so the only side that can still do it is the executor.
+`WasmerProdInstance::call` now clears it alongside setting the points limit. Wasmer 6 never had
+the bug because it has no such global to leave behind — which is exactly the class of
+divergence running 2.2 through the new boundary exists to catch.
+
 ### Still to do
 
-1. ~~**`c-api-common`.**~~ **Done** — see above. What remains of the original estimate: The extraction is small: of the thirteen modules in `c-api-wasmer6`,
-   **ten already reference no backend type at all**. Only `capi_vm_hook_context.rs` (10
-   the three `#[no_mangle]` entry-point files (`capi_executor.rs`, `capi_instance.rs`,
-   `capi_instance_state.rs`, ~700 lines) are still per-backend, because each needs its own
-   symbol prefix. `c-api-wasmer2` will duplicate them unless they are generated from a macro
-   parameterised by prefix — worth deciding when that crate is written, not before.
-2. **`c-api-wasmer2`.** Wasmer 2.2 through the new interfaces. **No longer blocked** — Stage 0
-   closed both halves: `WasmerProdRuntimeRef` is gone and `VMHooksLegacyAdapter` is
-   built directly on `ExecutorRuntime` + `InstanceState`, so one crate body can serve both
-   backends. What is left is mechanical: the
-   three `#[no_mangle]` entry-point files under a `vm_exec_w2_` prefix plus the one-line
-   `capi_logger` re-export. `capi_instance_state.rs` is now *character-identical* to the
-   Wasmer 6 copy apart from the prefix, since neither names a backend any more — which is what
-   makes generating the three from a prefix-parameterised macro worth deciding now rather than
-   duplicating a third time.
+1. ~~**`c-api-common`.**~~ **Done.** ~~**The prefix-parameterised macro question.**~~ **Answered
+   above: shared bodies, literal wrappers, parity enforced by test.**
+2. ~~**`c-api-wasmer2`.**~~ **Done** — see above.
 3. **`wasmercommon` in Go**, wrapping the common header: the error buffer, the status mapping,
    the call result and the hook result, so `wasmer2` and `wasmer6` share them instead of each
-   carrying a copy. Worth doing *after* `c-api-common`, since the Go types mirror it.
-4. A third cgo shim prefix for the new `wasmer2` package, since `w2_` belongs to the legacy one
-   for as long as both exist.
+   carrying a copy. Still outstanding, and deliberately so: it is a refactor of two packages,
+   and doing it while the second was being brought up would have made any failure ambiguous.
+   Now that the differential is green except for the known gap, it is safe to take.
+   Note the constraint it has to work around: cgo types are per-package, so anything whose
+   signature mentions `C.vm_exec_*` cannot move. What can is the error sentinels, the buffer
+   and its message decoding (over a plain `int32` status), the call-result enum, and
+   `readNames`.
+4. ~~A third cgo shim prefix for the new `wasmer2` package.~~ **Done.**
 
-The payoff is the comparison the whole structure exists for: **wasmer 2.2 against wasmer 2.2**,
-one through each interface set, under the hook-sequence differential. That isolates the
-interface migration from the runtime upgrade — if those two agree, any remaining difference
-against `wasmer6` is Wasmer's doing and not the new FFI's.
+### What the differential now says
+
+The comparison the whole structure exists for is running: `TestMigrationPreservesHookSequence`
+holds the wasm runtime constant and varies only the boundary.
+
+| scenario folder | hook-sequence lines | differences |
+|---|---|---|
+| `adder` | 183 | instance lifecycle only |
+| `crowdfunding-esdt` (16) | 8,896 | instance lifecycle only |
+| `erc20-rust` (57) | 14,441 | instance lifecycle only |
+
+"Instance lifecycle only" means literally this, and nothing else in any of them:
+
+```
+< Reset: true            > Reset: false
+< SetPointsUsed: 0       > Clean: true
+< SetGasLimit: ...
+< SetBreakpointValue: 0
+```
+
+Every hook call, in order, with every argument and every gas value, is identical. The
+divergence is the warm-instance path the new C API does not have yet (no `reset`, no module
+cache — Phase 6), and it is the same shape already seen against `wasmer6`.
+
+Two things it has also established:
+
+- **The whole-suite failure sets now separate the two variables.** `wasmer2legacy` 0 failures,
+  `wasmer2` 28, `wasmer6` 33 — and the 28 are a strict *subset* of the 33. So 28 failures
+  belong to the boundary (all of them the `MemLoad`/`MemStore`-outside-a-hook and
+  `Reset`/`Cache` gaps already on the 4b and Phase 6 lists) and exactly 5 belong to the runtime
+  change: `TestExecution_Call_GasConsumptionOnLocals`,
+  `TestExecution_DeployWASM_MoreThanMaximumLocals`, `TestRustBasicFeaturesBarnard`,
+  `TestRustBasicFeaturesLatest`, `TestRustComposability`. Before this library existed there was
+  no way to make that attribution.
+- **`delegation/v0_5_latest` fails 3 of 27 scenarios with "not enough gas", under *both* new
+  backends.** Previously invisible: `TestDelegation_v0_5_latest` is skipped on arm64, so the
+  differential was the first thing to run it here. Consistent with the cold-instance path, and
+  it is the sharpest symptom yet of why Phase 6 matters — but it is attributed, not diagnosed.
+
+### Three libraries in one binary, on macOS
+
+A `VMEXECUTOR=wasmer2` test binary links all three: `libvmexeccapi` (2.2), `libvmexeccapi_w2`
+(2.2 again) and `libvmexeccapi_w6` (6). Two independent copies of Wasmer 2.2 in one process,
+and the whole suite runs. `wasmer6/dualbackend` — which had gone stale against the
+`InstanceCallResult` change and could not compile — is repaired and both trap-handler
+orderings pass again.
+
+This does **not** carry to Linux. The colliding internal `wasmer_vm_*` symbols are still
+unverified there, and `-Wl,-Bsymbolic-functions` remains the open item; see
+"The symbol problem does not go away".
+
 
 ## Phase 5 — Bring-up and validation
 

@@ -1,6 +1,7 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
 	capi-w6 capi-w6-linux-amd64 capi-w6-linux-arm capi-w6-osx-amd64 capi-w6-osx-arm \
+	capi-w2 capi-w2-linux-amd64 capi-w2-linux-arm capi-w2-osx-amd64 capi-w2-osx-arm \
 	ci-local clean check-macos
 
 # cargo and docker already parallelise internally, and a parallel make would
@@ -68,6 +69,36 @@ capi-w6-osx-arm: check-macos capi-w6
 	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.dylib target/release/libvmexeccapi_w6_arm.dylib
 	install_name_tool -id @rpath/libvmexeccapi_w6_arm.dylib target/release/libvmexeccapi_w6_arm.dylib
 
+# --- The new C API, Wasmer 2.2 ------------------------------------------------
+# The same interface over the executor currently in production. Built alongside the
+# Wasmer 6 library rather than instead of it: running the *same* runtime through the
+# *new* boundary is what isolates the boundary as the variable, so a difference against
+# the legacy `libvmexeccapi` is attributable to the refactor and not to a runtime change.
+#
+# Three libraries can therefore be linked at once — `vm_exec_*`, `vm_exec_w2_*` and
+# `vm_exec_w6_*` share no exported symbols. On Linux that needs
+# `-Wl,-Bsymbolic-functions`, because the two Wasmer versions do collide on their
+# internal `wasmer_vm_*` symbols; macOS's two-level namespace handles it without help.
+
+capi-w2:
+	cargo build -p multiversx-chain-vm-executor-c-api-wasmer2 --release
+
+capi-w2-linux-amd64: capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.so target/release/libvmexeccapi_w2.so
+	patchelf --set-soname libvmexeccapi_w2.so target/release/libvmexeccapi_w2.so
+
+capi-w2-linux-arm: capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.so target/release/libvmexeccapi_w2_arm.so
+	patchelf --set-soname libvmexeccapi_w2_arm.so target/release/libvmexeccapi_w2_arm.so
+
+capi-w2-osx-amd64: check-macos capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.dylib target/release/libvmexeccapi_w2.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w2.dylib target/release/libvmexeccapi_w2.dylib
+
+capi-w2-osx-arm: check-macos capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.dylib target/release/libvmexeccapi_w2_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w2_arm.dylib target/release/libvmexeccapi_w2_arm.dylib
+
 # --- Local reproduction of the CI build matrix -------------------------------
 # The four targets above are what CI runs natively, one per runner. The targets
 # below drive the same builds from a single host: the two Linux libraries build
@@ -132,5 +163,10 @@ clean:
 	rm -f target/release/libvmexeccapi_w6.dylib
 	rm -f target/release/libvmexeccapi_w6_arm.dylib
 	rm -f c-api-wasmer6/libvmexeccapi_w6.h
+	rm -f target/release/libvmexeccapi_w2.so
+	rm -f target/release/libvmexeccapi_w2_arm.so
+	rm -f target/release/libvmexeccapi_w2.dylib
+	rm -f target/release/libvmexeccapi_w2_arm.dylib
+	rm -f c-api-wasmer2/libvmexeccapi_w2.h
 	rm -f target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	rm -rf $(CI_LOCAL_DIR)

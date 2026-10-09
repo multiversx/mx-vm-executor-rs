@@ -383,6 +383,17 @@ the sketch:
   `VMHooksSetEarlyExit` pair, and `impl ExecutorRuntime for RuntimeWeakRef` moved out of the
   `wasmer-experimental` feature gate to serve both.
 
+- **A prerequisite for instance reuse turned up on its own.** Under Wasmer 2.2 an early exit
+  trips the breakpoint global to halt the contract, and nothing cleared it afterwards: the
+  host used to, and the new interface does not expose it. So a 2.2 instance was single-use
+  after any early exit — which is precisely a reuse bug, found while building `c-api-wasmer2`
+  rather than while building the cache. `WasmerProdInstance::call` now clears it alongside
+  setting the points limit, so an instance is armed for each call rather than still halted
+  from the last one. Wasmer 6 never had the problem, having no such global; the general point
+  stands for stages 1–3 either way, that anything a call leaves behind in an instance has to
+  be reset by the executor, because after caching nobody else knows an instance is being
+  reused.
+
 - **The arming slot had to become a stack, early.** This was Stage 3's item, but Stage 0
   forced its core: resolving the execution per hook call means the slot must stay armed for
   the whole call, where it used to be cleared as soon as the instance was built. Widening the
