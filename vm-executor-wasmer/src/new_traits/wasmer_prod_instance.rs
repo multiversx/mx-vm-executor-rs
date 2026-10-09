@@ -35,6 +35,23 @@ impl Instance for WasmerProdInstance {
             );
         }
 
+        // Clear the breakpoint global, so the instance is armed for this call rather than
+        // still halted from the last one.
+        //
+        // Under the legacy interface this was the *host's* job — the Go VM did it in
+        // `runtimeContext.UseWarmInstance`, and the Rust VM never reused an instance at all.
+        // The new interface does not expose the global, deliberately: it is 2.2's private
+        // mechanism for stopping a contract, and Wasmer 6 has nothing like it. So the only
+        // side that can still do this is the executor, and not doing it would make an
+        // instance single-use after any early exit — a divergence from Wasmer 6, which has no
+        // such state to leave behind.
+        if let Err(err) = self
+            .inner_instance_ref
+            .set_breakpoint_value(BreakpointValueLegacy::None)
+        {
+            return wrap_runtime_error(err);
+        }
+
         let result = self.inner_instance_ref.call(func_name);
 
         match result {
