@@ -226,12 +226,9 @@ impl<'a> FunctionMiddleware<'a> for FunctionMetering {
             self.locals_error = Some(err);
             return;
         }
-        let unmetered_locals = self.unmetered_locals as u32;
-        if count > unmetered_locals {
-            let metered_locals = count - unmetered_locals;
-            let local_cost = self.opcode_config.opcode_cost.opcode_localallocate;
-            self.accumulated_cost += metered_locals as u64 * local_cost as u64;
-        }
+        let metered_locals = (count as usize).saturating_sub(self.unmetered_locals);
+        let local_cost = self.opcode_config.opcode_cost.opcode_localallocate;
+        self.accumulated_cost += metered_locals as u64 * local_cost as u64;
     }
 
     fn feed(

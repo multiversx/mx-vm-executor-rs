@@ -290,18 +290,14 @@ impl FunctionMiddleware for FunctionMetering {
     fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
         check_local_count_exceeded(count)?;
 
-        let unmetered_locals = self.unmetered_locals as u32;
-        if count > unmetered_locals {
-            let metered_locals = count - unmetered_locals;
-            let local_cost = self
-                .opcode_config
-                .lock()
-                .unwrap()
-                .opcode_cost
-                .opcode_localallocate;
-            let metered_locals_cost = metered_locals * local_cost;
-            self.accumulated_cost += metered_locals_cost as u64;
-        }
+        let metered_locals = (count as usize).saturating_sub(self.unmetered_locals);
+        let local_cost = self
+            .opcode_config
+            .lock()
+            .unwrap()
+            .opcode_cost
+            .opcode_localallocate;
+        self.accumulated_cost += metered_locals as u64 * local_cost as u64;
 
         Ok(())
     }
