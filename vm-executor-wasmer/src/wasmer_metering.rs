@@ -1,4 +1,4 @@
-use crate::executor_interface::OpcodeConfig;
+use crate::executor_interface::{OpcodeConfig, WASM_LOCALS_LIMIT};
 use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
@@ -19,7 +19,6 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
 const METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP: &str = "metering_bulk_memory_size_operand_backup";
-const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
@@ -291,18 +290,14 @@ impl FunctionMiddleware for FunctionMetering {
     fn feed_local_count(&mut self, count: u32) -> Result<(), MiddlewareError> {
         check_local_count_exceeded(count)?;
 
-        let unmetered_locals = self.unmetered_locals as u32;
-        if count > unmetered_locals {
-            let metered_locals = count - unmetered_locals;
-            let local_cost = self
-                .opcode_config
-                .lock()
-                .unwrap()
-                .opcode_cost
-                .opcode_localallocate;
-            let metered_locals_cost = metered_locals * local_cost;
-            self.accumulated_cost += metered_locals_cost as u64;
-        }
+        let metered_locals = (count as usize).saturating_sub(self.unmetered_locals);
+        let local_cost = self
+            .opcode_config
+            .lock()
+            .unwrap()
+            .opcode_cost
+            .opcode_localallocate;
+        self.accumulated_cost += metered_locals as u64 * local_cost as u64;
 
         Ok(())
     }
@@ -321,10 +316,10 @@ pub(crate) fn get_points_used(instance: &Instance) -> Result<u64, String> {
 }
 
 fn check_local_count_exceeded(count: u32) -> Result<(), MiddlewareError> {
-    if count > MAX_LOCAL_COUNT {
+    if count > WASM_LOCALS_LIMIT {
         return Err(MiddlewareError::new(
             "metering_middleware",
-            format!("maximum number of locals({MAX_LOCAL_COUNT}) exceeded({count})"),
+            format!("maximum number of locals({WASM_LOCALS_LIMIT}) exceeded({count})"),
         ));
     }
 

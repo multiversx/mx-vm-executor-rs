@@ -12,7 +12,7 @@ mod service_trait;
 mod vm_hooks;
 
 pub use breakpoint_value::*;
-pub use compilation_options::CompilationOptionsLegacy;
+pub use compilation_options::{CompilationOptionsLegacy, WASM_LOCALS_LIMIT};
 pub use executor::ExecutorLegacy;
 pub use instance::InstanceLegacy;
 pub use missing_wasm::{MissingWasmError, check_missing_wasm};
