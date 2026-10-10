@@ -41,10 +41,10 @@ impl MemoryUsage for ProtectedGlobals {
 }
 
 impl ModuleMiddleware for ProtectedGlobals {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionProtectedGlobals {
             protected_globals: self.get_protected_globals(),
         })
@@ -80,11 +80,11 @@ impl FunctionProtectedGlobals {
     }
 }
 
-impl FunctionMiddleware for FunctionProtectedGlobals {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionProtectedGlobals {
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
         self.check_protected_globals_invalid_access(&operator)?;
 

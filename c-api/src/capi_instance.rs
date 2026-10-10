@@ -1,13 +1,14 @@
 //! Instantiate a module, call functions, and read exports.
 
 use crate::{
+    capi_compilation_options::vm_exec_compilation_options_t,
     capi_executor::{CapiExecutor, vm_exec_executor_t},
     service_singleton::with_service,
     string_copy, vm_exec_result_t,
 };
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::{CompilationOptionsLegacy, InstanceLegacy};
+use multiversx_chain_vm_executor::InstanceLegacy;
 use std::{ffi::CStr, slice};
 
 /// Opaque pointer to a `wasmer_runtime::Instance` value in Rust.
@@ -18,10 +19,6 @@ use std::{ffi::CStr, slice};
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_instance_t;
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct vm_exec_compilation_options_t;
 
 pub struct CapiInstance {
     pub(crate) content: Box<dyn InstanceLegacy>,
@@ -51,13 +48,14 @@ pub unsafe extern "C" fn vm_exec_new_instance(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
+    return_if_ptr_null!(options_ptr, "compilation options ptr is null");
+
     let wasm_bytes: &[u8] =
         unsafe { slice::from_raw_parts(wasm_bytes_ptr, wasm_bytes_len as usize) };
-    let compilation_options: &CompilationOptionsLegacy =
-        unsafe { &*(options_ptr as *const CompilationOptionsLegacy) };
+    let compilation_options = unsafe { (*options_ptr).to_legacy() };
     let instance_result = capi_executor
         .content
-        .new_instance(wasm_bytes, compilation_options);
+        .new_instance(wasm_bytes, &compilation_options);
     match instance_result {
         Ok(instance_box) => {
             let capi_instance = CapiInstance {

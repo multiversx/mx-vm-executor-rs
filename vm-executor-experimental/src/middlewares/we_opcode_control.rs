@@ -9,7 +9,7 @@ use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
 use crate::{
     // we_breakpoints::{Breakpoints, BREAKPOINT_VALUE_MEMORY_LIMIT},
-    we_helpers::create_global_index,
+    we_helpers::create_i64_global_index,
     // MiddlewareWithProtectedGlobals,
 };
 
@@ -74,10 +74,10 @@ unsafe impl Send for OpcodeControl {}
 unsafe impl Sync for OpcodeControl {}
 
 impl ModuleMiddleware for OpcodeControl {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionOpcodeControl {
             total_memory_grow_count: self.total_memory_grow_count.clone(),
             max_memory_grow_count: self.max_memory_grow_count,
@@ -92,12 +92,12 @@ impl ModuleMiddleware for OpcodeControl {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
-            memory_grow_count_global_index: create_global_index(
+            memory_grow_count_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_MEMORY_GROW_COUNT,
                 0,
             ),
-            operand_backup_global_index: create_global_index(
+            operand_backup_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_OPERAND_BACKUP,
                 0,
@@ -181,11 +181,11 @@ impl FunctionOpcodeControl {
     }
 }
 
-impl FunctionMiddleware for FunctionOpcodeControl {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionOpcodeControl {
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
         if matches!(operator, Operator::MemoryGrow { .. }) {
             let mut grow_count = self
