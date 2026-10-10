@@ -1,10 +1,11 @@
-use crate::executor_interface::OpcodeCost;
+use crate::executor_interface::OpcodeConfig;
+use crate::get_opcode_cost;
 use crate::wasmer_breakpoints::{BREAKPOINT_VALUE_OUT_OF_GAS, Breakpoints};
 use crate::wasmer_helpers::{
-    MiddlewareWithProtectedGlobals, create_global_index, get_global_value_u64,
-    is_control_flow_operator, set_global_value_u64,
+    MiddlewareWithProtectedGlobals, create_i32_global_index, create_i64_global_index,
+    get_global_value_u64, is_control_flow_operator, set_global_value_u64,
 };
-use crate::{get_local_cost, get_opcode_cost};
+use crate::wasmer_opcode_cost_type::Cost;
 use loupe::{MemoryUsage, MemoryUsageTracker};
 use std::mem;
 use std::sync::{Arc, Mutex};
@@ -17,19 +18,21 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 const METERING_POINTS_LIMIT: &str = "metering_points_limit";
 const METERING_POINTS_USED: &str = "metering_points_used";
+const METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP: &str = "metering_bulk_memory_size_operand_backup";
 const MAX_LOCAL_COUNT: u32 = 4000;
 
 #[derive(Clone, Debug, MemoryUsage)]
 struct MeteringGlobalIndexes {
     points_limit_global_index: GlobalIndex,
     points_used_global_index: GlobalIndex,
+    bulk_memory_size_operand_backup_global_index: GlobalIndex,
 }
 
 #[derive(Debug)]
 pub(crate) struct Metering {
     points_limit: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: Mutex<Option<MeteringGlobalIndexes>>,
 }
@@ -38,13 +41,13 @@ impl Metering {
     pub(crate) fn new(
         points_limit: u64,
         unmetered_locals: usize,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         breakpoints_middleware: Arc<Breakpoints>,
     ) -> Self {
         Self {
             points_limit,
             unmetered_locals,
-            opcode_cost,
+            opcode_config,
             breakpoints_middleware,
             global_indexes: Mutex::new(None),
         }
@@ -67,6 +70,15 @@ impl Metering {
             .unwrap()
             .points_used_global_index
     }
+
+    fn get_bulk_memory_size_operand_backup_global_index(&self) -> GlobalIndex {
+        self.global_indexes
+            .lock()
+            .unwrap()
+            .as_ref()
+            .unwrap()
+            .bulk_memory_size_operand_backup_global_index
+    }
 }
 
 unsafe impl Send for Metering {}
@@ -87,7 +99,7 @@ impl ModuleMiddleware for Metering {
         Box::new(FunctionMetering {
             accumulated_cost: Default::default(),
             unmetered_locals: self.unmetered_locals,
-            opcode_cost: self.opcode_cost.clone(),
+            opcode_config: self.opcode_config.clone(),
             breakpoints_middleware: self.breakpoints_middleware.clone(),
             global_indexes: self.global_indexes.lock().unwrap().clone().unwrap(),
         })
@@ -99,12 +111,17 @@ impl ModuleMiddleware for Metering {
         let points_limit = self.points_limit as i64;
 
         *global_indexes = Some(MeteringGlobalIndexes {
-            points_limit_global_index: create_global_index(
+            points_limit_global_index: create_i64_global_index(
                 module_info,
                 METERING_POINTS_LIMIT,
                 points_limit,
             ),
-            points_used_global_index: create_global_index(module_info, METERING_POINTS_USED, 0),
+            points_used_global_index: create_i64_global_index(module_info, METERING_POINTS_USED, 0),
+            bulk_memory_size_operand_backup_global_index: create_i32_global_index(
+                module_info,
+                METERING_BULK_MEMORY_SIZE_OPERAND_BACKUP,
+                0,
+            ),
         });
     }
 }
@@ -114,6 +131,8 @@ impl MiddlewareWithProtectedGlobals for Metering {
         vec![
             self.get_points_limit_global_index().as_u32(),
             self.get_points_used_global_index().as_u32(),
+            self.get_bulk_memory_size_operand_backup_global_index()
+                .as_u32(),
         ]
     }
 }
@@ -122,7 +141,7 @@ impl MiddlewareWithProtectedGlobals for Metering {
 struct FunctionMetering {
     accumulated_cost: u64,
     unmetered_locals: usize,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
     breakpoints_middleware: Arc<Breakpoints>,
     global_indexes: MeteringGlobalIndexes,
 }
@@ -156,6 +175,72 @@ impl FunctionMetering {
         self.breakpoints_middleware
             .inject_breakpoint_condition(state, BREAKPOINT_VALUE_OUT_OF_GAS);
     }
+
+    /// Injects `points_used += size * cost_per_byte` ahead of a `memory.copy`/`memory.fill`,
+    /// using `size` as it appears on the stack (the raw, attacker-controlled operand), before
+    /// the real bulk-memory instruction validates it against the actual memory bounds.
+    ///
+    /// This only covers the cost of the bytes. The flat cost of the instruction itself goes
+    /// through the regular accumulator, so that a zero-size copy or fill is never free.
+    ///
+    /// Both operators take `size` as their last operand - `memory.copy` is `[dst, src, size]`,
+    /// `memory.fill` is `[dst, value, size]` - so the same injection works for both.
+    ///
+    /// `size` is an `i32` and so is the global it is parked in, so it makes the round trip
+    /// untouched. Only the multiplication is widened to `i64`, to leave room for the product.
+    ///
+    /// The multiplication is plain wrapping `i64` arithmetic (wasm has no trapping or
+    /// saturating integer multiply, and Wasmer doesn't offer one either), so it can in theory
+    /// wrap around for a large enough `size`. This is not exploitable under the current setup:
+    /// - `MAX_MEMORY_PAGES_ALLOWED` (in `wasmer_instance.rs`) caps declared memory at 20 pages
+    ///   (1.25 MiB), enforced at instantiation.
+    /// - any `size` large enough to matter for overflow (`size * cost_per_byte` approaching
+    ///   `i64::MAX`) necessarily exceeds that 1.25 MiB bound, so the real `memory.copy`/
+    ///   `memory.fill` that follows this injected code traps on out-of-bounds access and aborts
+    ///   the call immediately — regardless of what `points_used` ended up holding.
+    /// - a `size` that keeps the copy in-bounds is capped at 1,310,720 bytes, so
+    ///   `size * cost_per_byte` tops out around `5.6e15` for a `u32` cost, far below `i64::MAX`.
+    fn inject_bulk_memory_cost(&self, state: &mut MiddlewareReaderState, cost_per_byte: u32) {
+        // backup the bulk memory size
+        state.extend(&[Operator::GlobalSet {
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
+        }]);
+
+        // inject bulk memory cost
+        state.extend(&[
+            // size * cost_per_byte
+            Operator::GlobalGet {
+                global_index: self
+                    .global_indexes
+                    .bulk_memory_size_operand_backup_global_index
+                    .as_u32(),
+            },
+            Operator::I64ExtendI32U,
+            Operator::I64Const {
+                value: cost_per_byte as i64,
+            },
+            Operator::I64Mul,
+            // points_used += size * cost_per_byte
+            Operator::GlobalGet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+            Operator::I64Add,
+            Operator::GlobalSet {
+                global_index: self.global_indexes.points_used_global_index.as_u32(),
+            },
+        ]);
+
+        // bring back the bulk memory size
+        state.extend(&[Operator::GlobalGet {
+            global_index: self
+                .global_indexes
+                .bulk_memory_size_operand_backup_global_index
+                .as_u32(),
+        }]);
+    }
 }
 
 impl FunctionMiddleware for FunctionMetering {
@@ -167,14 +252,27 @@ impl FunctionMiddleware for FunctionMetering {
         // Get the cost of the current operator, and add it to the accumulator.
         // This needs to be done before the metering logic, to prevent operators like `Call` from escaping metering in some
         // corner cases.
-        let option = get_opcode_cost(&operator, &self.opcode_cost.lock().unwrap());
-        match option {
-            Some(cost) => self.accumulated_cost += cost as u64,
-            None => {
+        let cost = get_opcode_cost(&operator, &self.opcode_config.lock().unwrap());
+        match cost {
+            Cost::Illegal => {
                 return Err(MiddlewareError::new(
                     "metering_middleware",
                     format!("Unsupported operator: {operator:?}"),
                 ));
+            }
+            Cost::Base(base) => self.accumulated_cost += base as u64,
+            Cost::BulkMemory { base, per_byte } => {
+                self.accumulated_cost += base as u64;
+
+                // flush what accumulated so far, including the base cost of this operator,
+                // so that the out of gas check below takes all of it into account
+                self.inject_points_used_increment(state);
+                self.accumulated_cost = 0;
+
+                self.inject_bulk_memory_cost(state, per_byte);
+
+                // immediately insert out of gas check as this operation might be expensive
+                self.inject_out_of_gas_check(state);
             }
         }
 
@@ -196,7 +294,12 @@ impl FunctionMiddleware for FunctionMetering {
         let unmetered_locals = self.unmetered_locals as u32;
         if count > unmetered_locals {
             let metered_locals = count - unmetered_locals;
-            let local_cost = get_local_cost(&self.opcode_cost.lock().unwrap());
+            let local_cost = self
+                .opcode_config
+                .lock()
+                .unwrap()
+                .opcode_cost
+                .opcode_localallocate;
             let metered_locals_cost = metered_locals * local_cost;
             self.accumulated_cost += metered_locals_cost as u64;
         }

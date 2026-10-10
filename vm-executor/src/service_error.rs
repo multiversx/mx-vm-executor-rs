@@ -14,7 +14,7 @@ impl ServiceError {
 
 impl Display for ServiceError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", &self.message)
+        write!(f, "{}", self.message)
     }
 }
 

@@ -12,7 +12,7 @@ use wasmer_types::{GlobalIndex, ModuleInfo};
 
 use crate::{
     wasmer_breakpoints::{BREAKPOINT_VALUE_MEMORY_LIMIT, Breakpoints},
-    wasmer_helpers::{MiddlewareWithProtectedGlobals, create_global_index},
+    wasmer_helpers::{MiddlewareWithProtectedGlobals, create_i64_global_index},
 };
 
 const OPCODE_CONTROL_MEMORY_GROW_COUNT: &str = "opcode_control_memory_grow_count";
@@ -99,12 +99,12 @@ impl ModuleMiddleware for OpcodeControl {
         let mut global_indexes = self.global_indexes.lock().unwrap();
 
         *global_indexes = Some(OpcodeControlGlobalIndexes {
-            memory_grow_count_global_index: create_global_index(
+            memory_grow_count_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_MEMORY_GROW_COUNT,
                 0,
             ),
-            operand_backup_global_index: create_global_index(
+            operand_backup_global_index: create_i64_global_index(
                 module_info,
                 OPCODE_CONTROL_OPERAND_BACKUP,
                 0,
