@@ -1,5 +1,5 @@
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorError, Instance, OpcodeCost, WASM_LOCALS_LIMIT,
+    CompilationOptions, ExecutorError, Instance, OpcodeConfig, WASM_LOCALS_LIMIT,
 };
 use multiversx_chain_vm_executor_wasmer_experimental::{
     ExperimentalInstance, ExperimentalVMHooksBuilderDefault,
@@ -29,7 +29,7 @@ fn try_instance(num_locals: usize) -> Result<Box<dyn Instance>, ExecutorError> {
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
     ExperimentalInstance::try_new_instance(
         Box::new(ExperimentalVMHooksBuilderDefault),
-        Arc::new(OpcodeCost::default()),
+        Arc::new(OpcodeConfig::default()),
         &wasm_bytes,
         &COMPILATION_OPTIONS,
     )
