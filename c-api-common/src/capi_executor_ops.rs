@@ -9,12 +9,13 @@ use libc::{c_char, c_int};
 use std::sync::Arc;
 
 use crate::capi_config::vm_exec_executor_config_t;
-use crate::capi_handles::CapiExecutor;
+use crate::capi_handles::{CapiExecutor, NewBackendExecutor};
 use crate::capi_status::{vm_exec_status_t, write_error};
 use crate::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
 use crate::capi_vm_hook_table::CapiVMHookTable;
 
-/// Creates an executor from one configuration struct and one hook table.
+/// Creates an executor from one configuration struct, one hook table and the backend the
+/// calling library is for.
 ///
 /// # Safety
 ///
@@ -24,6 +25,7 @@ pub unsafe fn new_executor(
     executor_out: *mut *mut CapiExecutor,
     config: *const vm_exec_executor_config_t,
     hook_table: *const vm_exec_vm_hook_c_func_pointers,
+    new_backend_executor: NewBackendExecutor,
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
@@ -39,6 +41,7 @@ pub unsafe fn new_executor(
     let capi_executor = CapiExecutor {
         opcode_config: Arc::new(opcode_config),
         hook_table: unsafe { CapiVMHookTable::copy_from(hook_table) },
+        new_backend_executor,
     };
 
     unsafe {

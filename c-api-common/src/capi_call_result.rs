@@ -40,7 +40,7 @@ pub enum vm_exec_call_result_kind_t {
     VM_EXEC_CALL_BREAKPOINT = 4,
 }
 
-/// The out-struct of `vm_exec_w6_instance_call`.
+/// The out-struct of `vm_exec_w7_instance_call`.
 #[allow(non_camel_case_types)]
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]

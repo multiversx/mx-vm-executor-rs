@@ -2,7 +2,7 @@
 
 Goal as set: bring the Rust VM up to the Go VM's level — contract code compiled once and
 reused — and implement the executor side that this needs. Two halves: the experimental
-(Wasmer 6) executor, and the Rust VM itself.
+(Wasmer 7) executor, and the Rust VM itself.
 
 The first thing done was to measure what reuse is worth, because that determines the shape of
 both halves. It turned out to change the plan substantially, so it comes first.
@@ -10,7 +10,7 @@ both halves. It turned out to change the plan substantially, so it comes first.
 ## The measurement
 
 A real contract, `test/delegation/v0_4_genesis` (55 KB of wasm), 50 iterations, release build,
-Wasmer 6.1 Singlepass on an arm64 Mac. Numbers vary ±20% between runs; the *ratios* do not.
+Wasmer 7.1 Singlepass on an arm64 Mac. Numbers vary ±20% between runs; the *ratios* do not.
 
 | Operation | Cost | Share of a cold instance |
 | --- | --- | --- |
@@ -29,14 +29,14 @@ follows from that.
 ### Consequence 1: cache modules, not instances
 
 The Go VM keeps a *warm instance* cache and reuses live instances via `Instance.Reset()`. On
-Wasmer 6 that model buys ~30–50 µs on a ~6 ms operation — under 1% — over simply instantiating
+Wasmer 7 that model buys ~30–50 µs on a ~6 ms operation — under 1% — over simply instantiating
 a cached module afresh. It is not worth its complexity, and the complexity is considerable:
 
-- **Wasmer 6 has no instance reset, and adding one means forking it.** `Memory::reset` exists
+- **Wasmer 7 has no instance reset, and adding one means forking it.** `Memory::reset` exists
   but, per its own doc, "resets the memory back to zero length" — it does not re-apply data
   segments and does not touch globals. The Wasmer 2.2 `reset()` the Go VM relies on lives in
   the **MultiversX fork** (`handle.reset(data_initializers)`, reaching into `wasmer-vm`).
-  Wasmer 6 is consumed from **crates.io, unmodified** — which is a property worth keeping.
+  Wasmer 7 is consumed from **crates.io, unmodified** — which is a property worth keeping.
 - Re-instantiating is **behaviourally identical** to resetting: both yield fresh globals and
   memory initialised from the module's data segments. Nothing observable to a contract
   distinguishes them.
@@ -88,7 +88,7 @@ pub trait ExecutorRuntime: Send + Sync {
     /// Builds the VM hooks servicing one host call, around the instance state for that call,
     /// and lends them to `f` — which is called exactly once.
     ///
-    /// Built per call, not per instance: under Wasmer 6 the instance state is only reachable
+    /// Built per call, not per instance: under Wasmer 7 the instance state is only reachable
     /// for the duration of a call, so hooks that hold it cannot outlive it. Lending rather
     /// than returning avoids a `Box<dyn VMHooks>` allocation on every hook invocation.
     ///
@@ -111,15 +111,15 @@ compilation options on it — those are arguments to `new_instance`.
 The runtime reference becomes a per-**executor** handle, where today it is per-instance:
 
 ```c
-vm_exec_status_t vm_exec_w6_new_executor(
-    vm_exec_w6_executor_t **executor_out,
+vm_exec_status_t vm_exec_w7_new_executor(
+    vm_exec_w7_executor_t **executor_out,
     uintptr_t runtime_ref,                              /* NEW: the host's runtime handle */
     const vm_exec_vm_hook_c_func_pointers *hook_table,
     char *err_buf, int err_buf_len);
 
-vm_exec_status_t vm_exec_w6_new_instance(
-    vm_exec_w6_executor_t *executor,
-    vm_exec_w6_instance_t **instance_out,
+vm_exec_status_t vm_exec_w7_new_instance(
+    vm_exec_w7_executor_t *executor,
+    vm_exec_w7_instance_t **instance_out,
     const uint8_t *wasm_bytes, uint32_t wasm_bytes_len,
     const vm_exec_compilation_options_t *options,       /* now carries the opcode config */
     char *err_buf, int err_buf_len);                    /* go_vm_hooks is gone */
@@ -173,7 +173,7 @@ The one constraint to respect is the one already stated in 1.1: an `Engine` may 
 metering middleware keeps `global_indexes` populated at compile time. Instantiation does not
 run middlewares, so recursion is unaffected.
 
-**On the Go side today this is all vacuous anyway**: `Wasmer6Instance.Reset()` returns false,
+**On the Go side today this is all vacuous anyway**: `Wasmer7Instance.Reset()` returns false,
 and both `Cache()` and `NewInstanceFromCompiledCodeWithOptions` return `ErrCacheUnsupported`,
 so every execution compiles from bytecode and no instance is ever shared. Recursion is safe
 and slow. That is what the module cache fixes.
@@ -183,7 +183,7 @@ the execution resolved at call time (G6), the inner frame's hooks resolve to the
 context and the outer frame's to the outer, through the host's context stack — which is what
 that stack is for. On the C side the hook context pool is already a stack: the inner
 activation is innermost, the outer context is refused while it runs and valid again
-afterwards, which `probe_nesting` in `c-api-wasmer6/tests/ffi_boundary.rs` already pins.
+afterwards, which `probe_nesting` in `c-api-wasmer7/tests/ffi_boundary.rs` already pins.
 
 ## Wasmer 7.4, checked alongside — and one reason to move
 
@@ -202,8 +202,8 @@ serialize → deserialize → instantiate round trip (49 exports intact).
 **The reason to move is unrelated to caching.**
 `vm-executor-experimental/src/middlewares/we_metering.rs` has `feed_local_count` commented out
 under a TODO listing three options ("find alternative / PR to Wasmer / fork Wasmer"), because
-Wasmer 6 has no hook for it. The Wasmer 2.2 backend has that function **live**. So the two
-backends currently disagree on gas: **Wasmer 6 does not charge the unmetered-locals cost that
+Wasmer 7 has no hook for it. The Wasmer 2.2 backend has that function **live**. So the two
+backends currently disagree on gas: **Wasmer 7 does not charge the unmetered-locals cost that
 Wasmer 2.2 charges.**
 
 Wasmer 7.4 adds `FunctionMiddleware::locals_info(&mut self, locals: &[ValType])` — option (b)
@@ -248,7 +248,7 @@ pub trait Executor {
 }
 ```
 
-The Wasmer 6 implementation holds `{ engine: Engine, module: Module }`. The `Engine` has to
+The Wasmer 7 implementation holds `{ engine: Engine, module: Module }`. The `Engine` has to
 travel with the `Module`, because instantiation needs a `Store` built on the same engine
 (`Store::new(engine.clone())` — the clone is an `Arc` bump).
 
@@ -282,13 +282,13 @@ If it shows up, add an optional caller-supplied key. Not worth the extra paramet
 `cache()` already works (`module.serialize()`). Finish the other half: `new_instance_from_cache`
 should do `Module::deserialize(&engine, bytes)` against an engine built from the same options.
 
-**Security note to carry into the doc comment:** in Wasmer 6.1, `Module::deserialize` delegates
+**Security note to carry into the doc comment:** in Wasmer 7.1, `Module::deserialize` delegates
 to `deserialize_unchecked` — the "checked" variant performs no validation. Artifacts must come
 from a trusted store. That is true of our own cache, but it must be stated, because the name
 suggests otherwise.
 
 **Artifacts are not portable across Wasmer versions.** The serialized header carries an ABI
-version which `deserialize` rejects on mismatch, and it moved from **11** (Wasmer 6.1) to
+version which `deserialize` rejects on mismatch, and it moved from **11** (Wasmer 7.1) to
 **24** (Wasmer 7.4). Any persistent cache therefore needs the Wasmer version in its key, or an
 explicit purge on upgrade. Irrelevant to the in-memory module cache, which never serializes.
 
@@ -318,7 +318,7 @@ a stack pushed for the whole of `RuntimeRef::execute` and popped at the end:
 
 `impl ExecutorRuntime for RuntimeWeakRef` then has one method, which resolves the current
 context from that stack and builds the dispatcher around the state it was handed. One
-implementation serves both backends — the Wasmer 2.2 and Wasmer 6 executors are configured
+implementation serves both backends — the Wasmer 2.2 and Wasmer 7 executors are configured
 identically.
 
 ### 2.2 `ContractDebugExecutor` needs nothing special
@@ -365,12 +365,12 @@ the sketch:
 - **The C API stopped naming a backend entirely.** `capi_backend.rs` is deleted and
   `CapiVMHooksBuilder` implements `ExecutorRuntime` directly; see `PLAN-go-ffi.md` Phase 4c.
 
-- **Both backends converged, not just Wasmer 6.** `WasmerProdRuntimeRef` is deleted;
+- **Both backends converged, not just Wasmer 7.** `WasmerProdRuntimeRef` is deleted;
   `WasmerProdExecutor` takes the same `Arc<dyn ExecutorRuntime>`. The obstacle was that legacy
   `VMHooksLegacy` is an *object* built once per instance, with nowhere to report an early exit,
   while the runtime *lends* hooks per call. Resolved by regenerating `VMHooksLegacyAdapter`
   over `R: ExecutorRuntime` + `S: InstanceState` — header template only, all 277 bodies
-  byte-identical — so 2.2 now resolves the execution when the hook runs, exactly as Wasmer 6
+  byte-identical — so 2.2 now resolves the execution when the hook runs, exactly as Wasmer 7
   does. The stash-and-halt half is a defaulted `InstanceState::handle_early_exit_legacy`,
   which fails for every backend that does not implement it; a probe removing the 2.2 override
   fails exactly the OutOfGas and UserError tests and leaves the no-early-exit one passing.
@@ -389,7 +389,7 @@ the sketch:
   after any early exit — which is precisely a reuse bug, found while building `c-api-wasmer2`
   rather than while building the cache. `WasmerProdInstance::call` now clears it alongside
   setting the points limit, so an instance is armed for each call rather than still halted
-  from the last one. Wasmer 6 never had the problem, having no such global; the general point
+  from the last one. Wasmer 7 never had the problem, having no such global; the general point
   stands for stages 1–3 either way, that anything a call leaves behind in an instance has to
   be reset by the executor, because after caching nobody else knows an instance is being
   reused.
@@ -415,6 +415,12 @@ experimental executor. Go VM: the rebuilt dylib drops in with no Go changes and 
 `VMEXECUTOR=wasmer6` failure set is identical before and after — 33 failures, same set,
 compared by stashing the dylib.
 
+**Since superseded by the move itself.** Wasmer 7.5 is now the experimental backend's runtime,
+and everything named for 6 has been renamed to 7 — crate, library, symbols, Go package and
+`$VMEXECUTOR` value, so the selector read `wasmer6` above and reads `wasmer7` today. The
+failure set is 32: the 33 above less `TestExecution_DeployWASM_MoreThanMaximumLocals`, which
+the locals metering work fixed.
+
 One check worth recording, because it nearly produced a false pass: the composability suite
 (332 tests, contract-to-contract and recursive callers) runs on the **Debugger** by default,
 not the experimental executor, so it stays green even with the context guard deliberately
@@ -435,16 +441,16 @@ item removes. Until then the C API keeps its per-instance handle and the capi ke
 
 ## What this means for the Go VM
 
-Not in scope here, but the measurement applies to Go's Wasmer 6 backend too, and it bears on
-`PLAN-go-ffi.md` Phase 6 ("`reset()` on the Wasmer 6 instance — prerequisite for Go's
+Not in scope here, but the measurement applies to Go's Wasmer 7 backend too, and it bears on
+`PLAN-go-ffi.md` Phase 6 ("`reset()` on the Wasmer 7 instance — prerequisite for Go's
 warm-instance tracker").
 
 It is not a prerequisite, because it is not worth building. The Go VM's existing
 *compiled-code* path (`NewInstanceFromCompiledCodeWithOptions`) is already the
-Wasmer-6-compatible form of reuse: for this backend the warm instance cache collapses into the
-module cache. The cheapest route is for `Wasmer6Executor` to keep compiled modules in memory
+Wasmer-7-compatible form of reuse: for this backend the warm instance cache collapses into the
+module cache. The cheapest route is for `Wasmer7Executor` to keep compiled modules in memory
 and let `Reset()` keep returning false, which the instance tracker already handles by evicting
 and recreating.
 
 Worth confirming separately, because it is the one place where the Go VM's reuse model and
-Wasmer 6's capabilities genuinely disagree.
+Wasmer 7's capabilities genuinely disagree.

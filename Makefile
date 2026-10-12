@@ -1,6 +1,6 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
-	capi-w6 capi-w6-linux-amd64 capi-w6-linux-arm capi-w6-osx-amd64 capi-w6-osx-arm \
+	capi-w7 capi-w7-linux-amd64 capi-w7-linux-arm capi-w7-osx-amd64 capi-w7-osx-arm \
 	capi-w2 capi-w2-linux-amd64 capi-w2-linux-arm capi-w2-osx-amd64 capi-w2-osx-arm \
 	ci-local clean check-macos
 
@@ -50,33 +50,33 @@ capi-osx-arm: check-macos capi
 # VM starts consuming it, so the release assets do not grow a library nothing
 # links against.
 
-capi-w6:
-	cargo build -p multiversx-chain-vm-executor-c-api-wasmer6 --release
+capi-w7:
+	cargo build -p multiversx-chain-vm-executor-c-api-wasmer7 --release
 
-capi-w6-linux-amd64: capi-w6
-	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.so target/release/libvmexeccapi_w6.so
-	patchelf --set-soname libvmexeccapi_w6.so target/release/libvmexeccapi_w6.so
+capi-w7-linux-amd64: capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.so target/release/libvmexeccapi_w7.so
+	patchelf --set-soname libvmexeccapi_w7.so target/release/libvmexeccapi_w7.so
 
-capi-w6-linux-arm: capi-w6
-	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.so target/release/libvmexeccapi_w6_arm.so
-	patchelf --set-soname libvmexeccapi_w6_arm.so target/release/libvmexeccapi_w6_arm.so
+capi-w7-linux-arm: capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.so target/release/libvmexeccapi_w7_arm.so
+	patchelf --set-soname libvmexeccapi_w7_arm.so target/release/libvmexeccapi_w7_arm.so
 
-capi-w6-osx-amd64: check-macos capi-w6
-	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.dylib target/release/libvmexeccapi_w6.dylib
-	install_name_tool -id @rpath/libvmexeccapi_w6.dylib target/release/libvmexeccapi_w6.dylib
+capi-w7-osx-amd64: check-macos capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.dylib target/release/libvmexeccapi_w7.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w7.dylib target/release/libvmexeccapi_w7.dylib
 
-capi-w6-osx-arm: check-macos capi-w6
-	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer6.dylib target/release/libvmexeccapi_w6_arm.dylib
-	install_name_tool -id @rpath/libvmexeccapi_w6_arm.dylib target/release/libvmexeccapi_w6_arm.dylib
+capi-w7-osx-arm: check-macos capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.dylib target/release/libvmexeccapi_w7_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w7_arm.dylib target/release/libvmexeccapi_w7_arm.dylib
 
 # --- The new C API, Wasmer 2.2 ------------------------------------------------
 # The same interface over the executor currently in production. Built alongside the
-# Wasmer 6 library rather than instead of it: running the *same* runtime through the
+# Wasmer 7 library rather than instead of it: running the *same* runtime through the
 # *new* boundary is what isolates the boundary as the variable, so a difference against
 # the legacy `libvmexeccapi` is attributable to the refactor and not to a runtime change.
 #
 # Three libraries can therefore be linked at once — `vm_exec_*`, `vm_exec_w2_*` and
-# `vm_exec_w6_*` share no exported symbols. On Linux that needs
+# `vm_exec_w7_*` share no exported symbols. On Linux that needs
 # `-Wl,-Bsymbolic-functions`, because the two Wasmer versions do collide on their
 # internal `wasmer_vm_*` symbols; macOS's two-level namespace handles it without help.
 
@@ -158,11 +158,11 @@ clean:
 	rm -f target/release/libvmexeccapi.dylib
 	rm -f target/release/libvmexeccapi_arm.dylib
 	rm -f c-api/libvmexeccapi.h
-	rm -f target/release/libvmexeccapi_w6.so
-	rm -f target/release/libvmexeccapi_w6_arm.so
-	rm -f target/release/libvmexeccapi_w6.dylib
-	rm -f target/release/libvmexeccapi_w6_arm.dylib
-	rm -f c-api-wasmer6/libvmexeccapi_w6.h
+	rm -f target/release/libvmexeccapi_w7.so
+	rm -f target/release/libvmexeccapi_w7_arm.so
+	rm -f target/release/libvmexeccapi_w7.dylib
+	rm -f target/release/libvmexeccapi_w7_arm.dylib
+	rm -f c-api-wasmer7/libvmexeccapi_w7.h
 	rm -f target/release/libvmexeccapi_w2.so
 	rm -f target/release/libvmexeccapi_w2_arm.so
 	rm -f target/release/libvmexeccapi_w2.dylib

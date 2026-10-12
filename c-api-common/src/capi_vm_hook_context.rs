@@ -1,6 +1,6 @@
 //! The hook context: what a VM hook is handed, and what makes it safe to hand over.
 //!
-//! Under Wasmer 6 the instance state is a borrow of the host-call frame — memory and globals
+//! Under Wasmer 7 the instance state is a borrow of the host-call frame — memory and globals
 //! are only reachable through the `StoreMut` inside `FunctionEnvMut`, so the state is valid
 //! for exactly one hook invocation and not a moment longer. In Rust the borrow checker
 //! enforces that. Over C it has to be enforced dynamically, which is what this module does.
@@ -246,7 +246,7 @@ pub struct CapiVMHooksBuilder {
 // field is the context pool. The pool is touched exactly where guarantee 3 at the top of this
 // module already requires single-threaded access — inside a hook invocation, on the thread
 // cgo has pinned the calling goroutine to — and a goroutine spawned inside a hook is
-// forbidden from touching the context at all. This mirrors the same unsafe impl the Wasmer 6
+// forbidden from touching the context at all. This mirrors the same unsafe impl the Wasmer 7
 // backend puts on its own hooks wrapper, for the same reason.
 unsafe impl Send for CapiVMHooksBuilder {}
 unsafe impl Sync for CapiVMHooksBuilder {}

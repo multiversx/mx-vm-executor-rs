@@ -22,7 +22,11 @@
 //!
 //! - **The operations themselves**: executor and instance lifecycle, the outer instance
 //!   calls, and the state calls a hook makes. Only one of them is parameterised by backend —
-//!   which `Executor` an instance is built from, named by `capi_handles::CapiBackend`.
+//!   which `Executor` an instance is built from, which the entry point hands to
+//!   `new_executor` as a plain function (`capi_handles::NewBackendExecutor`) and which the
+//!   `CapiExecutor` then carries. A library serves one wasm runtime, fixed when it is
+//!   compiled, so there is nothing here to abstract over — and because the executor handle is
+//!   already backend-specific, creating an instance has nothing left to decide.
 //!
 //! The backend crates keep only their opaque handles and their prefixed entry points, which
 //! are thin wrappers over the operations here. They have to be written out literally rather

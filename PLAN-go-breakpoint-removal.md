@@ -300,7 +300,7 @@ are the only proof the migration is behaviour-preserving.
 
 Split along the semantic/mechanical seam.
 
-### Step A — stop *interpreting* breakpoints (no wasmer 6 dependency)
+### Step A — stop *interpreting* breakpoints (no wasmer 7 dependency)
 
 1. Land the Go `InstanceCallResult` and the new instance interface.
 2. Convert the three `handleBreakpointIfAny` sites to `resolveCallResult`.

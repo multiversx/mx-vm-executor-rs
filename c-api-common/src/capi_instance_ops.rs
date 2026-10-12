@@ -4,8 +4,9 @@
 //! calling, gas accounting, and module introspection. Everything a *hook* needs is in
 //! `capi_state_ops`, reached through a hook context rather than through this handle.
 //!
-//! Only [`new_instance`] is parameterised by backend, and only to pick which `Executor` to
-//! build. Everything after that goes through `dyn Instance`.
+//! Nothing here takes a backend. The executor handle is already backend-specific, so
+//! [`new_instance`] reads the choice off it, and everything after that goes through
+//! `dyn Instance`.
 
 use libc::{c_char, c_int};
 use std::ffi::CStr;
@@ -14,19 +15,19 @@ use std::sync::Arc;
 
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
-use crate::capi_handles::{CapiBackend, CapiExecutor, CapiInstance};
+use crate::capi_handles::{CapiExecutor, CapiInstance};
 use crate::capi_status::{vm_exec_status_t, write_error};
 use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
 use crate::capi_vm_hook_context::CapiVMHooksBuilder;
 
-/// Creates an instance of `B`'s backend.
+/// Creates an instance, using the backend the executor handle was created for.
 ///
 /// # Safety
 ///
 /// All pointer arguments must be valid for the duration of the call, and whatever
 /// `go_vm_hooks` identifies must outlive the instance.
 #[allow(clippy::too_many_arguments)]
-pub unsafe fn new_instance<B: CapiBackend>(
+pub unsafe fn new_instance(
     executor: *mut CapiExecutor,
     instance_out: *mut *mut CapiInstance,
     wasm_bytes: *const u8,
@@ -55,7 +56,7 @@ pub unsafe fn new_instance<B: CapiBackend>(
         go_vm_hooks,
         capi_executor.hook_table.clone(),
     ));
-    let backend_executor = B::new_executor(runtime);
+    let backend_executor = (capi_executor.new_backend_executor)(runtime);
 
     let instance = match backend_executor.new_instance(wasm_bytes, &compilation_options) {
         Ok(instance) => instance,

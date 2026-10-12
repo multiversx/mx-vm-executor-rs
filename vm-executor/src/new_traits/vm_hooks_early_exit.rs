@@ -44,7 +44,7 @@ impl VMHooksEarlyExit {
     ///
     /// **Only the legacy backend asks.** Its hooks return plain values, with no channel for
     /// an early exit, so the instance has to be stopped by tripping its breakpoint global.
-    /// Wasmer 6 hooks return the early exit directly and never come here.
+    /// Wasmer 7 hooks return the early exit directly and never come here.
     ///
     /// The codes are the high-level VM's own return codes, and for a while this looked like
     /// something only a host could decide. It is not: the Go VM and the Rust VM use the same

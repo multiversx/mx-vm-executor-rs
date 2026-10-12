@@ -6,7 +6,7 @@ members = [
     "c-api-common",
     "c-api-legacy",
     "c-api-wasmer2",
-    "c-api-wasmer6",
+    "c-api-wasmer7",
     "vm-executor",
     "vm-executor-experimental",
     "vm-executor-wasmer",

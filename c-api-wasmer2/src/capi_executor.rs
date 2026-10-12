@@ -22,6 +22,7 @@
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
 
+use crate::capi_backend::new_backend_executor;
 use crate::capi_config::vm_exec_executor_config_t;
 use crate::capi_executor_ops;
 use crate::capi_handles::CapiExecutor;
@@ -59,6 +60,7 @@ pub unsafe extern "C" fn vm_exec_w2_new_executor(
             executor_out as *mut *mut CapiExecutor,
             config,
             hook_table,
+            new_backend_executor,
             err_buf,
             err_buf_len,
         )

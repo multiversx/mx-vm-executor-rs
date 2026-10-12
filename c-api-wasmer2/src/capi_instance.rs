@@ -12,7 +12,6 @@
 use libc::{c_char, c_int};
 use meta::capi_safe_unwind;
 
-use crate::capi_backend::Backend;
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
 use crate::capi_executor::vm_exec_w2_executor_t;
@@ -50,7 +49,7 @@ pub unsafe extern "C" fn vm_exec_w2_new_instance(
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
     unsafe {
-        capi_instance_ops::new_instance::<Backend>(
+        capi_instance_ops::new_instance(
             executor as *mut CapiExecutor,
             instance_out as *mut *mut CapiInstance,
             wasm_bytes,

@@ -70,7 +70,7 @@ pub trait InstanceState {
     /// **Only the Wasmer 2.2 backend implements this**, and only because its hooks return
     /// plain values: a [`crate::VMHooksLegacy`] method has no channel for an early exit, so
     /// the exit has to be put somewhere and the instance stopped by tripping its breakpoint
-    /// global. Wasmer 6 hooks return the early exit directly and never come through here.
+    /// global. Wasmer 7 hooks return the early exit directly and never come through here.
     ///
     /// Both halves belong to the instance — it owns the stash and it owns the global — which
     /// is why they are one method on the state rather than two capabilities a backend has to

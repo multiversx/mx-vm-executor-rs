@@ -37,7 +37,7 @@ use crate::capi_vm_hook_context::vm_exec_hook_context_t;
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC.as_i64())]
-pub unsafe extern "C" fn vm_exec_w6_state_mem_load(
+pub unsafe extern "C" fn vm_exec_w7_state_mem_load(
     ctx: *mut vm_exec_hook_context_t,
     mem_ptr: i32,
     dest: *mut u8,
@@ -55,7 +55,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_load(
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
-pub unsafe extern "C" fn vm_exec_w6_state_mem_store(
+pub unsafe extern "C" fn vm_exec_w7_state_mem_store(
     ctx: *mut vm_exec_hook_context_t,
     mem_ptr: i32,
     src: *const u8,
@@ -73,7 +73,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_store(
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
-pub unsafe extern "C" fn vm_exec_w6_state_mem_length(
+pub unsafe extern "C" fn vm_exec_w7_state_mem_length(
     ctx: *mut vm_exec_hook_context_t,
     length_out: *mut u64,
     err_buf: *mut c_char,
@@ -91,7 +91,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_length(
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
-pub unsafe extern "C" fn vm_exec_w6_state_mem_grow(
+pub unsafe extern "C" fn vm_exec_w7_state_mem_grow(
     ctx: *mut vm_exec_hook_context_t,
     by_num_pages: u32,
     prev_pages_out: *mut u32,
@@ -110,7 +110,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_mem_grow(
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
-pub unsafe extern "C" fn vm_exec_w6_state_get_points_used(
+pub unsafe extern "C" fn vm_exec_w7_state_get_points_used(
     ctx: *mut vm_exec_hook_context_t,
     points_out: *mut u64,
     err_buf: *mut c_char,
@@ -126,7 +126,7 @@ pub unsafe extern "C" fn vm_exec_w6_state_get_points_used(
 /// C API function, works with raw object pointers.
 #[unsafe(no_mangle)]
 #[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
-pub unsafe extern "C" fn vm_exec_w6_state_set_points_used(
+pub unsafe extern "C" fn vm_exec_w7_state_set_points_used(
     ctx: *mut vm_exec_hook_context_t,
     points: u64,
     err_buf: *mut c_char,

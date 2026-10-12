@@ -17,24 +17,24 @@ use std::sync::{Arc, Mutex, OnceLock};
 use multiversx_chain_vm_executor::{
     Executor, ExecutorRuntime, InstanceState, VMHooks, VMHooksDefault,
 };
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_call_result::{
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_call_result::{
     vm_exec_call_result_kind_t, vm_exec_call_result_t,
 };
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_config::{
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_config::{
     vm_exec_compilation_options_t, vm_exec_executor_config_t,
 };
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_executor::{
-    vm_exec_w6_executor_destroy, vm_exec_w6_executor_t, vm_exec_w6_new_executor,
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_executor::{
+    vm_exec_w7_executor_destroy, vm_exec_w7_executor_t, vm_exec_w7_new_executor,
 };
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_instance::*;
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_instance_state::*;
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_opcode_cost::vm_exec_opcode_cost_t;
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_status::vm_exec_status_t;
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_context::{
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_instance::*;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_instance_state::*;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_opcode_cost::vm_exec_opcode_cost_t;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_status::vm_exec_status_t;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_vm_hook_context::{
     CapiVMHooksBuilder, vm_exec_hook_context_t, vm_exec_hook_result_t,
 };
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
-use multiversx_chain_vm_executor_c_api_wasmer6::capi_vm_hook_table::CapiVMHookTable;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_vm_hook_pointers::vm_exec_vm_hook_c_func_pointers;
+use multiversx_chain_vm_executor_c_api_wasmer7::capi_vm_hook_table::CapiVMHookTable;
 use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalExecutor;
 
 /// One memory page, five known bytes at offset 0, and endpoints that call VM hooks.
@@ -135,7 +135,7 @@ fn load_through_context(
 ) -> Result<Vec<u8>, i64> {
     let mut buf = vec![0u8; len.max(0) as usize];
     let loaded = unsafe {
-        vm_exec_w6_state_mem_load(ctx, mem_ptr, buf.as_mut_ptr(), len, std::ptr::null_mut(), 0)
+        vm_exec_w7_state_mem_load(ctx, mem_ptr, buf.as_mut_ptr(), len, std::ptr::null_mut(), 0)
     };
     if loaded < 0 {
         return Err(loaded);
@@ -158,7 +158,7 @@ extern "C" fn mock_get_gas_left(ctx: *mut vm_exec_hook_context_t) -> vm_exec_hoo
     }
 
     let mut length = 0u64;
-    let status = unsafe { vm_exec_w6_state_mem_length(ctx, &mut length, std::ptr::null_mut(), 0) };
+    let status = unsafe { vm_exec_w7_state_mem_length(ctx, &mut length, std::ptr::null_mut(), 0) };
     if status != vm_exec_status_t::VM_EXEC_OK || length != 65536 {
         log.failures
             .push(format!("mem_length in getGasLeft: {status:?}, {length}"));
@@ -208,16 +208,16 @@ fn mock_hook_table() -> &'static vm_exec_vm_hook_c_func_pointers {
 
 // --- Driving the exported functions -------------------------------------------------------
 
-fn new_executor(err: &mut ErrBuf) -> *mut vm_exec_w6_executor_t {
+fn new_executor(err: &mut ErrBuf) -> *mut vm_exec_w7_executor_t {
     let cost = opcode_cost();
     let config = vm_exec_executor_config_t {
         opcode_version: 1,
         opcode_cost: &cost,
     };
 
-    let mut executor: *mut vm_exec_w6_executor_t = std::ptr::null_mut();
+    let mut executor: *mut vm_exec_w7_executor_t = std::ptr::null_mut();
     let status = unsafe {
-        vm_exec_w6_new_executor(
+        vm_exec_w7_new_executor(
             &mut executor,
             &config,
             mock_hook_table(),
@@ -237,16 +237,16 @@ fn new_executor(err: &mut ErrBuf) -> *mut vm_exec_w6_executor_t {
 }
 
 fn new_instance(
-    executor: *mut vm_exec_w6_executor_t,
+    executor: *mut vm_exec_w7_executor_t,
     err: &mut ErrBuf,
-) -> *mut vm_exec_w6_instance_t {
+) -> *mut vm_exec_w7_instance_t {
     let options = compilation_options();
     let wasm = CONTRACT_WAT.as_bytes();
     let go_vm_hooks = 0xBEEFusize;
 
-    let mut instance: *mut vm_exec_w6_instance_t = std::ptr::null_mut();
+    let mut instance: *mut vm_exec_w7_instance_t = std::ptr::null_mut();
     let status = unsafe {
-        vm_exec_w6_new_instance(
+        vm_exec_w7_new_instance(
             executor,
             &mut instance,
             wasm.as_ptr(),
@@ -269,7 +269,7 @@ fn new_instance(
 }
 
 fn call(
-    instance: *mut vm_exec_w6_instance_t,
+    instance: *mut vm_exec_w7_instance_t,
     func_name: &str,
     err: &mut ErrBuf,
 ) -> vm_exec_call_result_t {
@@ -281,7 +281,7 @@ fn call(
     };
 
     let status = unsafe {
-        vm_exec_w6_instance_call(
+        vm_exec_w7_instance_call(
             instance,
             name.as_ptr(),
             1_000_000,
@@ -295,9 +295,9 @@ fn call(
 }
 
 fn names(
-    instance: *mut vm_exec_w6_instance_t,
-    length: unsafe extern "C" fn(*const vm_exec_w6_instance_t) -> c_int,
-    write: unsafe extern "C" fn(*const vm_exec_w6_instance_t, *mut c_char, c_int) -> c_int,
+    instance: *mut vm_exec_w7_instance_t,
+    length: unsafe extern "C" fn(*const vm_exec_w7_instance_t) -> c_int,
+    write: unsafe extern "C" fn(*const vm_exec_w7_instance_t, *mut c_char, c_int) -> c_int,
 ) -> Vec<String> {
     let needed = unsafe { length(instance) };
     assert!(needed > 0, "expected a non-empty name list");
@@ -338,29 +338,29 @@ fn lifecycle() {
 
     let mut points = u64::MAX;
     let status = unsafe {
-        vm_exec_w6_instance_get_points_used(instance, &mut points, err.ptr(), ERR_BUF_LEN)
+        vm_exec_w7_instance_get_points_used(instance, &mut points, err.ptr(), ERR_BUF_LEN)
     };
     assert_eq!(status, vm_exec_status_t::VM_EXEC_OK);
     assert_ne!(points, u64::MAX, "points_used was not written");
 
-    assert_eq!(unsafe { vm_exec_w6_instance_check_signatures(instance) }, 1);
+    assert_eq!(unsafe { vm_exec_w7_instance_check_signatures(instance) }, 1);
 
     let present = CString::new("doNothing").unwrap();
     let absent = CString::new("noSuchEndpoint").unwrap();
     assert_eq!(
-        unsafe { vm_exec_w6_instance_has_function(instance, present.as_ptr()) },
+        unsafe { vm_exec_w7_instance_has_function(instance, present.as_ptr()) },
         1
     );
     assert_eq!(
-        unsafe { vm_exec_w6_instance_has_function(instance, absent.as_ptr()) },
+        unsafe { vm_exec_w7_instance_has_function(instance, absent.as_ptr()) },
         0
     );
 
     assert_eq!(
         names(
             instance,
-            vm_exec_w6_instance_exported_function_names_length,
-            vm_exec_w6_instance_exported_function_names,
+            vm_exec_w7_instance_exported_function_names_length,
+            vm_exec_w7_instance_exported_function_names,
         ),
         vec![
             "callGetGasLeft".to_string(),
@@ -373,15 +373,15 @@ fn lifecycle() {
     assert_eq!(
         names(
             instance,
-            vm_exec_w6_instance_imported_function_names_length,
-            vm_exec_w6_instance_imported_function_names,
+            vm_exec_w7_instance_imported_function_names_length,
+            vm_exec_w7_instance_imported_function_names,
         ),
         vec!["getGasLeft".to_string(), "signalError".to_string()]
     );
 
     unsafe {
-        vm_exec_w6_instance_destroy(instance);
-        vm_exec_w6_executor_destroy(executor);
+        vm_exec_w7_instance_destroy(instance);
+        vm_exec_w7_executor_destroy(executor);
     }
 }
 
@@ -423,20 +423,20 @@ fn hook_dispatch() {
 
     drop(log);
     unsafe {
-        vm_exec_w6_instance_destroy(instance);
-        vm_exec_w6_executor_destroy(executor);
+        vm_exec_w7_instance_destroy(instance);
+        vm_exec_w7_executor_destroy(executor);
     }
 }
 
 #[test]
 fn null_arguments_are_refused_without_a_message() {
     let mut err = ErrBuf::new();
-    let mut executor: *mut vm_exec_w6_executor_t = std::ptr::null_mut();
+    let mut executor: *mut vm_exec_w7_executor_t = std::ptr::null_mut();
 
     // A null config cannot be reported through the error buffer, because the buffer itself may
     // be the thing that is null, so these return a dedicated status instead.
     let status = unsafe {
-        vm_exec_w6_new_executor(
+        vm_exec_w7_new_executor(
             &mut executor,
             std::ptr::null(),
             std::ptr::null(),
@@ -448,7 +448,7 @@ fn null_arguments_are_refused_without_a_message() {
     assert!(executor.is_null());
 
     assert_eq!(
-        unsafe { vm_exec_w6_instance_check_signatures(std::ptr::null()) },
+        unsafe { vm_exec_w7_instance_check_signatures(std::ptr::null()) },
         vm_exec_status_t::VM_EXEC_NULL_POINTER.as_c_int()
     );
 }
@@ -462,9 +462,9 @@ fn an_invalid_opcode_version_is_reported_through_the_buffer() {
         opcode_cost: &cost,
     };
 
-    let mut executor: *mut vm_exec_w6_executor_t = std::ptr::null_mut();
+    let mut executor: *mut vm_exec_w7_executor_t = std::ptr::null_mut();
     let status = unsafe {
-        vm_exec_w6_new_executor(
+        vm_exec_w7_new_executor(
             &mut executor,
             &config,
             mock_hook_table(),
@@ -484,7 +484,7 @@ fn a_context_is_rejected_when_no_call_is_active() {
 
     assert_eq!(
         unsafe {
-            vm_exec_w6_state_mem_length(std::ptr::null_mut(), &mut 0u64, err.ptr(), ERR_BUF_LEN)
+            vm_exec_w7_state_mem_length(std::ptr::null_mut(), &mut 0u64, err.ptr(), ERR_BUF_LEN)
         },
         vm_exec_status_t::VM_EXEC_NULL_POINTER
     );
@@ -492,7 +492,7 @@ fn a_context_is_rejected_when_no_call_is_active() {
     let mut points = 0u64;
     assert_eq!(
         unsafe {
-            vm_exec_w6_state_get_points_used(
+            vm_exec_w7_state_get_points_used(
                 std::ptr::null_mut(),
                 &mut points,
                 err.ptr(),
@@ -557,7 +557,7 @@ impl ExecutorRuntime for ProbingHooksBuilder {
 
 fn mem_load(ctx: *mut vm_exec_hook_context_t, mem_ptr: i32, dest: &mut [u8], len: i32) -> i64 {
     unsafe {
-        vm_exec_w6_state_mem_load(
+        vm_exec_w7_state_mem_load(
             ctx,
             mem_ptr,
             dest.as_mut_ptr(),
@@ -570,7 +570,7 @@ fn mem_load(ctx: *mut vm_exec_hook_context_t, mem_ptr: i32, dest: &mut [u8], len
 
 fn mem_store(ctx: *mut vm_exec_hook_context_t, mem_ptr: i32, src: &[u8]) -> vm_exec_status_t {
     unsafe {
-        vm_exec_w6_state_mem_store(
+        vm_exec_w7_state_mem_store(
             ctx,
             mem_ptr,
             src.as_ptr(),
@@ -585,7 +585,7 @@ fn probe_state_ops(ctx: *mut vm_exec_hook_context_t, outcome: &mut Outcome) {
     const PAGE: u64 = 65536;
 
     let mut length = 0u64;
-    let status = unsafe { vm_exec_w6_state_mem_length(ctx, &mut length, std::ptr::null_mut(), 0) };
+    let status = unsafe { vm_exec_w7_state_mem_length(ctx, &mut length, std::ptr::null_mut(), 0) };
     outcome.check(
         "mem_length",
         status == vm_exec_status_t::VM_EXEC_OK && length == PAGE,
@@ -662,10 +662,10 @@ fn probe_state_ops(ctx: *mut vm_exec_hook_context_t, outcome: &mut Outcome) {
     );
 
     // Gas, through the state handle rather than the instance handle.
-    let status = unsafe { vm_exec_w6_state_set_points_used(ctx, 42, std::ptr::null_mut(), 0) };
+    let status = unsafe { vm_exec_w7_state_set_points_used(ctx, 42, std::ptr::null_mut(), 0) };
     let mut points = 0u64;
     let get_status =
-        unsafe { vm_exec_w6_state_get_points_used(ctx, &mut points, std::ptr::null_mut(), 0) };
+        unsafe { vm_exec_w7_state_get_points_used(ctx, &mut points, std::ptr::null_mut(), 0) };
     outcome.check(
         "points used round-trip",
         status == vm_exec_status_t::VM_EXEC_OK
@@ -677,9 +677,9 @@ fn probe_state_ops(ctx: *mut vm_exec_hook_context_t, outcome: &mut Outcome) {
     // Growing reports the page count from before the growth.
     let mut prev_pages = 0u32;
     let status =
-        unsafe { vm_exec_w6_state_mem_grow(ctx, 1, &mut prev_pages, std::ptr::null_mut(), 0) };
+        unsafe { vm_exec_w7_state_mem_grow(ctx, 1, &mut prev_pages, std::ptr::null_mut(), 0) };
     let mut length_after = 0u64;
-    unsafe { vm_exec_w6_state_mem_length(ctx, &mut length_after, std::ptr::null_mut(), 0) };
+    unsafe { vm_exec_w7_state_mem_length(ctx, &mut length_after, std::ptr::null_mut(), 0) };
     outcome.check(
         "mem_grow",
         status == vm_exec_status_t::VM_EXEC_OK && prev_pages == 1 && length_after == 2 * PAGE,
@@ -704,7 +704,7 @@ fn probe_nesting(
 
             let mut length = 0u64;
             let inner_status =
-                vm_exec_w6_state_mem_length(inner_ctx, &mut length, std::ptr::null_mut(), 0);
+                vm_exec_w7_state_mem_length(inner_ctx, &mut length, std::ptr::null_mut(), 0);
             outcome.check(
                 "the innermost context works",
                 inner_status == vm_exec_status_t::VM_EXEC_OK,
@@ -712,7 +712,7 @@ fn probe_nesting(
             );
 
             let outer_status =
-                vm_exec_w6_state_mem_length(outer_ctx, &mut length, std::ptr::null_mut(), 0);
+                vm_exec_w7_state_mem_length(outer_ctx, &mut length, std::ptr::null_mut(), 0);
             outcome.check(
                 "an outer context is rejected while a nested call runs",
                 outer_status == vm_exec_status_t::VM_EXEC_STALE_CONTEXT,
@@ -722,7 +722,7 @@ fn probe_nesting(
 
         // ... and is usable again once the nested call has returned.
         let mut length = 0u64;
-        let status = vm_exec_w6_state_mem_length(outer_ctx, &mut length, std::ptr::null_mut(), 0);
+        let status = vm_exec_w7_state_mem_length(outer_ctx, &mut length, std::ptr::null_mut(), 0);
         outcome.check(
             "the outer context works again after the nested call",
             status == vm_exec_status_t::VM_EXEC_OK,
@@ -776,7 +776,7 @@ fn state_ops() {
     let escaped = outcome.escaped_context as *mut vm_exec_hook_context_t;
     let mut length = 0u64;
     let status =
-        unsafe { vm_exec_w6_state_mem_length(escaped, &mut length, std::ptr::null_mut(), 0) };
+        unsafe { vm_exec_w7_state_mem_length(escaped, &mut length, std::ptr::null_mut(), 0) };
     assert_eq!(
         status,
         vm_exec_status_t::VM_EXEC_STALE_CONTEXT,

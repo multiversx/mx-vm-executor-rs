@@ -12,7 +12,7 @@ pub trait ExecutorRuntime: Send + Sync {
     /// Builds the VM hooks servicing one host call, around the instance state for that call,
     /// and lends them to `f` — which implementations must call exactly once.
     ///
-    /// **Built per call, not per instance.** Under Wasmer 6 the instance state is only
+    /// **Built per call, not per instance.** Under Wasmer 7 the instance state is only
     /// reachable for the duration of a call — memory and globals live behind the `StoreMut`
     /// the host function is handed — so hooks that hold it cannot outlive the call and
     /// cannot be returned to the caller. Lending rather than returning also avoids a

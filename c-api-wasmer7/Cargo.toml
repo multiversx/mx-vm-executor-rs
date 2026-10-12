@@ -1,5 +1,5 @@
 [package]
-name = "multiversx-chain-vm-executor-c-api-wasmer6"
+name = "multiversx-chain-vm-executor-c-api-wasmer7"
 version = "0.0.0"
 edition = "2024"
 publish = false

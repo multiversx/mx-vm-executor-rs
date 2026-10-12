@@ -4,7 +4,7 @@
 //! shipping while this one is brought up. The two differ in four ways that matter to a
 //! caller:
 //!
-//! - **Exported symbols are prefixed `vm_exec_w6_`**, so both libraries can be linked into one
+//! - **Exported symbols are prefixed `vm_exec_w7_`**, so both libraries can be linked into one
 //!   binary. The legacy API already owns `vm_exec_new_executor` and friends.
 //! - **Errors travel through a caller-provided buffer**, not a thread-local last-error
 //!   singleton. See `capi_status`.
