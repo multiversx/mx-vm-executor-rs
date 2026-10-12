@@ -40,9 +40,19 @@ impl Executor for ExperimentalExecutor {
 
     fn new_instance_from_cache(
         &self,
-        _cache_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        Err(ExperimentalError::InstanceFromCacheUnsupported.into())
+        if cache_bytes.is_empty() {
+            return Err(ExperimentalError::EmptyCacheArtifact.into());
+        }
+
+        let instance = ExperimentalInstance::try_new_instance_from_cache(
+            self.runtime.clone(),
+            cache_bytes,
+            compilation_options,
+        )?;
+
+        Ok(Box::new(instance))
     }
 }

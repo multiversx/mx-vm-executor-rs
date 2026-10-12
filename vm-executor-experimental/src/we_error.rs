@@ -23,8 +23,8 @@ pub enum ExperimentalError {
     #[error("instance memory access error: {0}")]
     MemoryAccess(String),
 
-    #[error("creating an instance from cache is not supported")]
-    InstanceFromCacheUnsupported,
+    #[error("cache artifact is empty")]
+    EmptyCacheArtifact,
 
     #[error("resetting an instance is not supported")]
     ResetUnsupported,

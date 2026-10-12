@@ -37,6 +37,27 @@ pub struct CapiExecutor {
 /// What a `vm_exec_<prefix>_instance_t` points to.
 pub struct CapiInstance {
     pub content: Box<dyn Instance>,
+
+    /// The serialized module, held between the two halves of the cache call.
+    ///
+    /// Reading a variable-length result out of this API is a length call followed by a copy
+    /// call, the same shape the function-name readers use. For names that costs a cheap
+    /// recomputation; for an artifact it would mean serializing a few hundred KB twice, so
+    /// the length call produces it and leaves it here for the copy call to read.
+    ///
+    /// It lives until the instance is destroyed, or until a later length call replaces it.
+    /// Nothing invalidates it in between, because the module an instance was built from does
+    /// not change — only the instance's own memory and globals do, and those are not in it.
+    pub cached_artifact: Option<Vec<u8>>,
+}
+
+impl CapiInstance {
+    pub fn new(content: Box<dyn Instance>) -> Self {
+        CapiInstance {
+            content,
+            cached_artifact: None,
+        }
+    }
 }
 
 /// Builds the backend's executor around the runtime the C API supplies.

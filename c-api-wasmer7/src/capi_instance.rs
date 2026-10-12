@@ -62,6 +62,46 @@ pub unsafe extern "C" fn vm_exec_w7_new_instance(
     }
 }
 
+/// Creates an instance from a cached artifact, skipping compilation.
+///
+/// `cache_bytes` is what `vm_exec_w7_instance_cache` produced, from this same library. It is
+/// **executable code that is mapped, not validated** — an artifact from an untrusted source
+/// must not be passed here; compile the wasm instead. An artifact from a different Wasmer
+/// version is refused, because its header carries an ABI version.
+///
+/// `go_vm_hooks` is as in `vm_exec_w7_new_instance`.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[allow(clippy::too_many_arguments)]
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w7_new_instance_from_cache(
+    executor: *mut vm_exec_w7_executor_t,
+    instance_out: *mut *mut vm_exec_w7_instance_t,
+    cache_bytes: *const u8,
+    cache_bytes_len: u32,
+    options: *const vm_exec_compilation_options_t,
+    go_vm_hooks: usize,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::new_instance_from_cache(
+            executor as *mut CapiExecutor,
+            instance_out as *mut *mut CapiInstance,
+            cache_bytes,
+            cache_bytes_len,
+            options,
+            go_vm_hooks,
+            err_buf,
+            err_buf_len,
+        )
+    }
+}
+
 /// Destroys an instance. Does nothing if `instance` is null.
 ///
 /// # Safety
@@ -240,6 +280,64 @@ pub unsafe extern "C" fn vm_exec_w7_instance_imported_function_names(
             instance as *const CapiInstance,
             dest,
             dest_len,
+        )
+    }
+}
+
+/// Serializes the instance's module and reports how many bytes `vm_exec_w7_instance_cache`
+/// will write.
+///
+/// The artifact is produced by this call and held until the copy call reads it, so the pair
+/// serializes once rather than twice. Call this first; see the copy call.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w7_instance_cache_length(
+    instance: *mut vm_exec_w7_instance_t,
+    length_out: *mut u32,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::instance_cache_length(
+            instance as *mut CapiInstance,
+            length_out,
+            err_buf,
+            err_buf_len,
+        )
+    }
+}
+
+/// Copies the artifact produced by the preceding `vm_exec_w7_instance_cache_length` call.
+///
+/// `dest_len` must be at least the length that call reported. A short buffer is refused
+/// rather than filled partially, because a truncated artifact is indistinguishable from a
+/// whole one until it fails to deserialize.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w7_instance_cache(
+    instance: *mut vm_exec_w7_instance_t,
+    dest: *mut u8,
+    dest_len: u32,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::instance_cache(
+            instance as *mut CapiInstance,
+            dest,
+            dest_len,
+            err_buf,
+            err_buf_len,
         )
     }
 }

@@ -20,6 +20,6 @@ pub enum WasmerExecutorError {
     #[error("instance call error: {0}")]
     WrappedInstance(String),
 
-    #[error("creating an instance from cache is not supported")]
-    InstanceFromCacheUnsupported,
+    #[error("cache artifact is empty")]
+    EmptyCacheArtifact,
 }

@@ -277,10 +277,33 @@ gets it without writing any cache code.
 *Decision deferred:* the Go VM already has a code hash and would be paying that 14 µs twice.
 If it shows up, add an optional caller-supplied key. Not worth the extra parameter up front.
 
-### 1.3 The serialized-artifact path
+### 1.3 The serialized-artifact path — **done**
 
-`cache()` already works (`module.serialize()`). Finish the other half: `new_instance_from_cache`
-should do `Module::deserialize(&engine, bytes)` against an engine built from the same options.
+`cache()` already worked (`module.serialize()`); `new_instance_from_cache` now does
+`Module::deserialize(&store, bytes)` against a store built from the same options, on both
+backends. Shipped ahead of 1.2 rather than after it, because the Go VM's compiled-code cache
+was blocked on exactly this and the module cache is an independent optimization — see
+`PLAN-go-ffi.md`, Phase 6, for the C and Go halves and the tests.
+
+What the implementation added to the sketch below:
+
+- **1.1 arrived with it, in the small.** The split had to happen to have somewhere to
+  deserialize *into*: `new_store` builds the store, and the two entry points differ only in
+  `Module::new` against `Module::deserialize`. What did not arrive is the public
+  `CompiledModule` trait and `Executor::compile`/`instantiate` — nothing needs them until the
+  module cache does, and inventing the trait first would have fixed its shape before the cache
+  could argue about it.
+- **The middlewares are still pushed on the deserialize path**, which does nothing to the
+  module — it already carries its instrumentation — but keeps the two paths building the store
+  identically. Worth knowing when 1.2 lands: on that path the compiler config is dead weight,
+  and a module cache that keeps its engine will want to skip it.
+- **The metering globals survive because they are reached by name**, not by the middleware's
+  stored `GlobalIndex`. `get_global_value_u64(instance, store, METERING_POINTS_USED)` reads
+  the instance's exports, and the globals are created *and exported* during compilation, so
+  they are in the artifact. Had the runtime path used the stored indexes instead, deserialized
+  modules would have run unmetered — which is why the round-trip metering test exists.
+- Confirmed against Wasmer **7.5**: `deserialize` still delegates to `deserialize_unchecked`,
+  so the note below stands as written.
 
 **Security note to carry into the doc comment:** in Wasmer 7.1, `Module::deserialize` delegates
 to `deserialize_unchecked` — the "checked" variant performs no validation. Artifacts must come
@@ -341,11 +364,11 @@ supertrait, no escape hatch — which was the weak point of the rejected per-ins
 | Stage | Work | Depends on |
 | --- | --- | --- |
 | 0 | ~~`ExecutorRuntime` on the executor; `OpcodeConfig` folded into `CompilationOptions`; `new_instance(wasm, options)`~~ — **done**, see below | — |
-| 1 | Executor: split compile from instantiate; `CompiledModule` | 0 |
+| 1 | Executor: split compile from instantiate; `CompiledModule` — the split is done, the public trait is not (see 1.3) | 0 |
 | 2 | Executor: module cache, keyed on wasm + options | 1 |
 | 3 | Rust VM: context stack, `impl ExecutorRuntime for RuntimeWeakRef`, delete the slot | 0 |
 | 4 | Measure on a scenario suite | 2, 3 |
-| 5 | Serialized-artifact path (`new_instance_from_cache`), keyed including the Wasmer version | 1 |
+| 5 | ~~Serialized-artifact path (`new_instance_from_cache`)~~ — **done**, ahead of 2–4, because the Go VM's compiled-code cache was blocked on it | 1 |
 
 Stages 1–2 and 3 are independent once 0 lands.
 

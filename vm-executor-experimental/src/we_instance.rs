@@ -1,8 +1,8 @@
+use crate::ExperimentalError;
 use crate::middlewares::{
     Breakpoints, Metering, OpcodeControl, OpcodeTracer, ProtectedGlobals, get_breakpoint_value,
     get_points_used, set_points_limit,
 };
-use crate::ExperimentalError;
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
@@ -71,26 +71,81 @@ fn prepare_wasmer_instance_inner(
     })
 }
 
+/// Builds the store the module will be compiled into, or deserialized against.
+///
+/// The middlewares are pushed here rather than at instantiation because they are
+/// *compile-time* transforms: they rewrite the module and add the metering and breakpoint
+/// globals. A deserialized module already carries that instrumentation, so pushing them again
+/// changes nothing about it — what matters on that path is only that the engine agrees with
+/// the artifact, which is why both paths build the store the same way.
+///
+/// One store per instance, and so one engine per compiled module. The metering middleware
+/// keeps its global indexes in a `Mutex<Option<..>>` filled in during compilation, so
+/// compiling a second contract through the same engine would overwrite the first one's. See
+/// `PLAN-rust-vm-caching.md`, 1.1.
+fn new_store(compilation_options: &CompilationOptions) -> Store {
+    // Use Singlepass compiler with the default settings
+    let mut compiler = Singlepass::default();
+
+    // Push middlewares
+    push_middlewares(&mut compiler, compilation_options);
+
+    Store::new(compiler)
+}
+
 impl ExperimentalInstance {
     pub fn try_new_instance(
         runtime: Arc<dyn ExecutorRuntime>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptions,
     ) -> Result<Self, ExecutorError> {
-        // Use Singlepass compiler with the default settings
-        let mut compiler = Singlepass::default();
-
-        // Push middlewares
-        push_middlewares(&mut compiler, compilation_options);
-
-        // Create the store
-        let mut store: Store = Store::new(compiler);
+        let store = new_store(compilation_options);
 
         trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
+        Self::try_from_module(runtime, store, &module)
+    }
+
+    /// Instantiates a module from a previously serialized artifact, skipping compilation.
+    ///
+    /// The artifact comes from [`Instance::cache`], which is `Module::serialize`.
+    ///
+    /// # Trust
+    ///
+    /// `Module::deserialize` is **not** a validating load: in Wasmer 7.5 it delegates to
+    /// `deserialize_unchecked`, so it maps whatever it is given as executable code. The name
+    /// suggests otherwise, which is why it is said here. Artifacts must come from a store the
+    /// host trusts as much as it trusts itself — for the Go VM that is its own compiled-code
+    /// cache, written by `cache()` on this same machine.
+    ///
+    /// A mismatched artifact is rejected rather than misread, but only as far as the header
+    /// goes: it carries a Wasmer ABI version (11 in 7.1, 24 in 7.4) that `deserialize`
+    /// refuses on mismatch. So an upgrade invalidates a persisted cache loudly, as an error
+    /// here, rather than silently — but a cache that outlives an upgrade still has to be
+    /// keyed by Wasmer version or purged, because every entry in it will fail this way.
+    pub fn try_new_instance_from_cache(
+        runtime: Arc<dyn ExecutorRuntime>,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
+    ) -> Result<Self, ExecutorError> {
+        let store = new_store(compilation_options);
+
+        trace!("Deserializing module ...");
+        // SAFETY: see the trust note above — the caller vouches for the artifact's origin.
+        let module = unsafe { Module::deserialize(&store, cache_bytes)? };
+
+        Self::try_from_module(runtime, store, &module)
+    }
+
+    /// The half the two entry points share: everything after there is a `Module`.
+    fn try_from_module(
+        runtime: Arc<dyn ExecutorRuntime>,
+        mut store: Store,
+        module: &Module,
+    ) -> Result<Self, ExecutorError> {
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(runtime, &module, &mut store, weak)
+            prepare_wasmer_instance_inner(runtime, module, &mut store, weak)
         })?;
 
         Ok(ExperimentalInstance {

@@ -1188,9 +1188,68 @@ route for the Go VM is for `Wasmer7Executor` to hold compiled modules in memory 
 recreating. `NewInstanceFromCompiledCodeWithOptions` is already the Wasmer-6-compatible form
 of reuse.
 
-Remaining here: the serialized-artifact path. Note that artifacts carry an ABI version that
-`deserialize` rejects on mismatch — it moved from 11 (Wasmer 7.1) to 24 (Wasmer 7.4) — so a
-persisted cache needs the Wasmer version in its key or a purge on upgrade.
+### Done: the serialized-artifact path, on both new backends
+
+`Cache()` and `NewInstanceFromCompiledCodeWithOptions` work, so the VM's compiled-code cache
+is live for `wasmer7` and `wasmer2` as well as `wasmer2legacy`, and
+`instance caching is not supported by this executor` is gone from the logs.
+
+Three new C entry points per library, bodies shared in `c-api-common` as usual:
+`new_instance_from_cache`, and `instance_cache_length` / `instance_cache`. Reading the
+artifact out is the same two-call shape as the function-name readers, with one difference
+worth knowing: the **length call does the work**. An artifact is a few hundred KB, so
+serializing it twice to answer the same question is not worth the symmetry; the length call
+produces it and leaves it on the `CapiInstance` for the copy call. Calling the copy without
+the length is an error rather than an empty result, and a short buffer is refused rather than
+part-filled.
+
+On the Rust side this needed only a split of compile-from-instantiate inside
+`ExperimentalInstance` (stage 1 of `PLAN-rust-vm-caching.md`, in the small): `new_store` is
+shared, and the two entry points differ only in `Module::new` against `Module::deserialize`.
+The 2.2 backend already had `try_new_instance_from_cache` for the legacy executor, so
+`WasmerProdExecutor` gained the same shape and the two are now at parity.
+
+**`Module::deserialize` does not validate.** In Wasmer 7.5 it still delegates to
+`deserialize_unchecked`, so it maps whatever it is handed as executable code. That is fine for
+the VM, whose artifacts come from its own store keyed by code hash, but it is said in the doc
+comment on every layer — Rust, C and Go — because the name suggests otherwise. Artifacts also
+carry an ABI version that `deserialize` rejects on mismatch (11 in Wasmer 7.1, 24 in 7.4), so
+an upgrade invalidates a persisted cache loudly rather than silently; a persistent cache still
+needs the Wasmer version in its key, or a purge on upgrade, or every entry will fail this way.
+A caller that gets an error here falls back to compiling, so a stale or corrupt entry is a
+recoverable miss.
+
+**Still not here:** the in-executor module cache (stage 2), which is a separate optimization —
+pure memoization on `(hash(wasm), hash(options))`, with no host semantics — and `reset()`,
+for the reasons above.
+
+### What the tests said, and a gap they did not cover
+
+Adding caching changed no failure counts at all: `wasmer2legacy` 0, `wasmer2` 28, `wasmer7` 32,
+before and after. That is not reassuring, it is the finding — **nothing in the suite was
+testing caching**. `TestExecution_CachingCompiledCode` calls a contract four times and checks
+four successes, which is exactly what happens when caching does not work, and it passed
+throughout the period when `Cache()` returned an error.
+
+So the coverage was added with the feature, at each layer that can fail on its own:
+
+- Rust, per backend (`cache_test.rs` in both backend crates): the artifact round-trips, and
+  **metering is identical across it**. That is the one that matters — the middlewares are
+  compile-time and nothing re-runs them on the way back, so a deserialization that lost the
+  metering globals would make contracts run free rather than fail, and every other assertion
+  would still pass.
+- C API, per library (`ffi_boundary.rs`): the round trip through the real entry points, plus
+  the two-call protocol's failure modes — copy without length, short buffer, non-artifact
+  bytes.
+- Go, per package (`cache7_test.go`, `cache2_test.go`): the cgo marshalling. This is the only
+  place a variable-length *binary* result crosses the boundary, so an off-by-one in the
+  length/copy pair has nothing else to catch it.
+- Go, host level: `TestExecution_CachingCompiledCode_SavesAnArtifact` asserts the store is
+  populated with something that is not the bytecode, and
+  `TestExecution_CachingCompiledCode_UsesTheArtifact` proves the artifact is *read* by
+  swapping in a valid artifact for a different contract and requiring the call to come back
+  `FunctionNotFound`. Verified to bite: disabling the cached path fails it with that message
+  while the original test still passes.
 
 ## Cross-repo note — `mx-sdk-rs`
 

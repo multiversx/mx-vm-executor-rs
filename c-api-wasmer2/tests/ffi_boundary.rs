@@ -783,3 +783,190 @@ fn state_ops() {
         "a context used after its call must be rejected"
     );
 }
+
+/// Reads an artifact out through the two-call cache convention.
+fn read_artifact(instance: *mut vm_exec_w2_instance_t, err: &mut ErrBuf) -> Vec<u8> {
+    let mut needed: u32 = 0;
+    let status =
+        unsafe { vm_exec_w2_instance_cache_length(instance, &mut needed, err.ptr(), ERR_BUF_LEN) };
+    assert_eq!(
+        status,
+        vm_exec_status_t::VM_EXEC_OK,
+        "cache_length failed: {}",
+        err.message()
+    );
+    assert!(needed > 0, "an artifact cannot be empty");
+
+    let mut buf = vec![0u8; needed as usize];
+    let status = unsafe {
+        vm_exec_w2_instance_cache(instance, buf.as_mut_ptr(), needed, err.ptr(), ERR_BUF_LEN)
+    };
+    assert_eq!(
+        status,
+        vm_exec_status_t::VM_EXEC_OK,
+        "cache failed: {}",
+        err.message()
+    );
+
+    buf
+}
+
+/// The serialized-artifact path across the boundary: out through the two-call read, back in
+/// through `new_instance_from_cache`, and the restored instance is a working instance.
+#[test]
+fn cache_round_trip() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+    let instance = new_instance(executor, &mut err);
+
+    let artifact = read_artifact(instance, &mut err);
+    assert_ne!(
+        artifact.as_slice(),
+        CONTRACT_WAT.as_bytes(),
+        "the artifact must be the compiled module, not the source"
+    );
+
+    let options = compilation_options();
+    let mut restored: *mut vm_exec_w2_instance_t = std::ptr::null_mut();
+    let status = unsafe {
+        vm_exec_w2_new_instance_from_cache(
+            executor,
+            &mut restored,
+            artifact.as_ptr(),
+            artifact.len() as u32,
+            &options,
+            0xBEEFusize,
+            err.ptr(),
+            ERR_BUF_LEN,
+        )
+    };
+    assert_eq!(
+        status,
+        vm_exec_status_t::VM_EXEC_OK,
+        "new_instance_from_cache failed: {}",
+        err.message()
+    );
+    assert!(!restored.is_null());
+
+    // The restored instance runs, and its hooks still reach the host: `callGetGasLeft` goes
+    // out through the mock table, which a module that lost its imports could not do.
+    let result = call(restored, "doNothing", &mut err);
+    assert_eq!(result.kind, vm_exec_call_result_kind_t::VM_EXEC_CALL_OK);
+    let result = call(restored, "callGetGasLeft", &mut err);
+    assert_eq!(result.kind, vm_exec_call_result_kind_t::VM_EXEC_CALL_OK);
+
+    assert_eq!(
+        names(
+            restored,
+            vm_exec_w2_instance_exported_function_names_length,
+            vm_exec_w2_instance_exported_function_names,
+        ),
+        names(
+            instance,
+            vm_exec_w2_instance_exported_function_names_length,
+            vm_exec_w2_instance_exported_function_names,
+        ),
+    );
+
+    unsafe {
+        vm_exec_w2_instance_destroy(restored);
+        vm_exec_w2_instance_destroy(instance);
+        vm_exec_w2_executor_destroy(executor);
+    }
+}
+
+/// The copy call depends on the length call having run, and says so rather than handing back
+/// an empty buffer that would deserialize into a confusing error later.
+#[test]
+fn cache_copy_without_length_is_refused() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+    let instance = new_instance(executor, &mut err);
+
+    let mut buf = [0u8; 64];
+    let status = unsafe {
+        vm_exec_w2_instance_cache(
+            instance,
+            buf.as_mut_ptr(),
+            buf.len() as u32,
+            err.ptr(),
+            ERR_BUF_LEN,
+        )
+    };
+    assert_eq!(status, vm_exec_status_t::VM_EXEC_ERROR);
+    assert!(
+        err.message().contains("length"),
+        "unexpected message: {}",
+        err.message()
+    );
+
+    unsafe {
+        vm_exec_w2_instance_destroy(instance);
+        vm_exec_w2_executor_destroy(executor);
+    }
+}
+
+/// A buffer shorter than the reported length is refused rather than part-filled: half an
+/// artifact is indistinguishable from a whole one until it fails to load.
+#[test]
+fn cache_copy_into_a_short_buffer_is_refused() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+    let instance = new_instance(executor, &mut err);
+
+    let mut needed: u32 = 0;
+    let status =
+        unsafe { vm_exec_w2_instance_cache_length(instance, &mut needed, err.ptr(), ERR_BUF_LEN) };
+    assert_eq!(status, vm_exec_status_t::VM_EXEC_OK);
+
+    let mut buf = vec![0u8; needed as usize - 1];
+    let status = unsafe {
+        vm_exec_w2_instance_cache(
+            instance,
+            buf.as_mut_ptr(),
+            needed - 1,
+            err.ptr(),
+            ERR_BUF_LEN,
+        )
+    };
+    assert_eq!(status, vm_exec_status_t::VM_EXEC_ERROR);
+    assert!(
+        err.message().contains("too small"),
+        "unexpected message: {}",
+        err.message()
+    );
+
+    unsafe {
+        vm_exec_w2_instance_destroy(instance);
+        vm_exec_w2_executor_destroy(executor);
+    }
+}
+
+/// Bytes that are not an artifact are rejected at the boundary with a message, not a panic
+/// and not a silent success.
+#[test]
+fn instance_from_non_artifact_bytes_is_refused() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+
+    let junk = b"not a wasmer artifact";
+    let options = compilation_options();
+    let mut restored: *mut vm_exec_w2_instance_t = std::ptr::null_mut();
+    let status = unsafe {
+        vm_exec_w2_new_instance_from_cache(
+            executor,
+            &mut restored,
+            junk.as_ptr(),
+            junk.len() as u32,
+            &options,
+            0xBEEFusize,
+            err.ptr(),
+            ERR_BUF_LEN,
+        )
+    };
+    assert_eq!(status, vm_exec_status_t::VM_EXEC_ERROR);
+    assert!(restored.is_null());
+    assert!(!err.message().is_empty());
+
+    unsafe { vm_exec_w2_executor_destroy(executor) }
+}
