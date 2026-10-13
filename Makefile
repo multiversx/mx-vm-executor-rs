@@ -1,5 +1,7 @@
 .PHONY: capi capi-linux-amd64 capi-linux-arm capi-osx-amd64 capi-osx-arm \
 	capi-osx-amd64-cross capi-linux-amd64-docker capi-linux-arm64-docker \
+	capi-w7 capi-w7-linux-amd64 capi-w7-linux-arm capi-w7-osx-amd64 capi-w7-osx-arm \
+	capi-w2 capi-w2-linux-amd64 capi-w2-linux-arm capi-w2-osx-amd64 capi-w2-osx-arm \
 	ci-local clean check-macos
 
 # cargo and docker already parallelise internally, and a parallel make would
@@ -13,14 +15,14 @@ CI_LOCAL_DIR ?= target/ci-local
 UNAME_S := $(shell uname -s)
 
 capi:
-	cargo build -p multiversx-chain-vm-executor-c-api --release
+	cargo build -p multiversx-chain-vm-executor-c-api-legacy --release
 
 capi-linux-amd64: capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.so target/release/libvmexeccapi.so
 	patchelf --set-soname libvmexeccapi.so target/release/libvmexeccapi.so
 
 capi-linux-arm: capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.so target/release/libvmexeccapi_arm.so
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.so target/release/libvmexeccapi_arm.so
 	patchelf --set-soname libvmexeccapi_arm.so target/release/libvmexeccapi_arm.so
 
 # A prerequisite, not an inline check in the recipe: under .NOTPARALLEL, make
@@ -31,12 +33,71 @@ check-macos:
 	@test "$(UNAME_S)" = "Darwin" || { echo "This target requires a macOS host (produces a Mach-O .dylib)." >&2; exit 1; }
 
 capi-osx-amd64: check-macos capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/release/libvmexeccapi.dylib
 	install_name_tool -id @rpath/libvmexeccapi.dylib target/release/libvmexeccapi.dylib
 
 capi-osx-arm: check-macos capi
-	mv target/release/libmultiversx_chain_vm_executor_c_api.dylib target/release/libvmexeccapi_arm.dylib
+	mv target/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/release/libvmexeccapi_arm.dylib
 	install_name_tool -id @rpath/libvmexeccapi_arm.dylib target/release/libvmexeccapi_arm.dylib
+
+# --- The new C API ------------------------------------------------------------
+# Built into separately named artifacts, so a consumer can link one, the other, or
+# both: the two libraries share no exported symbols (`vm_exec_*` against
+# `vm_exec2_*`), which is what makes running them side by side for differential
+# testing possible.
+#
+# Not wired into `ci-local` or the release workflows yet. That happens when the Go
+# VM starts consuming it, so the release assets do not grow a library nothing
+# links against.
+
+capi-w7:
+	cargo build -p multiversx-chain-vm-executor-c-api-wasmer7 --release
+
+capi-w7-linux-amd64: capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.so target/release/libvmexeccapi_w7.so
+	patchelf --set-soname libvmexeccapi_w7.so target/release/libvmexeccapi_w7.so
+
+capi-w7-linux-arm: capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.so target/release/libvmexeccapi_w7_arm.so
+	patchelf --set-soname libvmexeccapi_w7_arm.so target/release/libvmexeccapi_w7_arm.so
+
+capi-w7-osx-amd64: check-macos capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.dylib target/release/libvmexeccapi_w7.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w7.dylib target/release/libvmexeccapi_w7.dylib
+
+capi-w7-osx-arm: check-macos capi-w7
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer7.dylib target/release/libvmexeccapi_w7_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w7_arm.dylib target/release/libvmexeccapi_w7_arm.dylib
+
+# --- The new C API, Wasmer 2.2 ------------------------------------------------
+# The same interface over the executor currently in production. Built alongside the
+# Wasmer 7 library rather than instead of it: running the *same* runtime through the
+# *new* boundary is what isolates the boundary as the variable, so a difference against
+# the legacy `libvmexeccapi` is attributable to the refactor and not to a runtime change.
+#
+# Three libraries can therefore be linked at once — `vm_exec_*`, `vm_exec_w2_*` and
+# `vm_exec_w7_*` share no exported symbols. On Linux that needs
+# `-Wl,-Bsymbolic-functions`, because the two Wasmer versions do collide on their
+# internal `wasmer_vm_*` symbols; macOS's two-level namespace handles it without help.
+
+capi-w2:
+	cargo build -p multiversx-chain-vm-executor-c-api-wasmer2 --release
+
+capi-w2-linux-amd64: capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.so target/release/libvmexeccapi_w2.so
+	patchelf --set-soname libvmexeccapi_w2.so target/release/libvmexeccapi_w2.so
+
+capi-w2-linux-arm: capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.so target/release/libvmexeccapi_w2_arm.so
+	patchelf --set-soname libvmexeccapi_w2_arm.so target/release/libvmexeccapi_w2_arm.so
+
+capi-w2-osx-amd64: check-macos capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.dylib target/release/libvmexeccapi_w2.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w2.dylib target/release/libvmexeccapi_w2.dylib
+
+capi-w2-osx-arm: check-macos capi-w2
+	mv target/release/libmultiversx_chain_vm_executor_c_api_wasmer2.dylib target/release/libvmexeccapi_w2_arm.dylib
+	install_name_tool -id @rpath/libvmexeccapi_w2_arm.dylib target/release/libvmexeccapi_w2_arm.dylib
 
 # --- Local reproduction of the CI build matrix -------------------------------
 # The four targets above are what CI runs natively, one per runner. The targets
@@ -56,8 +117,8 @@ capi-osx-amd64-cross:
 	  exit 1; \
 	}
 	rustup target add x86_64-apple-darwin
-	cargo build -p multiversx-chain-vm-executor-c-api --release --target x86_64-apple-darwin
-	cp target/x86_64-apple-darwin/release/libmultiversx_chain_vm_executor_c_api.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
+	cargo build -p multiversx-chain-vm-executor-c-api-legacy --release --target x86_64-apple-darwin
+	cp target/x86_64-apple-darwin/release/libmultiversx_chain_vm_executor_c_api_legacy.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	install_name_tool -id @rpath/libvmexeccapi.dylib target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 
 capi-linux-amd64-docker:
@@ -97,5 +158,15 @@ clean:
 	rm -f target/release/libvmexeccapi.dylib
 	rm -f target/release/libvmexeccapi_arm.dylib
 	rm -f c-api/libvmexeccapi.h
+	rm -f target/release/libvmexeccapi_w7.so
+	rm -f target/release/libvmexeccapi_w7_arm.so
+	rm -f target/release/libvmexeccapi_w7.dylib
+	rm -f target/release/libvmexeccapi_w7_arm.dylib
+	rm -f c-api-wasmer7/libvmexeccapi_w7.h
+	rm -f target/release/libvmexeccapi_w2.so
+	rm -f target/release/libvmexeccapi_w2_arm.so
+	rm -f target/release/libvmexeccapi_w2.dylib
+	rm -f target/release/libvmexeccapi_w2_arm.dylib
+	rm -f c-api-wasmer2/libvmexeccapi_w2.h
 	rm -f target/x86_64-apple-darwin/release/libvmexeccapi.dylib
 	rm -rf $(CI_LOCAL_DIR)

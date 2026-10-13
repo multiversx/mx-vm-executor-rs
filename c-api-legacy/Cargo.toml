@@ -1,0 +1,23 @@
+[package]
+name = "multiversx-chain-vm-executor-c-api-legacy"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+meta = { path = "../meta" }
+multiversx-chain-vm-executor = { path = "../vm-executor" }
+multiversx-chain-vm-executor-wasmer = { path = "../vm-executor-wasmer" }
+
+lazy_static = "1.4"
+libc = { version = "^0.2", default-features = false }
+
+chrono = "0.4.23"
+env_logger = "0.11"
+log = "0.4"
+
+[build-dependencies]
+cbindgen = "0.29"
