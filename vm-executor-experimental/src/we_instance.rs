@@ -16,23 +16,72 @@ use wasmer::{Extern, ExternType, Module, Pages, Store};
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 
+/// One instantiated contract, and everything needed to put it back the way it started.
+///
+/// # What it owns
+///
+/// A store, an instance inside that store, and the two things a rebuild needs: the compiled
+/// module and the runtime the imports are built from. The store is *per instance*, not per
+/// executor — see [`new_store`] for why the metering middleware forces that — so this struct
+/// is the whole of one contract's world: its memory, its globals, its tables, and the engine
+/// its code was compiled by.
+///
+/// # Not `Sync`, not `Send`, and not reentrant
+///
+/// `inner` is an `Rc`, so an instance belongs to one thread; the Go VM honours that because
+/// cgo pins a goroutine to its OS thread for the duration of a call.
+///
+/// Reentrancy is the caller's obligation, not something checked here: every entry point that
+/// can touch the store takes `&mut self`, so calling one while a call is in flight would
+/// alias. Nesting into a *different* instance is fine and is what the Go VM does for
+/// `executeOnDestContext`; re-entering the same one is refused by the host, in
+/// `Wasmer7Instance.inCall`.
+///
+/// # The back-reference, and why `inner` is separate
+///
+/// The import object a hook is dispatched through has to be able to find the instance's
+/// memory, but it is built *before* the instance exists. [`ExperimentalInstanceInner`] is
+/// the knot that ties: it is created through `rc_new_cyclic_fallible`, so the imports can
+/// capture a `Weak` to it that becomes valid the moment instantiation succeeds. That is the
+/// only reason the wasmer instance is not simply a field here.
 pub struct ExperimentalInstance {
+    /// Owns the instance's memory, globals and tables, and the engine its module was
+    /// compiled by. Replaced wholesale by [`Instance::reset`].
     wasmer_store: wasmer::Store,
+
+    /// The wasmer instance, behind the `Rc` the import object holds a `Weak` to.
     inner: Rc<ExperimentalInstanceInner>,
 
     /// Kept so the instance can be rebuilt in place by [`Instance::reset`].
     ///
     /// Cheap to hold — `Module` is a handle over refcounted compiled code, not a copy of it —
-    /// and it is the only way to re-instantiate without going back to the wasm bytes.
+    /// and it is the only way to re-instantiate without going back to the wasm bytes. It is
+    /// also what [`Instance::cache`] serializes.
     module: Module,
 
     /// Kept for the same reason: re-instantiating means building a fresh import object, and
     /// that needs the runtime the hooks are reached through.
+    ///
+    /// An `Arc<dyn ExecutorRuntime>` rather than a concrete type, because the runtime is the
+    /// host's — the Go VM's hook bridge, or the Rust VM's — and the backend must not know
+    /// which. It is cloned into each import object, so the imports and this struct keep the
+    /// runtime alive between them for as long as either exists.
     runtime: Arc<dyn ExecutorRuntime>,
 }
 
+/// The part of an instance that a hook's import object can hold a `Weak` to.
+///
+/// Split out of [`ExperimentalInstance`] for one reason, given in that type's documentation:
+/// the import object has to be built before the instance it belongs to exists, so the back
+/// reference has to go through something tied by `rc_new_cyclic_fallible`.
 pub struct ExperimentalInstanceInner {
     pub wasmer_instance: wasmer::Instance,
+
+    /// The export name of the contract's single memory, resolved once at instantiation.
+    ///
+    /// Held rather than looked up per access because every hook that touches memory would
+    /// otherwise re-scan the export list, and because the "exactly one memory" rule is
+    /// checked at instantiation — recording the name is what carries that check forward.
     pub memory_name: String,
 }
 
