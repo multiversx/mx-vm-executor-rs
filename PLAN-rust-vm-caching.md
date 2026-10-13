@@ -318,10 +318,39 @@ explicit purge on upgrade. Irrelevant to the in-memory module cache, which never
 This tier matters less for the Rust VM (in-process, so the module cache covers it) than for
 persistence across process restarts. Lower priority than 1.1 and 1.2.
 
-### 1.4 What is explicitly not built
+### 1.4 `reset()` — **built, by re-instantiating**
 
-`reset()` stays `Err(ResetUnsupported)`, with the measurement and the fork argument recorded in
-the doc comment so the question is not reopened without new evidence.
+This section used to say `reset()` stays unsupported because Wasmer 7 has no instance reset
+and getting one would mean forking. The first half is true; the conclusion was wrong, and it
+is worth correcting rather than quietly dropping, because it was wrong in a way that would
+have kept a door shut.
+
+Wasmer 7 does not need to offer a reset. **Instantiating a module is the operation that
+produces a fresh instance**, so `ExperimentalInstance::reset` builds a new `Store` from the
+existing engine — a refcount clone, so the module stays compiled — re-instantiates, and swaps
+both into `self` behind the same handle. `Instance::reset` therefore takes `&mut self` now;
+`&self` would have forced interior mutability to express something that was never shared.
+
+What it costs: a full instantiation (~30–50 µs) rather than the handful of writes the 2.2
+fork's in-place reset does. What it buys beyond that fork: tables and passive-element
+bookkeeping come back too, because nothing is being selectively rewound — so the correctness
+question "could this have changed?" does not arise per field.
+
+It is exposed through the C API as `vm_exec_<prefix>_instance_reset`, for both backends, and
+the Go VM's `Reset()` now returns true, so the warm instance tier is live on `wasmer7` and
+`wasmer2` as well as `wasmer2legacy`.
+
+**The in-place version remains unbuilt, and now has a design.** See
+`PLAN-reset-via-middlewares.md`: the contract's own globals *are* reachable, by having a
+middleware export them at compile time — the same mechanism the metering globals already use
+— and memory can be restored from a per-module snapshot taken at instantiation. That document
+also records the two things found while establishing it: passive segments are inert under this
+VM's opcode whitelist in both versions, and the 2.2 fork's reset does not restore **tables**,
+which V1 allows contracts to mutate.
+
+The measurement still says the in-place version is not worth building: the whole warm tier is
+under 1% over a compiled-code cache hit, and this optimizes a fraction of that. Reopen it on
+evidence, not on principle.
 
 ## Side 2 — the Rust VM
 

@@ -32,8 +32,22 @@ pub trait Instance {
     /// Returns the number of points(gas) used by the given instance.
     fn get_points_used(&mut self) -> Result<u64, ExecutorError>;
 
-    /// Resets an instance, cleaning memories and globals.
-    fn reset(&self) -> Result<(), ExecutorError>;
+    /// Returns the instance to the state it was in immediately after creation, so that it can
+    /// serve another execution.
+    ///
+    /// Memory contents and length, every mutable global, and anything else a call can leave
+    /// behind must be restored. What must *not* change is the instance's identity: the host
+    /// holds this instance across the reset, so a backend has to rebuild in place rather than
+    /// hand back a new object.
+    ///
+    /// Takes `&mut self` because that is what it is: the whole point is to mutate the
+    /// instance. A backend may need to replace its internals wholesale — see
+    /// `ExperimentalInstance::reset`, which rebuilds the store — and `&self` would force it to
+    /// reach for interior mutability to express something that is not shared at all.
+    ///
+    /// A backend that cannot offer this returns an error, and the host is expected to discard
+    /// the instance and build a fresh one.
+    fn reset(&mut self) -> Result<(), ExecutorError>;
 
     /// Caches an instance.
     fn cache(&self) -> Result<Vec<u8>, ExecutorError>;

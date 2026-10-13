@@ -198,6 +198,22 @@ vm_exec_status_t vm_exec_w7_instance_cache_length(struct vm_exec_w7_instance_t *
 vm_exec_status_t vm_exec_w7_instance_cache(struct vm_exec_w7_instance_t *instance, uint8_t *dest, uint32_t dest_len, char *err_buf, int err_buf_len);
 
 /**
+ * Returns the instance to the state it was in immediately after creation, so it can serve
+ * another execution.
+ *
+ * Memory contents and length, every mutable global, and the metering and breakpoint globals
+ * are all restored. The handle stays valid — the instance is rebuilt behind it, not replaced.
+ *
+ * On failure the caller must destroy the instance rather than reuse it: an instance whose
+ * reset failed still carries the previous execution's state.
+ *
+ * # Safety
+ *
+ * C API function, works with raw object pointers.
+ */
+vm_exec_status_t vm_exec_w7_instance_reset(struct vm_exec_w7_instance_t *instance, char *err_buf, int err_buf_len);
+
+/**
  * Loads from instance memory into a caller-provided buffer, **truncating** at the end of
  * the memory.
  *

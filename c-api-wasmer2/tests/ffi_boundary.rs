@@ -970,3 +970,58 @@ fn instance_from_non_artifact_bytes_is_refused() {
 
     unsafe { vm_exec_w2_executor_destroy(executor) }
 }
+
+/// Reset across the boundary: the entry point is wired, and the handle survives it.
+///
+/// Only the wiring is asserted here. What reset actually *clears* is checked in the backend's
+/// own `reset_test.rs`, against globals and memory this layer cannot see — and the hook log
+/// this file uses to observe memory is process-global, so a test that mutated it would race
+/// the hook-dispatch tests rather than add coverage.
+#[test]
+fn reset_keeps_the_handle_usable() {
+    let mut err = ErrBuf::new();
+    let executor = new_executor(&mut err);
+    let instance = new_instance(executor, &mut err);
+
+    let before = names(
+        instance,
+        vm_exec_w2_instance_exported_function_names_length,
+        vm_exec_w2_instance_exported_function_names,
+    );
+    let result = call(instance, "doNothing", &mut err);
+    assert_eq!(result.kind, vm_exec_call_result_kind_t::VM_EXEC_CALL_OK);
+
+    let status = unsafe { vm_exec_w2_instance_reset(instance, err.ptr(), ERR_BUF_LEN) };
+    assert_eq!(
+        status,
+        vm_exec_status_t::VM_EXEC_OK,
+        "reset failed: {}",
+        err.message()
+    );
+
+    // The same pointer still calls, and still describes the same module: reset rebuilds the
+    // instance behind the handle rather than invalidating it.
+    let result = call(instance, "doNothing", &mut err);
+    assert_eq!(result.kind, vm_exec_call_result_kind_t::VM_EXEC_CALL_OK);
+    assert_eq!(
+        names(
+            instance,
+            vm_exec_w2_instance_exported_function_names_length,
+            vm_exec_w2_instance_exported_function_names,
+        ),
+        before
+    );
+
+    unsafe {
+        vm_exec_w2_instance_destroy(instance);
+        vm_exec_w2_executor_destroy(executor);
+    }
+}
+
+/// A null instance is refused without a message, like every other entry point.
+#[test]
+fn reset_refuses_a_null_instance() {
+    let mut err = ErrBuf::new();
+    let status = unsafe { vm_exec_w2_instance_reset(std::ptr::null_mut(), err.ptr(), ERR_BUF_LEN) };
+    assert_eq!(status, vm_exec_status_t::VM_EXEC_NULL_POINTER);
+}

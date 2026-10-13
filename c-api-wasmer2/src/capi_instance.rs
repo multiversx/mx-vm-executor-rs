@@ -341,3 +341,28 @@ pub unsafe extern "C" fn vm_exec_w2_instance_cache(
         )
     }
 }
+
+/// Returns the instance to the state it was in immediately after creation, so it can serve
+/// another execution.
+///
+/// Memory contents and length, every mutable global, and the metering and breakpoint globals
+/// are all restored. The handle stays valid — the instance is rebuilt behind it, not replaced.
+///
+/// On failure the caller must destroy the instance rather than reuse it: an instance whose
+/// reset failed still carries the previous execution's state.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w2_instance_reset(
+    instance: *mut vm_exec_w2_instance_t,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::instance_reset(instance as *mut CapiInstance, err_buf, err_buf_len)
+    }
+}

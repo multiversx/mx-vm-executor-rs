@@ -1122,6 +1122,12 @@ Two things it has also established:
   Reading 33 → 32 as "one test fixed" would have missed it entirely; this is the case the
   per-test attribution exists for.
 
+  After `reset()` landed: `wasmer2legacy` 0, `wasmer2` **27**, `wasmer7` **31**. One test on
+  each — `TestRustAdderLog` — and nothing newly broken. The subset relation still holds. A
+  single test is a smaller return than the warm tier sounds like it should give, and it is the
+  same point the measurement makes from the other direction: almost everything the warm cache
+  would have bought was already bought by the compiled-code cache.
+
 - **Open, and the reason the above matters: multi-memory modules are now accepted.** The test
   deploys a module declaring five memories and exporting one, and expects `ContractInvalid`; on
   7.5 it returns `Ok`. The cause is that `validate_memories` in
@@ -1174,19 +1180,24 @@ unverified there, and `-Wl,-Bsymbolic-functions` remains the open item; see
 Was: `reset()` on the Wasmer 7 instance, as a prerequisite for Go's warm-instance tracker,
 then `new_instance_from_cache`, then warm instances for wasmer7.
 
-**`reset()` is off the list.** Measured on a 55 KB contract: compiling costs ~6 ms and
-instantiating from a module already in memory ~30–50 µs, so reusing a live instance saves
-under 1% over instantiating a cached module afresh. And it is not cheap to get — Wasmer 7
-*and* 7.4 have no instance reset (`Memory::reset` only zeroes and shrinks memory; no
-data-segment or global restore), so it would mean forking Wasmer 7, which is consumed
-unmodified from crates.io unlike the 2.2 fork. Re-instantiating is behaviourally identical to
-resetting.
+**The economics**, measured on a 55 KB contract: compiling costs ~6 ms, instantiating from a
+module already in memory ~30–50 µs. So the warm tier is worth under 1% over a compiled-code
+cache hit, and the compiled-code cache is where the real win is. That ordering is why the
+serialized-artifact path shipped first.
 
-So for this backend the warm instance cache **collapses into the module cache**. The cheapest
-route for the Go VM is for `Wasmer7Executor` to hold compiled modules in memory and let
-`Reset()` keep returning false, which the instance tracker already handles by evicting and
-recreating. `NewInstanceFromCompiledCodeWithOptions` is already the Wasmer-6-compatible form
-of reuse.
+**`reset()` was off the list, and is now done.** The original argument was that Wasmer 7 has
+no instance reset — true, `Memory::reset` empties the memory and restores neither contents nor
+globals — and therefore that getting one meant forking Wasmer 7. That conclusion was wrong.
+Instantiating a module *is* the operation that produces a fresh instance, so
+`ExperimentalInstance::reset` rebuilds the store from the existing engine and re-instantiates
+in place, behind the same handle. Slower than the 2.2 fork's in-place rewind, and stricter:
+tables and passive-element state come back too.
+
+So `Reset()` now returns true on `wasmer7` and `wasmer2`, and the warm instance tier is live
+on all three backends rather than collapsing into the module cache. `Instance::reset` takes
+`&mut self` to say what it does. The faster in-place design — exporting the contract's globals
+from a middleware, restoring memory from a per-module snapshot — is written up in
+`PLAN-reset-via-middlewares.md` and deliberately not built, on the 1% above.
 
 ### Done: the serialized-artifact path, on both new backends
 

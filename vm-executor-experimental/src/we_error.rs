@@ -25,7 +25,4 @@ pub enum ExperimentalError {
 
     #[error("cache artifact is empty")]
     EmptyCacheArtifact,
-
-    #[error("resetting an instance is not supported")]
-    ResetUnsupported,
 }

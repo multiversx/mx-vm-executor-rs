@@ -19,6 +19,16 @@ const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
 pub struct ExperimentalInstance {
     wasmer_store: wasmer::Store,
     inner: Rc<ExperimentalInstanceInner>,
+
+    /// Kept so the instance can be rebuilt in place by [`Instance::reset`].
+    ///
+    /// Cheap to hold — `Module` is a handle over refcounted compiled code, not a copy of it —
+    /// and it is the only way to re-instantiate without going back to the wasm bytes.
+    module: Module,
+
+    /// Kept for the same reason: re-instantiating means building a fresh import object, and
+    /// that needs the runtime the hooks are reached through.
+    runtime: Arc<dyn ExecutorRuntime>,
 }
 
 pub struct ExperimentalInstanceInner {
@@ -104,7 +114,7 @@ impl ExperimentalInstance {
         trace!("Compiling module ...");
         let module = Module::new(&store, wasm_bytes)?;
 
-        Self::try_from_module(runtime, store, &module)
+        Self::try_from_module(runtime, store, module)
     }
 
     /// Instantiates a module from a previously serialized artifact, skipping compilation.
@@ -135,22 +145,24 @@ impl ExperimentalInstance {
         // SAFETY: see the trust note above — the caller vouches for the artifact's origin.
         let module = unsafe { Module::deserialize(&store, cache_bytes)? };
 
-        Self::try_from_module(runtime, store, &module)
+        Self::try_from_module(runtime, store, module)
     }
 
     /// The half the two entry points share: everything after there is a `Module`.
     fn try_from_module(
         runtime: Arc<dyn ExecutorRuntime>,
         mut store: Store,
-        module: &Module,
+        module: Module,
     ) -> Result<Self, ExecutorError> {
         let inner = rc_new_cyclic_fallible(|weak| {
-            prepare_wasmer_instance_inner(runtime, module, &mut store, weak)
+            prepare_wasmer_instance_inner(runtime.clone(), &module, &mut store, weak)
         })?;
 
         Ok(ExperimentalInstance {
             wasmer_store: store,
             inner,
+            module,
+            runtime,
         })
     }
 
@@ -338,8 +350,45 @@ impl Instance for ExperimentalInstance {
         get_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store)
     }
 
-    fn reset(&self) -> Result<(), ExecutorError> {
-        Err(ExperimentalError::ResetUnsupported.into())
+    /// Re-instantiates the module into a fresh store, in place.
+    ///
+    /// Wasmer 7 has no `Instance::reset` — the only `reset` it offers is `Memory::reset`,
+    /// which empties the memory and restores neither its contents nor the globals — so there
+    /// is nothing to rewind an instance with. What there is, is the module: instantiating it
+    /// again produces exactly the state a fresh instance would have, because that is the same
+    /// operation. So this throws the instance away and builds another one behind the same
+    /// handle.
+    ///
+    /// **The store is rebuilt, not reused.** It owns the instance's memory and globals, so
+    /// keeping it would keep the very state being discarded. The *engine* is reused — cloned
+    /// out of the old store, which is a refcount bump — and that is what makes this cheap:
+    /// the module stays compiled, and only instantiation is repeated.
+    ///
+    /// Compared with the Wasmer 2.2 fork's `Instance::reset`, which rewinds globals and
+    /// memories in place, this is slower — it re-runs the whole instantiation, including
+    /// rebuilding the import object. It is also stricter: tables and passive-element
+    /// bookkeeping come back too, which the fork's version does not restore. See
+    /// `PLAN-reset-via-middlewares.md` for the faster in-place design and why it was not
+    /// built yet.
+    ///
+    /// On failure the instance is left untouched rather than half-rebuilt, since the new
+    /// store and inner are only swapped in once both exist.
+    fn reset(&mut self) -> Result<(), ExecutorError> {
+        // Same engine, so the already-compiled module is still valid in the new store.
+        let mut store = Store::new(self.wasmer_store.engine().clone());
+
+        let runtime = self.runtime.clone();
+        let module = self.module.clone();
+        let inner = rc_new_cyclic_fallible(|weak| {
+            prepare_wasmer_instance_inner(runtime, &module, &mut store, weak)
+        })?;
+
+        // Dropping the old store releases the old instance's memory and globals, and with
+        // them the import object holding the previous `Weak` back-reference.
+        self.wasmer_store = store;
+        self.inner = inner;
+
+        Ok(())
     }
 
     fn cache(&self) -> Result<Vec<u8>, ExecutorError> {

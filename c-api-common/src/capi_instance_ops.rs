@@ -149,6 +149,36 @@ unsafe fn build_instance(
     vm_exec_status_t::VM_EXEC_OK
 }
 
+/// Returns the instance to the state it was in immediately after creation.
+///
+/// This is what makes an instance reusable for a second execution: memory contents and
+/// length, every mutable global, and the metering and breakpoint globals with them. The
+/// instance keeps its identity, so the caller's handle stays valid.
+///
+/// A backend that cannot do it reports an error, and the caller is expected to destroy the
+/// instance and build another rather than reuse it. Reusing an instance whose reset failed
+/// would carry the previous execution's state into the next one.
+///
+/// # Safety
+///
+/// All pointer arguments must be valid for the duration of the call.
+pub unsafe fn instance_reset(
+    instance: *mut CapiInstance,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    if instance.is_null() {
+        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
+    }
+
+    let capi_instance = unsafe { &mut *instance };
+
+    match capi_instance.content.reset() {
+        Ok(()) => vm_exec_status_t::VM_EXEC_OK,
+        Err(err) => write_error(err, err_buf, err_buf_len),
+    }
+}
+
 /// Serializes the instance's module and reports the buffer size [`instance_cache`] needs.
 ///
 /// This is the first half of the usual two-call read, but it does the work rather than just
