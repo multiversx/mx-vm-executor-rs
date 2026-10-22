@@ -23,25 +23,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          load: true
-          platforms: linux/arm64
-          file: ./Docker/linux.dockerfile
-          build-args: |
-            MAKE_TARGET=capi-linux-arm
-            ARTIFACT_NAME=libvmexeccapi_arm.so
-          tags: mx-builder
-
-      - name: Copy library from Docker image
-        run: docker run --platform="linux/arm64" --rm mx-builder cat /data/libvmexeccapi_arm.so > $GITHUB_WORKSPACE/libvmexeccapi_arm.so
+      # The same target developers run locally. The Makefile owns the buildx
+      # invocation — platform, build args, the `wasmer-fork` named context — so
+      # a new Dockerfile input only has to be wired up in one place, and this
+      # build cannot drift from `make ci-local`. It leaves the library in
+      # $(CI_LOCAL_DIR), hence the artifact path below.
+      - name: Build library
+        run: make capi-linux-arm64-docker
 
       - name: Save artifacts
         uses: actions/upload-artifact@v4
         with:
           name: lib-linux-arm
           path: |
-            libvmexeccapi_arm.so
+            target/ci-local/libvmexeccapi_arm.so
           if-no-files-found: error

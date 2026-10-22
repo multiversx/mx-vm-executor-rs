@@ -1,0 +1,4 @@
+Default value of the `wasmer-fork` named build context (see Makefile:
+WASMER_FORK_DIR). Kept empty and checked in so `docker buildx build
+--build-context wasmer-fork=...` always resolves to a real directory even
+when no local wasmer fork override is in use.

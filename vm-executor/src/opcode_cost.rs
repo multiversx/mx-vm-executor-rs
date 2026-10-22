@@ -243,16 +243,6 @@ pub struct OpcodeCost {
     pub opcode_returncallindirect: u32,
     #[serde(rename = "Select", default)]
     pub opcode_select: u32,
-    #[serde(rename = "TableGet", default)]
-    pub opcode_tableget: u32,
-    #[serde(rename = "TableGrow", default)]
-    pub opcode_tablegrow: u32,
-    #[serde(rename = "TableInit", default)]
-    pub opcode_tableinit: u32,
-    #[serde(rename = "TableSet", default)]
-    pub opcode_tableset: u32,
-    #[serde(rename = "TableSize", default)]
-    pub opcode_tablesize: u32,
     #[serde(rename = "Throw", default)]
     pub opcode_throw: u32,
     #[serde(rename = "Try", default)]
