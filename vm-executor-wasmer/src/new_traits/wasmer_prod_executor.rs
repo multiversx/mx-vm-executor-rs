@@ -1,26 +1,20 @@
-use multiversx_chain_vm_executor::OpcodeConfig;
-
 use crate::WasmerInstance;
 use crate::executor_interface::{
-    CompilationOptions, Executor, ExecutorError, Instance, VMHooksLegacy, check_missing_wasm,
+    CompilationOptions, Executor, ExecutorError, ExecutorRuntime, Instance, OpcodeConfig,
+    VMHooksLegacy, VMHooksLegacyAdapter, check_missing_wasm,
 };
+use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
 use std::{
     fmt,
     rc::Rc,
     sync::{Arc, Mutex},
 };
 
-use super::{WasmerProdInstance, WasmerProdInstanceState};
-
-pub trait WasmerProdRuntimeRef: Send + Sync {
-    fn vm_hooks(&self, instance_state: WasmerProdInstanceState) -> Box<dyn VMHooksLegacy>;
-
-    fn opcode_config(&self) -> Arc<Mutex<OpcodeConfig>>;
-}
+use super::{WasmerExecutorError, WasmerProdInstance, WasmerProdInstanceState};
 
 /// Executor implementation that produces wasmer instances with correctly injected VM hooks from runtime.
 pub struct WasmerProdExecutor {
-    runtime_ref: Box<dyn WasmerProdRuntimeRef>,
+    runtime: Arc<dyn ExecutorRuntime>,
 }
 
 impl fmt::Debug for WasmerProdExecutor {
@@ -30,32 +24,43 @@ impl fmt::Debug for WasmerProdExecutor {
 }
 
 impl WasmerProdExecutor {
-    pub fn new(runtime_ref: Box<dyn WasmerProdRuntimeRef>) -> Self {
-        WasmerProdExecutor { runtime_ref }
+    pub fn new(runtime: Arc<dyn ExecutorRuntime>) -> Self {
+        WasmerProdExecutor { runtime }
     }
 
-    fn new_instance_from_bytes(
+    /// Builds an instance from either source.
+    ///
+    /// The two paths differ only in how the `WasmerInstance` is constructed — compile, or
+    /// deserialize — and everything around that is identical: the cyclic hook wiring and the
+    /// wrapper. So `build` is the one thing passed in.
+    fn new_instance_with(
         &self,
-        wasm_bytes: &[u8],
-        compilation_options: &CompilationOptions,
-    ) -> Box<dyn Instance> {
-        let inner_instance_ref = Rc::new_cyclic(|weak| {
-            let instance_state = WasmerProdInstanceState::new(weak.clone());
-            let vm_hooks = self.runtime_ref.vm_hooks(instance_state);
+        build: impl FnOnce(Rc<dyn VMHooksLegacy>) -> Result<WasmerInstance, ExecutorError>,
+    ) -> Result<Box<dyn Instance>, ExecutorError> {
+        let inner_instance_ref = rc_new_cyclic_fallible(|weak| {
+            // The legacy import object wants a hooks object for the instance's life, while
+            // the runtime lends hooks per call; the adapter is the join. The hooks an
+            // instance calls are therefore built fresh each time, around this instance's
+            // state, so they serve whichever execution the host has current — never the one
+            // that happened to be current when the instance was created.
+            let vm_hooks = VMHooksLegacyAdapter::new(
+                self.runtime.clone(),
+                WasmerProdInstanceState::new(weak.clone()),
+            );
 
-            WasmerInstance::try_new_instance(
-                Rc::from(vm_hooks),
-                self.runtime_ref.opcode_config(),
-                wasm_bytes,
-                &compilation_options.to_legacy(),
-            )
-            .expect("instance init failed")
-        });
+            build(Rc::new(vm_hooks))
+        })?;
 
-        let wasmer_instance_ref = WasmerProdInstance::new(inner_instance_ref);
-
-        Box::new(wasmer_instance_ref)
+        Ok(Box::new(WasmerProdInstance::new(inner_instance_ref)))
     }
+}
+
+/// The 2.2 middleware wants the config behind a `Mutex`, which was how the gas schedule used
+/// to be swapped under a live executor. Nothing mutates it any more: the config now arrives
+/// per instance in the compilation options, so this is a private copy that no one else holds
+/// a handle to.
+fn private_opcode_config(compilation_options: &CompilationOptions) -> Arc<Mutex<OpcodeConfig>> {
+    Arc::new(Mutex::new((*compilation_options.opcode_config).clone()))
 }
 
 impl Executor for WasmerProdExecutor {
@@ -66,14 +71,36 @@ impl Executor for WasmerProdExecutor {
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         check_missing_wasm(wasm_bytes)?;
 
-        Ok(self.new_instance_from_bytes(wasm_bytes, compilation_options))
+        let opcode_config = private_opcode_config(compilation_options);
+        let legacy = compilation_options.to_legacy();
+        self.new_instance_with(|vm_hooks| {
+            WasmerInstance::try_new_instance(vm_hooks, opcode_config, wasm_bytes, &legacy)
+        })
     }
 
+    /// Instantiates a previously serialized module.
+    ///
+    /// Same trust note as the Wasmer 7 backend: `Module::deserialize` maps executable code
+    /// without validating it, so artifacts must come from a store the host trusts. Here they
+    /// come from [`Instance::cache`] on this same library.
     fn new_instance_from_cache(
         &self,
-        _cache_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        panic!("WasmerProdExecutor new_instance_from_cache not supported")
+        if cache_bytes.is_empty() {
+            return Err(WasmerExecutorError::EmptyCacheArtifact.into());
+        }
+
+        let opcode_config = private_opcode_config(compilation_options);
+        let legacy = compilation_options.to_legacy();
+        self.new_instance_with(|vm_hooks| {
+            WasmerInstance::try_new_instance_from_cache(
+                vm_hooks,
+                opcode_config,
+                cache_bytes,
+                &legacy,
+            )
+        })
     }
 }

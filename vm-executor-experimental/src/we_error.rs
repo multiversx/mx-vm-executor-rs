@@ -19,4 +19,10 @@ pub enum ExperimentalError {
 
     #[error("instance call error: {0}")]
     InstanceCall(wasmer::RuntimeError),
+
+    #[error("instance memory access error: {0}")]
+    MemoryAccess(String),
+
+    #[error("cache artifact is empty")]
+    EmptyCacheArtifact,
 }
