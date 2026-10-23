@@ -20,7 +20,7 @@ pub struct MissingWasmError(String);
 
 impl fmt::Display for MissingWasmError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Contract {}", &self.0)
+        write!(f, "Contract {}", self.0)
     }
 }
 
