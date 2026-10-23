@@ -1,3 +1,5 @@
+#![allow(dead_code, unused_imports)]
+
 mod test_instance;
 mod test_wat;
 mod test_wat_bad;

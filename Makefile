@@ -12,6 +12,15 @@
 # stay out of the host's target/release.
 CI_LOCAL_DIR ?= target/ci-local
 
+# Passed to the Docker builds as the `wasmer-fork` named build context. Only
+# matters when vm-executor-wasmer/Cargo.toml has a `path = "../wasmer-fork/..."`
+# override in place of the usual git dependency: the container can't see paths
+# outside its build context, so the fork checkout has to be handed over
+# explicitly. Defaults to an empty directory so the plain git-dependency case
+# (no override) keeps working with no extra setup. Override with e.g.
+# `make ci-local WASMER_FORK_DIR=../wasmer-fork` when testing local fork changes.
+WASMER_FORK_DIR ?= Docker/empty-context
+
 UNAME_S := $(shell uname -s)
 
 capi:
@@ -124,6 +133,7 @@ capi-osx-amd64-cross:
 capi-linux-amd64-docker:
 	docker buildx build --platform linux/amd64 --file Docker/linux.dockerfile \
 	  --build-arg MAKE_TARGET=capi-linux-amd64 --build-arg ARTIFACT_NAME=libvmexeccapi.so \
+	  --build-context wasmer-fork=$(WASMER_FORK_DIR) \
 	  --tag mx-builder-amd64 --load .
 	mkdir -p $(CI_LOCAL_DIR)
 	docker run --platform linux/amd64 --rm mx-builder-amd64 cat /data/libvmexeccapi.so > $(CI_LOCAL_DIR)/libvmexeccapi.so
@@ -131,6 +141,7 @@ capi-linux-amd64-docker:
 capi-linux-arm64-docker:
 	docker buildx build --platform linux/arm64 --file Docker/linux.dockerfile \
 	  --build-arg MAKE_TARGET=capi-linux-arm --build-arg ARTIFACT_NAME=libvmexeccapi_arm.so \
+	  --build-context wasmer-fork=$(WASMER_FORK_DIR) \
 	  --tag mx-builder-arm64 --load .
 	mkdir -p $(CI_LOCAL_DIR)
 	docker run --platform linux/arm64 --rm mx-builder-arm64 cat /data/libvmexeccapi_arm.so > $(CI_LOCAL_DIR)/libvmexeccapi_arm.so

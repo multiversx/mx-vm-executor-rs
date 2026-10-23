@@ -24,3 +24,19 @@ pub fn test_instance(wat: &str) -> Box<dyn InstanceLegacy> {
         .new_instance(&wasm_bytes, &DUMMY_COMPILATION_OPTIONS)
         .unwrap()
 }
+
+/// Like [`test_instance`], but with caller-provided compilation options, for
+/// tests that need metering headroom or memory growth to be allowed.
+pub fn test_instance_with_options(
+    wat: &str,
+    compilation_options: &CompilationOptionsLegacy,
+) -> Box<dyn InstanceLegacy> {
+    let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
+    let service = BasicExecutorService::new();
+    let executor = service
+        .new_executor(Box::new(VMHooksLegacyDefault))
+        .unwrap();
+    executor
+        .new_instance(&wasm_bytes, compilation_options)
+        .unwrap()
+}

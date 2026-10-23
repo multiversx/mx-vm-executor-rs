@@ -15,7 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
-COPY . /repository
-WORKDIR /repository
+# `wasmer-fork` is a named build context (see Makefile: WASMER_FORK_DIR). It
+# defaults to an empty directory, and is only populated when a `path =
+# "../wasmer-fork/..."` override is in use in vm-executor-wasmer/Cargo.toml —
+# the sibling layout here mirrors that of the local checkout so those
+# relative paths resolve the same way on the host and in the container.
+COPY . /repository/mx-vm-executor-rs
+COPY --from=wasmer-fork . /repository/wasmer-fork
+WORKDIR /repository/mx-vm-executor-rs
 RUN make ${MAKE_TARGET}
-RUN mkdir /data && cp /repository/target/release/${ARTIFACT_NAME} /data/${ARTIFACT_NAME}
+RUN mkdir /data && cp /repository/mx-vm-executor-rs/target/release/${ARTIFACT_NAME} /data/${ARTIFACT_NAME}
