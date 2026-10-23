@@ -2,6 +2,12 @@
 
 This file contains a centralizes a trace of all published crate versions, with their changes in short.
 
+
+## [multiversx-chain-vm-executor 0.5.2] - 2026-10-23
+- Fixes from VM advisory:
+    - Eliminated table opcodes.
+    - Wasmer 2 fixes: popcnt fix, memory allocation fix (unreleased).
+
 ## [multiversx-chain-vm-executor 0.5.1] - 2026-01-20
 - Upgraded to Wasmer v6.1.0.
 - Fixed linker issue on Linux for Wasmer 2 (unreleased).

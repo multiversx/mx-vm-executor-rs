@@ -17,13 +17,15 @@ together with the generated header, in `target/ci-local`:
 | `libvmexeccapi_arm.dylib` | native (`capi-osx-arm`) | a macOS host |
 | `libvmexeccapi.dylib` | cross-compiled to `x86_64-apple-darwin` (`capi-osx-amd64-cross`) | a macOS host |
 
-The two container targets build under `Docker/linux.dockerfile`, the same file
-the `libvmexeccapi-build-linux-arm64` workflow uses, parameterized by
-`MAKE_TARGET`/`ARTIFACT_NAME`; the `rust` base image is multi-arch, so
+The two container targets build under `Docker/linux.dockerfile`, parameterized
+by `MAKE_TARGET`/`ARTIFACT_NAME`; the `rust` base image is multi-arch, so
 `--platform` alone selects amd64 or arm64. They need a running Docker daemon
 with buildx, and the non-native arch needs QEMU registered (Docker Desktop does
 this automatically; on plain Docker Engine, run
-`docker run --privileged --rm tonistiigi/binfmt --install all` once).
+`docker run --privileged --rm tonistiigi/binfmt --install all` once). The
+`libvmexeccapi-build-linux-arm64` workflow runs `capi-linux-arm64-docker`
+itself rather than driving buildx on its own, so the CI build and the local one
+cannot drift apart.
 
 **The two macOS libraries can only be built on an actual macOS host.** There is
 no Docker equivalent for them: Apple's terms don't allow macOS to run in a
