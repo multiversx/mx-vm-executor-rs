@@ -1,13 +1,13 @@
 use crate::{ExperimentalInstance, ExperimentalVMHooksBuilder};
 use multiversx_chain_vm_executor::{
-    CompilationOptions, Executor, ExecutorError, Instance, OpcodeCost, check_missing_wasm,
+    CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig, check_missing_wasm,
 };
 use std::{fmt, sync::Arc};
 
 pub trait ExperimentalExecutorRuntimeRef: Send + Sync {
     fn vm_hooks_builder(&self) -> Box<dyn ExperimentalVMHooksBuilder>;
 
-    fn opcode_cost(&self) -> Arc<OpcodeCost>;
+    fn opcode_config(&self) -> Arc<OpcodeConfig>;
 }
 
 /// Executor implementation that produces wasmer instances with correctly injected VM hooks from runtime.
@@ -34,7 +34,7 @@ impl ExperimentalExecutor {
         Box::new(
             ExperimentalInstance::try_new_instance(
                 self.runtime_ref.vm_hooks_builder(),
-                self.runtime_ref.opcode_cost(),
+                self.runtime_ref.opcode_config(),
                 wasm_bytes,
                 compilation_options,
             )
