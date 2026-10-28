@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use multiversx_chain_vm_executor::{Executor, Instance, OpcodeConfig};
+use multiversx_chain_vm_executor::{Executor, Instance, InstanceStopHandle, OpcodeConfig};
 
 use crate::capi_vm_hook_context::CapiVMHooksBuilder;
 use crate::capi_vm_hook_table::CapiVMHookTable;
@@ -58,6 +58,18 @@ impl CapiInstance {
             cached_artifact: None,
         }
     }
+}
+
+/// What a `vm_exec_<prefix>_stop_handle_t` points to.
+///
+/// Its own allocation, deliberately, and not a field read off `CapiInstance`. A stop is only
+/// useful while a call is running, and a call holds `&mut CapiInstance` for its whole
+/// duration — so reaching the handle through the instance pointer would mean forming `&` to
+/// something another thread holds `&mut` to. A separate object has no such overlap: it is
+/// taken before the call and used during it, which is the shape `InstanceStopHandle`
+/// describes.
+pub struct CapiStopHandle {
+    pub content: Box<dyn InstanceStopHandle>,
 }
 
 /// Builds the backend's executor around the runtime the C API supplies.

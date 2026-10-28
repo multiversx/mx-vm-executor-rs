@@ -15,7 +15,7 @@ use meta::capi_safe_unwind;
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
 use crate::capi_executor::vm_exec_w7_executor_t;
-use crate::capi_handles::{CapiExecutor, CapiInstance};
+use crate::capi_handles::{CapiExecutor, CapiInstance, CapiStopHandle};
 use crate::capi_instance_ops;
 use crate::capi_status::vm_exec_status_t;
 
@@ -23,6 +23,72 @@ use crate::capi_status::vm_exec_status_t;
 #[allow(non_camel_case_types)]
 #[repr(C)]
 pub struct vm_exec_w7_instance_t;
+
+/// Opaque handle that can stop a running call.
+#[allow(non_camel_case_types)]
+#[repr(C)]
+pub struct vm_exec_w7_stop_handle_t;
+
+/// Produces a handle that can stop a call on this instance.
+///
+/// Take it *before* the call it is meant to stop, then use it, from any thread, while that
+/// call is running. That ordering is the point: a stop is only useful mid-call, and the call
+/// owns the instance for its whole duration, so the handle is a separate object rather than
+/// something reached back through the instance pointer.
+///
+/// The handle must be released with `vm_exec_w7_stop_handle_destroy`. It may outlive the
+/// instance; a stop requested after the instance is gone does nothing.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w7_instance_stop_handle(
+    instance: *const vm_exec_w7_instance_t,
+    handle_out: *mut *mut vm_exec_w7_stop_handle_t,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::instance_stop_handle(
+            instance as *const CapiInstance,
+            handle_out as *mut *mut CapiStopHandle,
+            err_buf,
+            err_buf_len,
+        )
+    }
+}
+
+/// Asks the instance this handle came from to stop at the next opportunity.
+///
+/// Best effort, and says nothing about whether it worked: the call may already have finished,
+/// and neither backend can interrupt a contract that is inside a VM hook — the stop is
+/// noticed when control returns to wasm. Safe to call when no call is running.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(())]
+pub unsafe extern "C" fn vm_exec_w7_stop_handle_request_stop(
+    handle: *const vm_exec_w7_stop_handle_t,
+) {
+    unsafe { capi_instance_ops::stop_handle_request_stop(handle as *const CapiStopHandle) }
+}
+
+/// Releases a stop handle.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(())]
+pub unsafe extern "C" fn vm_exec_w7_stop_handle_destroy(
+    handle: *mut vm_exec_w7_stop_handle_t,
+) {
+    unsafe { capi_instance_ops::stop_handle_destroy(handle as *mut CapiStopHandle) }
+}
 
 /// Creates an instance.
 ///

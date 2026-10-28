@@ -13,7 +13,7 @@ pub use breakpoint_value_new::{BreakpointValue, UnknownBreakpointValueError};
 pub use compilation_options_new::CompilationOptions;
 pub use executor_new::Executor;
 pub use executor_runtime::{ExecutorRuntime, ExecutorRuntimeDefault, with_vm_hooks_once};
-pub use instance_new::{Instance, InstanceCallResult};
+pub use instance_new::{Instance, InstanceCallResult, InstanceStopHandle};
 pub use instance_state::InstanceState;
 pub use memory::{MemoryError, checked_load_range, checked_store_range, clamped_load_len};
 pub use vm_hooks_early_exit::VMHooksEarlyExit;

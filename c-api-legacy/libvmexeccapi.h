@@ -457,6 +457,11 @@ typedef struct vm_legacy_opcode_cost_t {
   uint32_t opcode_returncall;
   uint32_t opcode_returncallindirect;
   uint32_t opcode_select;
+  uint32_t opcode_tableget;
+  uint32_t opcode_tablegrow;
+  uint32_t opcode_tableinit;
+  uint32_t opcode_tableset;
+  uint32_t opcode_tablesize;
   uint32_t opcode_throw;
   uint32_t opcode_try;
   uint32_t opcode_typedselect;

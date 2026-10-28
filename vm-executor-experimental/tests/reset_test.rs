@@ -66,6 +66,7 @@ fn describe(result: &InstanceCallResult) -> &'static str {
         InstanceCallResult::RuntimeError(_) => "RuntimeError",
         InstanceCallResult::VMHooksEarlyExit(_) => "VMHooksEarlyExit",
         InstanceCallResult::Breakpoint(_) => "Breakpoint",
+        InstanceCallResult::Interrupted => "Interrupted",
     }
 }
 

@@ -78,6 +78,13 @@ typedef enum vm_exec_call_result_kind_t {
    * A middleware stopped execution. `breakpoint` says which.
    */
   VM_EXEC_CALL_BREAKPOINT = 4,
+  /**
+   * The host asked for the call to stop, through a stop handle.
+   *
+   * Its own kind rather than a breakpoint value: that field reports what the executor's
+   * own middlewares raised, and this came from outside the executor entirely.
+   */
+  VM_EXEC_CALL_INTERRUPTED = 5,
 } vm_exec_call_result_kind_t;
 
 /**
@@ -205,11 +212,6 @@ typedef struct vm_exec_opcode_cost_t {
   uint32_t opcode_returncall;
   uint32_t opcode_returncallindirect;
   uint32_t opcode_select;
-  uint32_t opcode_tableget;
-  uint32_t opcode_tablegrow;
-  uint32_t opcode_tableinit;
-  uint32_t opcode_tableset;
-  uint32_t opcode_tablesize;
   uint32_t opcode_throw;
   uint32_t opcode_try;
   uint32_t opcode_typedselect;

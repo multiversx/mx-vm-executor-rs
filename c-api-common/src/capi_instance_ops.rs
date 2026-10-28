@@ -16,7 +16,7 @@ use std::{ptr, slice};
 
 use crate::capi_call_result::vm_exec_call_result_t;
 use crate::capi_config::vm_exec_compilation_options_t;
-use crate::capi_handles::{CapiExecutor, CapiInstance};
+use crate::capi_handles::{CapiExecutor, CapiInstance, CapiStopHandle};
 use crate::capi_status::{vm_exec_status_t, write_error};
 use crate::capi_strings::{copy_pipe_joined, pipe_joined_length};
 use crate::capi_vm_hook_context::CapiVMHooksBuilder;
@@ -276,6 +276,68 @@ pub unsafe fn instance_cache(
 pub unsafe fn instance_destroy(instance: *mut CapiInstance) {
     if !instance.is_null() {
         drop(unsafe { Box::from_raw(instance) });
+    }
+}
+
+/// Produces a handle that can stop a call on this instance.
+///
+/// Taken while no call is running; used, from any thread, while one is. The handle owns
+/// nothing of the instance's borrow, so the two do not overlap — see `CapiStopHandle`.
+///
+/// The handle outlives the instance safely: both backends resolve to an object that either
+/// shares the instance's refcounted internals or names it by id, so a stop requested after
+/// the instance is gone is a no-op rather than a dangling write.
+///
+/// # Safety
+///
+/// All pointer arguments must be valid for the duration of the call.
+pub unsafe fn instance_stop_handle(
+    instance: *const CapiInstance,
+    handle_out: *mut *mut CapiStopHandle,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    if instance.is_null() || handle_out.is_null() {
+        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
+    }
+
+    let instance = unsafe { &*instance };
+    let handle = Box::new(CapiStopHandle {
+        content: instance.content.stop_handle(),
+    });
+
+    unsafe { *handle_out = Box::into_raw(handle) };
+
+    let _ = (err_buf, err_buf_len);
+
+    vm_exec_status_t::VM_EXEC_OK
+}
+
+/// Asks the instance this handle came from to stop at the next opportunity.
+///
+/// Best effort, and deliberately silent: the call may already have finished, and neither
+/// backend can interrupt a contract that is inside a VM hook — the stop is noticed when
+/// control returns to wasm. A caller that must bound the wait needs its own timeout.
+///
+/// # Safety
+///
+/// `handle` must be a pointer returned by `instance_stop_handle` and not yet destroyed.
+pub unsafe fn stop_handle_request_stop(handle: *const CapiStopHandle) {
+    if handle.is_null() {
+        return;
+    }
+
+    unsafe { &*handle }.content.request_stop();
+}
+
+/// Releases a stop handle.
+///
+/// # Safety
+///
+/// `handle` must be a pointer returned by `instance_stop_handle` and not yet destroyed.
+pub unsafe fn stop_handle_destroy(handle: *mut CapiStopHandle) {
+    if !handle.is_null() {
+        drop(unsafe { Box::from_raw(handle) });
     }
 }
 

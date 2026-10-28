@@ -24,6 +24,11 @@ wasmer = { version = "7.5", default-features = false, features = [
     "singlepass",
     "sys",
     "wat",
+    # Gives Store::interrupter(), the only way to stop a call on this backend: every global
+    # goes through the Store, which `call` borrows mutably for the whole execution, so the
+    # breakpoint global the 2.2 backend writes is unreachable here. Unix-only upstream; see
+    # ExperimentalStopHandle for what happens elsewhere.
+    "experimental-host-interrupt",
 ] }
 wasmer-types = "7.5"
 

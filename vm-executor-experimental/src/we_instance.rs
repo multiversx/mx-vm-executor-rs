@@ -7,14 +7,45 @@ use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
 use multiversx_chain_vm_executor::{
     BreakpointValue, CompilationOptions, ExecutorError, ExecutorRuntime, Instance,
-    InstanceCallResult, ServiceError, VMHooksEarlyExit,
+    InstanceCallResult, InstanceStopHandle, ServiceError, VMHooksEarlyExit,
 };
 use rc_new_cyclic_fallible::rc_new_cyclic_fallible;
-use std::{rc::Rc, rc::Weak, sync::Arc};
+use std::{
+    rc::Rc,
+    rc::Weak,
+    sync::{Arc, Mutex},
+};
 use wasmer::sys::{CompilerConfig, Singlepass};
 use wasmer::{Extern, ExternType, Module, Pages, Store};
+use wasmer_types::TrapCode;
 
 const MAX_MEMORY_PAGES_ALLOWED: Pages = Pages(20);
+
+#[cfg(unix)]
+use wasmer::Interrupter;
+
+#[cfg(unix)]
+fn store_interrupter(store: &Store) -> Interrupter {
+    store.interrupter()
+}
+
+/// Stands in where Wasmer has no interrupter to offer: upstream it is unix-only, behind the
+/// `experimental-host-interrupt` feature this crate enables unconditionally. Requesting a
+/// stop is then a no-op and the call runs to completion, which the contract of
+/// `request_stop` already allows, it being best effort.
+#[cfg(not(unix))]
+#[derive(Debug)]
+struct Interrupter;
+
+#[cfg(not(unix))]
+impl Interrupter {
+    fn interrupt(&self) {}
+}
+
+#[cfg(not(unix))]
+fn store_interrupter(_store: &Store) -> Interrupter {
+    Interrupter
+}
 
 /// One instantiated contract, and everything needed to put it back the way it started.
 ///
@@ -48,6 +79,13 @@ pub struct ExperimentalInstance {
     /// Owns the instance's memory, globals and tables, and the engine its module was
     /// compiled by. Replaced wholesale by [`Instance::reset`].
     wasmer_store: wasmer::Store,
+
+    /// The interrupter for the current store, shared with every outstanding stop handle.
+    ///
+    /// Behind an `Arc<Mutex<_>>` rather than handed out by value because an interrupter names
+    /// one store, and [`Instance::reset`] builds a new one. A handle taken before a reset
+    /// would otherwise go quietly dead; this way the reset refreshes what every handle reads.
+    interrupter: Arc<Mutex<Interrupter>>,
 
     /// The wasmer instance, behind the `Rc` the import object holds a `Weak` to.
     inner: Rc<ExperimentalInstanceInner>,
@@ -208,6 +246,7 @@ impl ExperimentalInstance {
         })?;
 
         Ok(ExperimentalInstance {
+            interrupter: Arc::new(Mutex::new(store_interrupter(&store))),
             wasmer_store: store,
             inner,
             module,
@@ -332,6 +371,12 @@ impl Instance for ExperimentalInstance {
                 match runtime_error.downcast::<VMHooksEarlyExit>() {
                     Ok(vm_hooks_error) => InstanceCallResult::VMHooksEarlyExit(vm_hooks_error),
                     Err(other_error) => {
+                        // A host-requested stop arrives as a trap, not as a global: the
+                        // interrupter delivers it by signal, so there is nothing to poll.
+                        if other_error.clone().to_trap() == Some(TrapCode::HostInterrupt) {
+                            return InstanceCallResult::Interrupted;
+                        }
+
                         let breakpoint = match self.get_breakpoint_value() {
                             Ok(breakpoint) => breakpoint,
                             Err(err) => return InstanceCallResult::RuntimeError(err),
@@ -434,6 +479,12 @@ impl Instance for ExperimentalInstance {
 
         // Dropping the old store releases the old instance's memory and globals, and with
         // them the import object holding the previous `Weak` back-reference.
+        // Before the old store is dropped, so that a handle taken earlier starts pointing at
+        // the new store rather than at one that no longer exists.
+        if let Ok(mut interrupter) = self.interrupter.lock() {
+            *interrupter = store_interrupter(&store);
+        }
+
         self.wasmer_store = store;
         self.inner = inner;
 
@@ -443,5 +494,42 @@ impl Instance for ExperimentalInstance {
     fn cache(&self) -> Result<Vec<u8>, ExecutorError> {
         let module = self.inner.wasmer_instance.module();
         Ok(module.serialize()?.to_vec())
+    }
+
+    fn stop_handle(&self) -> Box<dyn InstanceStopHandle> {
+        Box::new(ExperimentalStopHandle {
+            interrupter: self.interrupter.clone(),
+        })
+    }
+}
+
+/// Stops a Wasmer 7 call through the store's interrupter.
+///
+/// Where the 2.2 backend writes a breakpoint global, this cannot: every global here is reached
+/// through the `Store`, and `call` borrows it mutably for the whole execution — which is
+/// exactly the window a stop has to work in. The interrupter is the mechanism Wasmer provides
+/// for that, and it names only a `StoreId`, so it is reachable without the store.
+///
+/// It is also sharper than a global: the delivery is a signal, so a tight loop stops at once
+/// instead of at the next injected checkpoint.
+struct ExperimentalStopHandle {
+    interrupter: Arc<Mutex<Interrupter>>,
+}
+
+// InstanceStopHandle requires Debug. Implemented by hand rather than derived, so that
+// wasmer's Interrupter does not have to be Debug just to be held here.
+impl std::fmt::Debug for ExperimentalStopHandle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ExperimentalStopHandle").finish_non_exhaustive()
+    }
+}
+
+impl InstanceStopHandle for ExperimentalStopHandle {
+    fn request_stop(&self) {
+        let Ok(interrupter) = self.interrupter.lock() else {
+            return;
+        };
+
+        interrupter.interrupt();
     }
 }

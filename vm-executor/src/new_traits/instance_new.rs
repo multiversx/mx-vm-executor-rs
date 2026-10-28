@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::{BreakpointValue, ExecutorError, VMHooksEarlyExit};
 
 pub enum InstanceCallResult {
@@ -6,6 +8,34 @@ pub enum InstanceCallResult {
     RuntimeError(ExecutorError),
     VMHooksEarlyExit(VMHooksEarlyExit),
     Breakpoint(BreakpointValue),
+
+    /// The host asked for the call to stop, through an [`InstanceStopHandle`].
+    ///
+    /// Its own kind rather than a `BreakpointValue`, because it is not one: that enum covers
+    /// the interruptions the executor's *own middlewares* raise, and this one comes from
+    /// outside the executor entirely.
+    Interrupted,
+}
+
+/// Stops a call that is already running.
+///
+/// Separate from [`Instance`] on purpose. The only moment a stop is useful is while `call` is
+/// in flight, and `call` takes `&mut self` — so a method on the instance could not be reached
+/// precisely when it is wanted, and reaching it anyway would alias that borrow. A handle is
+/// taken *before* the call and used from another thread during it, which is the same shape
+/// Wasmer 7 settled on for `Store::interrupter`.
+///
+/// It is best effort, and silent about whether it worked, for two reasons that no
+/// implementation can do anything about: a contract already past its last checkpoint may
+/// finish first, and neither backend can interrupt a contract that is inside a VM hook — the
+/// stop is noticed when control returns to wasm. A caller that must bound the wait needs its
+/// own timeout regardless.
+pub trait InstanceStopHandle: Send + Sync + fmt::Debug {
+    /// Asks the instance to stop at the next opportunity.
+    ///
+    /// Safe to call at any time, from any thread, including when no call is running or when
+    /// the call has already finished: both are no-ops.
+    fn request_stop(&self);
 }
 
 /// The new instance trait, only used for configuring & calling the wasmer instance.
@@ -51,4 +81,10 @@ pub trait Instance {
 
     /// Caches an instance.
     fn cache(&self) -> Result<Vec<u8>, ExecutorError>;
+
+    /// Returns a handle that can stop a call on this instance from another thread.
+    ///
+    /// Taken before the call it is meant to stop; see [`InstanceStopHandle`] for why it is a
+    /// handle rather than a method here.
+    fn stop_handle(&self) -> Box<dyn InstanceStopHandle>;
 }

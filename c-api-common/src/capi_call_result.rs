@@ -38,6 +38,12 @@ pub enum vm_exec_call_result_kind_t {
 
     /// A middleware stopped execution. `breakpoint` says which.
     VM_EXEC_CALL_BREAKPOINT = 4,
+
+    /// The host asked for the call to stop, through a stop handle.
+    ///
+    /// Its own kind rather than a breakpoint value: that field reports what the executor's
+    /// own middlewares raised, and this came from outside the executor entirely.
+    VM_EXEC_CALL_INTERRUPTED = 5,
 }
 
 /// The out-struct of `vm_exec_w7_instance_call`.
@@ -100,6 +106,9 @@ impl vm_exec_call_result_t {
                     early_exit_code: early_exit.code,
                     breakpoint: 0,
                 }
+            }
+            InstanceCallResult::Interrupted => {
+                vm_exec_call_result_t::of_kind(vm_exec_call_result_kind_t::VM_EXEC_CALL_INTERRUPTED)
             }
             InstanceCallResult::Breakpoint(breakpoint) => vm_exec_call_result_t {
                 kind: vm_exec_call_result_kind_t::VM_EXEC_CALL_BREAKPOINT,
