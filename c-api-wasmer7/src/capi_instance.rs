@@ -235,6 +235,30 @@ pub unsafe extern "C" fn vm_exec_w7_instance_get_points_used(
     }
 }
 
+/// Overwrites the number of points (gas) used so far.
+///
+/// # Safety
+///
+/// C API function, works with raw object pointers.
+#[allow(clippy::cast_ptr_alignment)]
+#[unsafe(no_mangle)]
+#[capi_safe_unwind(vm_exec_status_t::VM_EXEC_PANIC)]
+pub unsafe extern "C" fn vm_exec_w7_instance_set_points_used(
+    instance: *mut vm_exec_w7_instance_t,
+    points: u64,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    unsafe {
+        capi_instance_ops::instance_set_points_used(
+            instance as *mut CapiInstance,
+            points,
+            err_buf,
+            err_buf_len,
+        )
+    }
+}
+
 /// Checks that every exported function takes no arguments and returns nothing.
 ///
 /// Returns 1 if so, 0 if not, or a negative status.

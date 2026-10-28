@@ -62,6 +62,22 @@ pub trait Instance {
     /// Returns the number of points(gas) used by the given instance.
     fn get_points_used(&mut self) -> Result<u64, ExecutorError>;
 
+    /// Overwrites the number of points (gas) used by the given instance.
+    ///
+    /// The counterpart of [`Instance::get_points_used`], and here for the same reason: the
+    /// points counter belongs to the instance and outlives any single call, so a host that
+    /// charges gas between calls has nowhere else to put it.
+    ///
+    /// [`InstanceState::set_points_used`] is the same operation seen from inside a host call.
+    /// Both exist because both moments are real: a hook charges gas while the contract is
+    /// running, and a host charges gas after a call has returned but before the next one on
+    /// the same instance — settling an async step, refunding what a nested execution did not
+    /// spend. The Go VM does both, and the counter it adjusts is the one the metering
+    /// middleware compares against the limit on the next call.
+    ///
+    /// [`InstanceState::set_points_used`]: crate::InstanceState::set_points_used
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError>;
+
     /// Returns the instance to the state it was in immediately after creation, so that it can
     /// serve another execution.
     ///

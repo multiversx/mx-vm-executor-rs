@@ -1,7 +1,7 @@
 use crate::ExperimentalError;
 use crate::middlewares::{
     Breakpoints, Metering, OpcodeControl, OpcodeTracer, ProtectedGlobals, get_breakpoint_value,
-    get_points_used, set_points_limit,
+    get_points_used, set_points_limit, set_points_used,
 };
 use crate::{we_imports::generate_import_object, we_vm_hooks::VMHooksWrapper};
 use log::trace;
@@ -442,6 +442,10 @@ impl Instance for ExperimentalInstance {
 
     fn get_points_used(&mut self) -> Result<u64, ExecutorError> {
         get_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store)
+    }
+
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
+        set_points_used(&self.inner.wasmer_instance, &mut self.wasmer_store, points)
     }
 
     /// Re-instantiates the module into a fresh store, in place.

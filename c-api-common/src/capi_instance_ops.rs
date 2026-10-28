@@ -406,6 +406,31 @@ pub unsafe fn instance_get_points_used(
     }
 }
 
+/// Overwrites the number of points (gas) used so far.
+///
+/// The counterpart of `instance_get_points_used`, for a host that charges gas between calls
+/// on the same instance rather than from inside a host call.
+///
+/// # Safety
+///
+/// All pointer arguments must be valid for the duration of the call.
+pub unsafe fn instance_set_points_used(
+    instance: *mut CapiInstance,
+    points: u64,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    if instance.is_null() {
+        return vm_exec_status_t::VM_EXEC_NULL_POINTER;
+    }
+
+    let capi_instance = unsafe { &mut *instance };
+    match capi_instance.content.set_points_used(points) {
+        Ok(()) => vm_exec_status_t::VM_EXEC_OK,
+        Err(err) => write_error(err, err_buf, err_buf_len),
+    }
+}
+
 /// Checks that every exported function takes no arguments and returns nothing.
 ///
 /// # Safety

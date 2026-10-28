@@ -148,6 +148,12 @@ impl Instance for WasmerProdInstance {
             .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
     }
 
+    fn set_points_used(&mut self, points: u64) -> Result<(), ExecutorError> {
+        self.inner_instance_ref
+            .set_points_used(points)
+            .map_err(|err| WasmerExecutorError::WrappedInstance(err).into())
+    }
+
     fn reset(&mut self) -> Result<(), ExecutorError> {
         self.inner_instance_ref
             .reset()
