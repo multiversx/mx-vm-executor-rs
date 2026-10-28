@@ -1,0 +1,16 @@
+[package]
+name = "multiversx-chain-vm-executor-c-api-common"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+multiversx-chain-vm-executor = { path = "../vm-executor" }
+
+libc = { version = "^0.2", default-features = false }
+
+[build-dependencies]
+cbindgen = "0.29"

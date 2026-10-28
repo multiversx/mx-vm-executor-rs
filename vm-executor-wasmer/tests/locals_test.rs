@@ -1,19 +1,10 @@
 use multiversx_chain_vm_executor_wasmer::executor_interface::{
-    CompilationOptionsLegacy, ExecutorError, ExecutorLegacy, ExecutorService, InstanceLegacy,
-    OpcodeConfig, OpcodeCost, VMHooksLegacyDefault, WASM_LOCALS_LIMIT,
+    CompilationOptions, Executor, ExecutorError, ExecutorRuntimeDefault, Instance,
+    InstanceCallResult, OpcodeConfig, OpcodeCost, WASM_LOCALS_LIMIT,
 };
-use multiversx_chain_vm_executor_wasmer::{BasicExecutorService, WasmerExecutor};
+use multiversx_chain_vm_executor_wasmer::new_traits::WasmerProdExecutor;
+use std::sync::Arc;
 use wasmer::wat2wasm;
-
-const COMPILATION_OPTIONS: CompilationOptionsLegacy = CompilationOptionsLegacy {
-    gas_limit: 0,
-    unmetered_locals: 0,
-    max_memory_grow: 0,
-    max_memory_grow_delta: 0,
-    opcode_trace: false,
-    metering: false,
-    runtime_breakpoints: false,
-};
 
 fn wat_with_locals(num_locals: usize) -> String {
     format!(
@@ -25,14 +16,14 @@ fn wat_with_locals(num_locals: usize) -> String {
     )
 }
 
-fn try_instance(num_locals: usize) -> Result<Box<dyn InstanceLegacy>, ExecutorError> {
+fn new_executor() -> WasmerProdExecutor {
+    WasmerProdExecutor::new(Arc::new(ExecutorRuntimeDefault))
+}
+
+fn try_instance(num_locals: usize) -> Result<Box<dyn Instance>, ExecutorError> {
     let wat = wat_with_locals(num_locals);
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
-    let service = BasicExecutorService::new();
-    let executor = service
-        .new_executor(Box::new(VMHooksLegacyDefault))
-        .unwrap();
-    executor.new_instance(&wasm_bytes, &COMPILATION_OPTIONS)
+    new_executor().new_instance(&wasm_bytes, &CompilationOptions::default())
 }
 
 #[test]
@@ -46,34 +37,31 @@ fn deploy_more_than_maximum_locals_fails() {
 }
 
 const LOCAL_ALLOCATE_COST: u32 = 5;
+const POINTS_LIMIT: u64 = 1_000_000;
 
 /// All opcodes are free except local allocation, so `points_used` after calling `init`
 /// is exactly the cost of the metered locals.
 fn points_used_with_locals(num_locals: usize, unmetered_locals: usize) -> u64 {
     let wat = wat_with_locals(num_locals);
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
-    let options = CompilationOptionsLegacy {
-        gas_limit: 1_000_000,
+    let opcode_config = OpcodeConfig {
+        opcode_cost: OpcodeCost {
+            opcode_localallocate: LOCAL_ALLOCATE_COST,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
+    let options = CompilationOptions {
         unmetered_locals,
-        metering: true,
-        runtime_breakpoints: true,
-        ..COMPILATION_OPTIONS
+        opcode_config: Arc::new(opcode_config),
+        ..Default::default()
     };
 
-    let mut executor = WasmerExecutor::new(Box::new(VMHooksLegacyDefault));
-    executor
-        .set_opcode_config(OpcodeConfig {
-            opcode_cost: OpcodeCost {
-                opcode_localallocate: LOCAL_ALLOCATE_COST,
-                ..Default::default()
-            },
-            ..Default::default()
-        })
-        .unwrap();
-    let instance = executor.new_instance(&wasm_bytes, &options).unwrap();
-
-    instance.set_points_used(0).unwrap();
-    instance.call("init").unwrap();
+    let mut instance = new_executor().new_instance(&wasm_bytes, &options).unwrap();
+    assert!(matches!(
+        instance.call("init", POINTS_LIMIT),
+        InstanceCallResult::Ok
+    ));
     instance.get_points_used().unwrap()
 }
 

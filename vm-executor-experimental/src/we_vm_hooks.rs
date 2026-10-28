@@ -1,12 +1,14 @@
-use std::rc::Weak;
+use std::{rc::Weak, sync::Arc};
 
-use multiversx_chain_vm_executor::{MemLength, MemPtr, VMHooks, VMHooksEarlyExit};
+use multiversx_chain_vm_executor::{
+    ExecutorRuntime, MemLength, MemPtr, VMHooks, VMHooksEarlyExit, with_vm_hooks_once,
+};
 use wasmer::FunctionEnvMut;
 
-use crate::{ExperimentalInstanceInner, ExperimentalInstanceState, ExperimentalVMHooksBuilder};
+use crate::{ExperimentalInstanceInner, ExperimentalInstanceState};
 
 pub struct VMHooksWrapper {
-    pub vm_hooks_builder: Box<dyn ExperimentalVMHooksBuilder>,
+    pub runtime: Arc<dyn ExecutorRuntime>,
     pub wasmer_inner: Weak<ExperimentalInstanceInner>,
 }
 
@@ -36,7 +38,8 @@ where
         store_mut: &mut store_mut,
     };
 
-    let mut vm_hooks = data.vm_hooks_builder.create_vm_hooks(&mut instance_state);
-
-    f(&mut *vm_hooks)
+    with_vm_hooks_once(
+        |lend| data.runtime.with_vm_hooks(&mut instance_state, lend),
+        f,
+    )
 }

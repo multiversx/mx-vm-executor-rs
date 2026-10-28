@@ -1,0 +1,21 @@
+[package]
+name = "multiversx-chain-vm-executor-c-api-wasmer2"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[lib]
+# `cdylib` is what the Go VM links against; `rlib` is what the integration tests under
+# `tests/` need in order to call the exported functions from Rust.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+meta = { path = "../meta" }
+multiversx-chain-vm-executor = { path = "../vm-executor" }
+multiversx-chain-vm-executor-c-api-common = { path = "../c-api-common" }
+multiversx-chain-vm-executor-wasmer = { path = "../vm-executor-wasmer" }
+
+libc = { version = "^0.2", default-features = false }
+
+[build-dependencies]
+cbindgen = "0.29"

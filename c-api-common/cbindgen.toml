@@ -1,0 +1,16 @@
+# This crate exports no C functions, only the shared vocabulary the backend APIs are written
+# in, so nothing is reachable from an entry point and everything has to be named explicitly.
+include_guard = "VM_EXEC_COMMON_H"
+
+[export]
+include = [
+    "vm_exec_status_t",
+    "vm_exec_opcode_cost_t",
+    "vm_exec_compilation_options_t",
+    "vm_exec_executor_config_t",
+    "vm_exec_call_result_kind_t",
+    "vm_exec_call_result_t",
+    "vm_exec_hook_result_t",
+    "vm_exec_hook_context_t",
+    "vm_exec_vm_hook_c_func_pointers",
+]
