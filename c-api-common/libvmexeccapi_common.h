@@ -46,6 +46,22 @@ typedef enum vm_exec_status_t {
    * entry point traps them and reports this instead.
    */
   VM_EXEC_PANIC = -4,
+  /**
+   * A memory access named an offset outside the instance memory.
+   */
+  VM_EXEC_MEM_BAD_BOUNDS = -5,
+  /**
+   * A memory access named an offset before the start of the instance memory.
+   */
+  VM_EXEC_MEM_BAD_BOUNDS_LOWER = -6,
+  /**
+   * A memory access named a range ending past the end of the instance memory.
+   */
+  VM_EXEC_MEM_BAD_BOUNDS_UPPER = -7,
+  /**
+   * A memory access named a negative length.
+   */
+  VM_EXEC_MEM_NEGATIVE_LENGTH = -8,
 } vm_exec_status_t;
 
 /**

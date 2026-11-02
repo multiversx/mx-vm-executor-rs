@@ -15,11 +15,11 @@
 
 use libc::{c_char, c_int};
 use multiversx_chain_vm_executor::{
-    ExecutorError, MemLength, MemPtr, ServiceError, clamped_load_len,
+    ExecutorError, MemLength, MemPtr, MemoryError, ServiceError, clamped_load_len,
 };
 use std::slice;
 
-use crate::capi_status::{vm_exec_status_t, write_error, write_error_count};
+use crate::capi_status::{vm_exec_status_t, write_executor_error, write_executor_error_count};
 use crate::capi_vm_hook_context::{
     ErasedInstanceState, vm_exec_hook_context_t, with_instance_state,
 };
@@ -63,7 +63,7 @@ pub unsafe fn state_mem_load(
 
     match loaded {
         Err(context_err) => context_err.as_status().as_i64(),
-        Ok(Err(err)) => write_error_count(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error_count(err, err_buf, err_buf_len),
         Ok(Ok(to_load)) => to_load as i64,
     }
 }
@@ -83,7 +83,9 @@ pub unsafe fn state_mem_store(
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
     if src_len < 0 {
-        return write_error("negative length", err_buf, err_buf_len);
+        // Classified like any other memory error, rather than as a plain message: the caller
+        // matches on the status, and a negative length is one of the cases it tells apart.
+        return write_executor_error(Box::new(MemoryError::NegativeLength), err_buf, err_buf_len);
     }
     if src.is_null() && src_len > 0 {
         return vm_exec_status_t::VM_EXEC_NULL_POINTER;
@@ -102,7 +104,7 @@ pub unsafe fn state_mem_store(
 
     match stored {
         Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error(err, err_buf, err_buf_len),
         Ok(Ok(())) => vm_exec_status_t::VM_EXEC_OK,
     }
 }
@@ -128,7 +130,7 @@ pub unsafe fn state_mem_length(
 
     match length {
         Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error(err, err_buf, err_buf_len),
         Ok(Ok(length)) => {
             unsafe {
                 *length_out = length;
@@ -160,7 +162,7 @@ pub unsafe fn state_mem_grow(
 
     match grown {
         Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error(err, err_buf, err_buf_len),
         Ok(Ok(prev_pages)) => {
             unsafe {
                 *prev_pages_out = prev_pages;
@@ -191,7 +193,7 @@ pub unsafe fn state_get_points_used(
 
     match points {
         Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error(err, err_buf, err_buf_len),
         Ok(Ok(points)) => {
             unsafe {
                 *points_out = points;
@@ -218,7 +220,7 @@ pub unsafe fn state_set_points_used(
 
     match set {
         Err(context_err) => context_err.as_status(),
-        Ok(Err(err)) => write_error(err, err_buf, err_buf_len),
+        Ok(Err(err)) => write_executor_error(err, err_buf, err_buf_len),
         Ok(Ok(())) => vm_exec_status_t::VM_EXEC_OK,
     }
 }

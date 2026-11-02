@@ -122,6 +122,16 @@ struct HookLog {
     failures: Vec<String>,
 }
 
+/// Serialises the tests that drive hooks, which share the process-global hook log.
+///
+/// Both of them assert on absolute call counts, so neither can run while the other is adding
+/// to the log. A poisoned lock is taken anyway: the failure it signals belongs to whichever
+/// test panicked, and the rest should still report their own result.
+fn hook_serial() -> &'static Mutex<()> {
+    static SERIAL: OnceLock<Mutex<()>> = OnceLock::new();
+    SERIAL.get_or_init(|| Mutex::new(()))
+}
+
 fn hook_log() -> &'static Mutex<HookLog> {
     static LOG: OnceLock<Mutex<HookLog>> = OnceLock::new();
     LOG.get_or_init(|| Mutex::new(HookLog::default()))
@@ -387,6 +397,14 @@ fn lifecycle() {
 
 #[test]
 fn hook_dispatch() {
+    // The hook log is a process global, and the mock table every test shares writes to it.
+    // This test asserts absolute call counts, so it holds the other hook-driving test off
+    // and starts from a known log - which is what it used to depend on test order for.
+    let _serial = hook_serial()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    *hook_log().lock().unwrap() = HookLog::default();
+
     let mut err = ErrBuf::new();
     let executor = new_executor(&mut err);
     let instance = new_instance(executor, &mut err);
@@ -622,21 +640,21 @@ fn probe_state_ops(ctx: *mut vm_exec_hook_context_t, outcome: &mut Outcome) {
     let loaded = mem_load(ctx, (PAGE + 1) as i32, &mut buf, 1);
     outcome.check(
         "mem_load rejects an offset past the end",
-        loaded == vm_exec_status_t::VM_EXEC_ERROR.as_i64(),
+        loaded == vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS.as_i64(),
         format!("loaded {loaded}"),
     );
 
     let loaded = mem_load(ctx, -1, &mut buf, 1);
     outcome.check(
         "mem_load rejects a negative offset",
-        loaded == vm_exec_status_t::VM_EXEC_ERROR.as_i64(),
+        loaded == vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS.as_i64(),
         format!("loaded {loaded}"),
     );
 
     let loaded = mem_load(ctx, 0, &mut buf, -1);
     outcome.check(
         "mem_load rejects a negative length",
-        loaded == vm_exec_status_t::VM_EXEC_ERROR.as_i64(),
+        loaded == vm_exec_status_t::VM_EXEC_MEM_NEGATIVE_LENGTH.as_i64(),
         format!("loaded {loaded}"),
     );
 
@@ -657,7 +675,7 @@ fn probe_state_ops(ctx: *mut vm_exec_hook_context_t, outcome: &mut Outcome) {
     let status = mem_store(ctx, (PAGE - 1) as i32, b"ABC");
     outcome.check(
         "mem_store rejects a range past the end",
-        status == vm_exec_status_t::VM_EXEC_ERROR,
+        status == vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS_UPPER,
         format!("{status:?}"),
     );
 
@@ -733,6 +751,11 @@ fn probe_nesting(
 
 #[test]
 fn state_ops() {
+    // Drives the same shared hook table; see hook_serial.
+    let _serial = hook_serial()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
     let outcome = Arc::new(Mutex::new(Outcome::default()));
     let builder = ProbingHooksBuilder {
         inner: CapiVMHooksBuilder::new(0xBEEFusize, unsafe {
@@ -815,6 +838,11 @@ fn read_artifact(instance: *mut vm_exec_w2_instance_t, err: &mut ErrBuf) -> Vec<
 /// through `new_instance_from_cache`, and the restored instance is a working instance.
 #[test]
 fn cache_round_trip() {
+    // Runs the restored instance's hooks, so it writes to the shared log too; see hook_serial.
+    let _serial = hook_serial()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
     let mut err = ErrBuf::new();
     let executor = new_executor(&mut err);
     let instance = new_instance(executor, &mut err);

@@ -8,6 +8,7 @@
 //! writes its message into it before returning.
 
 use libc::{c_char, c_int};
+use multiversx_chain_vm_executor::{ExecutorError, MemoryError};
 use std::fmt::Display;
 use std::{ptr, slice};
 
@@ -37,6 +38,36 @@ pub enum vm_exec_status_t {
     /// A panic was caught at the boundary. Rust panics must never unwind into C, so every
     /// entry point traps them and reports this instead.
     VM_EXEC_PANIC = -4,
+
+    /// A memory access named an offset outside the instance memory.
+    VM_EXEC_MEM_BAD_BOUNDS = -5,
+
+    /// A memory access named an offset before the start of the instance memory.
+    VM_EXEC_MEM_BAD_BOUNDS_LOWER = -6,
+
+    /// A memory access named a range ending past the end of the instance memory.
+    VM_EXEC_MEM_BAD_BOUNDS_UPPER = -7,
+
+    /// A memory access named a negative length.
+    VM_EXEC_MEM_NEGATIVE_LENGTH = -8,
+}
+
+/// The memory errors get their own statuses because a host tells them apart.
+///
+/// [`MemoryError`] exists so that a VM can map the cases onto its own error values by
+/// matching rather than by parsing a message, and flattening them all into
+/// `VM_EXEC_ERROR` would take that away at the boundary: the only thing left to match on
+/// would be the message text. The message is still written, for a caller that only prints
+/// it.
+impl From<MemoryError> for vm_exec_status_t {
+    fn from(err: MemoryError) -> Self {
+        match err {
+            MemoryError::BadBounds => vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS,
+            MemoryError::BadBoundsLower => vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS_LOWER,
+            MemoryError::BadBoundsUpper => vm_exec_status_t::VM_EXEC_MEM_BAD_BOUNDS_UPPER,
+            MemoryError::NegativeLength => vm_exec_status_t::VM_EXEC_MEM_NEGATIVE_LENGTH,
+        }
+    }
 }
 
 impl vm_exec_status_t {
@@ -63,6 +94,38 @@ pub fn write_error(
     err_buf: *mut c_char,
     err_buf_len: c_int,
 ) -> vm_exec_status_t {
+    write_message(message, err_buf, err_buf_len);
+    vm_exec_status_t::VM_EXEC_ERROR
+}
+
+/// Writes the message of an error that may be a [`MemoryError`], and returns the status that
+/// classifies it.
+///
+/// Used by every entry point whose error can come from a memory access, so that the caller
+/// gets the classification in the status rather than having to recognise it in the text.
+pub fn write_executor_error(
+    err: ExecutorError,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> vm_exec_status_t {
+    write_message(&err, err_buf, err_buf_len);
+
+    match err.downcast_ref::<MemoryError>() {
+        Some(mem_err) => (*mem_err).into(),
+        None => vm_exec_status_t::VM_EXEC_ERROR,
+    }
+}
+
+/// [`write_executor_error`] for the functions that return a count.
+pub fn write_executor_error_count(
+    err: ExecutorError,
+    err_buf: *mut c_char,
+    err_buf_len: c_int,
+) -> i64 {
+    write_executor_error(err, err_buf, err_buf_len).as_i64()
+}
+
+fn write_message(message: impl Display, err_buf: *mut c_char, err_buf_len: c_int) {
     if !err_buf.is_null() && err_buf_len > 0 {
         let message = message.to_string();
         let capacity = err_buf_len as usize - 1; // room for the NUL
@@ -80,8 +143,6 @@ pub fn write_error(
             dest[copy_len] = 0;
         }
     }
-
-    vm_exec_status_t::VM_EXEC_ERROR
 }
 
 /// Writes a message and returns it as a negative count, for the functions that return one.
