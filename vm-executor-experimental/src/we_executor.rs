@@ -1,18 +1,12 @@
-use crate::{ExperimentalInstance, ExperimentalVMHooksBuilder};
+use crate::{ExperimentalError, ExperimentalInstance};
 use multiversx_chain_vm_executor::{
-    CompilationOptions, Executor, ExecutorError, Instance, OpcodeConfig, check_missing_wasm,
+    CompilationOptions, Executor, ExecutorError, ExecutorRuntime, Instance, check_missing_wasm,
 };
 use std::{fmt, sync::Arc};
 
-pub trait ExperimentalExecutorRuntimeRef: Send + Sync {
-    fn vm_hooks_builder(&self) -> Box<dyn ExperimentalVMHooksBuilder>;
-
-    fn opcode_config(&self) -> Arc<OpcodeConfig>;
-}
-
 /// Executor implementation that produces wasmer instances with correctly injected VM hooks from runtime.
 pub struct ExperimentalExecutor {
-    runtime_ref: Box<dyn ExperimentalExecutorRuntimeRef>,
+    runtime: Arc<dyn ExecutorRuntime>,
 }
 
 impl fmt::Debug for ExperimentalExecutor {
@@ -22,24 +16,8 @@ impl fmt::Debug for ExperimentalExecutor {
 }
 
 impl ExperimentalExecutor {
-    pub fn new(runtime_ref: Box<dyn ExperimentalExecutorRuntimeRef>) -> Self {
-        ExperimentalExecutor { runtime_ref }
-    }
-
-    fn new_instance_from_bytes(
-        &self,
-        wasm_bytes: &[u8],
-        compilation_options: &CompilationOptions,
-    ) -> Box<dyn Instance> {
-        Box::new(
-            ExperimentalInstance::try_new_instance(
-                self.runtime_ref.vm_hooks_builder(),
-                self.runtime_ref.opcode_config(),
-                wasm_bytes,
-                compilation_options,
-            )
-            .expect("instance init failed"),
-        )
+    pub fn new(runtime: Arc<dyn ExecutorRuntime>) -> Self {
+        ExperimentalExecutor { runtime }
     }
 }
 
@@ -51,14 +29,30 @@ impl Executor for ExperimentalExecutor {
     ) -> Result<Box<dyn Instance>, ExecutorError> {
         check_missing_wasm(wasm_bytes)?;
 
-        Ok(self.new_instance_from_bytes(wasm_bytes, compilation_options))
+        let instance = ExperimentalInstance::try_new_instance(
+            self.runtime.clone(),
+            wasm_bytes,
+            compilation_options,
+        )?;
+
+        Ok(Box::new(instance))
     }
 
     fn new_instance_from_cache(
         &self,
-        _cache_bytes: &[u8],
-        _compilation_options: &CompilationOptions,
+        cache_bytes: &[u8],
+        compilation_options: &CompilationOptions,
     ) -> Result<Box<dyn Instance>, ExecutorError> {
-        panic!("WasmerProdExecutor new_instance_from_cache not supported")
+        if cache_bytes.is_empty() {
+            return Err(ExperimentalError::EmptyCacheArtifact.into());
+        }
+
+        let instance = ExperimentalInstance::try_new_instance_from_cache(
+            self.runtime.clone(),
+            cache_bytes,
+            compilation_options,
+        )?;
+
+        Ok(Box::new(instance))
     }
 }

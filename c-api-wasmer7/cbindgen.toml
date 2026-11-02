@@ -1,0 +1,17 @@
+# The shared vocabulary comes from the common header rather than being repeated here, so that
+# a caller linking more than one of these libraries sees one definition of each type. Without
+# the exclusion cbindgen would emit its own copy of every type it can reach.
+header = "#include \"libvmexeccapi_common.h\""
+
+[export]
+exclude = [
+    "vm_exec_status_t",
+    "vm_exec_opcode_cost_t",
+    "vm_exec_compilation_options_t",
+    "vm_exec_executor_config_t",
+    "vm_exec_call_result_kind_t",
+    "vm_exec_call_result_t",
+    "vm_exec_hook_result_t",
+    "vm_exec_hook_context_t",
+    "vm_exec_vm_hook_c_func_pointers",
+]

@@ -1,19 +1,10 @@
 use multiversx_chain_vm_executor::{
-    CompilationOptions, ExecutorError, Instance, InstanceCallResult, OpcodeConfig, OpcodeCost,
-    WASM_LOCALS_LIMIT,
+    CompilationOptions, ExecutorError, ExecutorRuntimeDefault, Instance, InstanceCallResult,
+    OpcodeConfig, OpcodeCost, WASM_LOCALS_LIMIT,
 };
-use multiversx_chain_vm_executor_wasmer_experimental::{
-    ExperimentalInstance, ExperimentalVMHooksBuilderDefault,
-};
+use multiversx_chain_vm_executor_wasmer_experimental::ExperimentalInstance;
 use std::sync::Arc;
 use wasmer::wat2wasm;
-
-const COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
-    unmetered_locals: 0,
-    max_memory_grow: 0,
-    max_memory_grow_delta: 0,
-    opcode_trace: false,
-};
 
 fn wat_with_locals(num_locals: usize) -> String {
     format!(
@@ -29,10 +20,9 @@ fn try_instance(num_locals: usize) -> Result<Box<dyn Instance>, ExecutorError> {
     let wat = wat_with_locals(num_locals);
     let wasm_bytes = wat2wasm(wat.as_bytes()).unwrap();
     ExperimentalInstance::try_new_instance(
-        Box::new(ExperimentalVMHooksBuilderDefault),
-        Arc::new(OpcodeConfig::default()),
+        Arc::new(ExecutorRuntimeDefault),
         &wasm_bytes,
-        &COMPILATION_OPTIONS,
+        &CompilationOptions::default(),
     )
     .map(|instance| Box::new(instance) as Box<dyn Instance>)
 }
@@ -64,12 +54,12 @@ fn points_used_with_locals(num_locals: usize, unmetered_locals: usize) -> u64 {
     };
     let options = CompilationOptions {
         unmetered_locals,
-        ..COMPILATION_OPTIONS
+        opcode_config: Arc::new(opcode_config),
+        ..Default::default()
     };
 
     let mut instance = ExperimentalInstance::try_new_instance(
-        Box::new(ExperimentalVMHooksBuilderDefault),
-        Arc::new(opcode_config),
+        Arc::new(ExecutorRuntimeDefault),
         &wasm_bytes,
         &options,
     )

@@ -7,19 +7,12 @@ use wasmer::wat2wasm;
 
 const MEMORY_COPY_WAT: &[u8] = include_bytes!("memory-copy.wat");
 
-const DUMMY_COMPILATION_OPTIONS: CompilationOptions = CompilationOptions {
-    unmetered_locals: 0,
-    max_memory_grow: 0,
-    max_memory_grow_delta: 0,
-    opcode_trace: false,
-};
-
 #[test]
 fn opcode_version_test() {
     let wasm_bytes = wat2wasm(MEMORY_COPY_WAT).unwrap();
 
     let mut executor = WasmerExecutor::new(Box::new(VMHooksLegacyDefault));
-    let result = executor.new_instance(&wasm_bytes, &DUMMY_COMPILATION_OPTIONS.to_legacy());
+    let result = executor.new_instance(&wasm_bytes, &CompilationOptions::default().to_legacy());
     assert!(result.is_err());
 
     executor
@@ -29,6 +22,6 @@ fn opcode_version_test() {
         })
         .unwrap();
 
-    let result = executor.new_instance(&wasm_bytes, &DUMMY_COMPILATION_OPTIONS.to_legacy());
+    let result = executor.new_instance(&wasm_bytes, &CompilationOptions::default().to_legacy());
     assert!(result.is_ok());
 }

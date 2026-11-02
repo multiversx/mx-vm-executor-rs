@@ -1,6 +1,7 @@
 use crate::executor_interface::{
     BreakpointValueLegacy, CompilationOptionsLegacy, ExecutorError, InstanceLegacy, MemLength,
-    MemPtr, OpcodeConfig, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
+    MemPtr, OpcodeConfig, ServiceError, VMHooksEarlyExit, VMHooksLegacy, checked_load_range,
+    checked_store_range,
 };
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
@@ -135,6 +136,15 @@ impl WasmerInstance {
 
     pub fn take_early_exit(&self) -> Option<VMHooksEarlyExit> {
         self.early_exit_cell.take()
+    }
+
+    pub fn get_imported_function_names(&self) -> Vec<String> {
+        self.wasmer_instance
+            .module()
+            .imports()
+            .filter(|import| matches!(import.ty(), ExternType::Function(_)))
+            .map(|import| import.name().to_string())
+            .collect()
     }
 }
 
@@ -317,28 +327,18 @@ impl InstanceLegacy for WasmerInstance {
     }
 
     fn memory_load(&self, mem_ptr: MemPtr, mem_length: MemLength) -> Result<&[u8], ExecutorError> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => unsafe {
-                let mem_data = memory.data_unchecked();
-                let start = mem_ptr as usize;
-                let end = (mem_ptr + mem_length) as usize;
-                Ok(&mem_data[start..end])
-            },
-            Err(err) => Err(err.into()),
-        }
+        let memory = self.get_memory_ref()?;
+        let (start, end) = checked_load_range(mem_ptr, mem_length, memory.data_size())?;
+        unsafe { Ok(&memory.data_unchecked()[start..end]) }
     }
 
     fn memory_store(&self, mem_ptr: MemPtr, data: &[u8]) -> Result<(), ExecutorError> {
-        let result = self.get_memory_ref();
-        match result {
-            Ok(memory) => unsafe {
-                let mem_data = memory.data_unchecked_mut();
-                mem_data[mem_ptr as usize..mem_ptr as usize + data.len()].copy_from_slice(data);
-                Ok(())
-            },
-            Err(err) => Err(err.into()),
+        let memory = self.get_memory_ref()?;
+        let (start, end) = checked_store_range(mem_ptr, data.len(), memory.data_size())?;
+        unsafe {
+            memory.data_unchecked_mut()[start..end].copy_from_slice(data);
         }
+        Ok(())
     }
 
     fn memory_grow(&self, by_num_pages: u32) -> Result<u32, ExecutorError> {

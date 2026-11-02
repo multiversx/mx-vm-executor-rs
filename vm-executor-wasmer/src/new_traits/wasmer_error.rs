@@ -19,4 +19,7 @@ pub enum WasmerExecutorError {
 
     #[error("instance call error: {0}")]
     WrappedInstance(String),
+
+    #[error("cache artifact is empty")]
+    EmptyCacheArtifact,
 }

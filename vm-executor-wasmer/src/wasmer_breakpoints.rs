@@ -17,6 +17,13 @@ use crate::wasmer_helpers::{
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
 pub(crate) const BREAKPOINT_VALUE_NO_BREAKPOINT: u64 = 0;
+
+/// The value a host-requested stop writes.
+///
+/// Deliberately outside `BreakpointValueLegacy`, whose six values are all spoken for, and
+/// outside the three a middleware can raise. Nothing but `InstanceStopHandle::request_stop`
+/// writes it, and the only reader turns it straight into `InstanceCallResult::Interrupted`.
+pub(crate) const BREAKPOINT_VALUE_HOST_REQUESTED_STOP: u64 = 6;
 pub(crate) const BREAKPOINT_VALUE_OUT_OF_GAS: u64 = 4;
 pub(crate) const BREAKPOINT_VALUE_MEMORY_LIMIT: u64 = 5;
 
