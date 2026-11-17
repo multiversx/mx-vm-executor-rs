@@ -98,6 +98,7 @@ endif
 	  echo "--- Not on macOS: skipping libvmexeccapi.dylib / libvmexeccapi_arm.dylib" \
 	       "(no container or cross-compile path exists for macOS; see README) ---"; \
 	fi
+	scripts/git-info.sh > $(CI_LOCAL_DIR)/libvmexeccapi-git-info.txt
 	@echo "--- CI artifacts reproduced in $(CI_LOCAL_DIR) ---"
 	@ls -1 $(CI_LOCAL_DIR)
 
