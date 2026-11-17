@@ -24,7 +24,7 @@ version = "0.5.2"
 
 [dependencies.wasmer]
 git = "https://github.com/multiversx/wasmer"
-rev = "8bbcffa0bc574d21e5e2fbeb7df39ab352687997"
+rev = "294849966131e5ae981d731b5212d97def2b95cf"
 default-features = false
 features = [
     "singlepass",
@@ -35,11 +35,11 @@ features = [
 
 [dependencies.wasmer-vm]
 git = "https://github.com/multiversx/wasmer"
-rev = "8bbcffa0bc574d21e5e2fbeb7df39ab352687997"
+rev = "294849966131e5ae981d731b5212d97def2b95cf"
 
 [dependencies.wasmer-types]
 git = "https://github.com/multiversx/wasmer"
-rev = "8bbcffa0bc574d21e5e2fbeb7df39ab352687997"
+rev = "294849966131e5ae981d731b5212d97def2b95cf"
 
 [dependencies]
 log = "0.4"
