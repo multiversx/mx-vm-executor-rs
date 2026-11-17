@@ -16,3 +16,6 @@ my-*
 .vscode
 **/.DS_Store
 .claude
+
+# Graphify graph
+graphify-out/
