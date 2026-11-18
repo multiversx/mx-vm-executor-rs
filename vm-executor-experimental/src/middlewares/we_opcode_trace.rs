@@ -29,10 +29,10 @@ impl MemoryUsage for OpcodeTracer {
 }
 
 impl ModuleMiddleware for OpcodeTracer {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         let file = fs::OpenOptions::new()
             .append(true)
             .open(OPCODE_TRACE_PATH)
@@ -76,11 +76,11 @@ impl FunctionOpcodeTracer {
     }
 }
 
-impl FunctionMiddleware for FunctionOpcodeTracer {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionOpcodeTracer {
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
         self.trace_operator(&operator);
 

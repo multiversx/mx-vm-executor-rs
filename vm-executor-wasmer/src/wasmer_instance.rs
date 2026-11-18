@@ -1,6 +1,6 @@
 use crate::executor_interface::{
     BreakpointValueLegacy, CompilationOptionsLegacy, ExecutorError, InstanceLegacy, MemLength,
-    MemPtr, OpcodeCost, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
+    MemPtr, OpcodeConfig, ServiceError, VMHooksEarlyExit, VMHooksLegacy,
 };
 use crate::wasmer_opcode_trace::OpcodeTracer;
 use crate::wasmer_protected_globals::ProtectedGlobals;
@@ -28,7 +28,7 @@ pub struct WasmerInstance {
 impl WasmerInstance {
     pub fn try_new_instance(
         vm_hooks: Rc<dyn VMHooksLegacy>,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         wasm_bytes: &[u8],
         compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
@@ -36,7 +36,7 @@ impl WasmerInstance {
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, opcode_cost);
+        push_middlewares(&mut compiler, compilation_options, opcode_config);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -74,7 +74,7 @@ impl WasmerInstance {
 
     pub fn try_new_instance_from_cache(
         vm_hooks: Rc<dyn VMHooksLegacy>,
-        opcode_cost: Arc<Mutex<OpcodeCost>>,
+        opcode_config: Arc<Mutex<OpcodeConfig>>,
         cache_bytes: &[u8],
         compilation_options: &CompilationOptionsLegacy,
     ) -> Result<Self, ExecutorError> {
@@ -82,7 +82,7 @@ impl WasmerInstance {
         let mut compiler = Singlepass::default();
 
         // Push middlewares
-        push_middlewares(&mut compiler, compilation_options, opcode_cost);
+        push_middlewares(&mut compiler, compilation_options, opcode_config);
 
         // Create the store
         let store = Store::new(&Universal::new(compiler).engine());
@@ -181,7 +181,7 @@ fn validate_memory(memory: &wasmer::Memory) -> Result<(), ExecutorError> {
 fn push_middlewares(
     compiler: &mut Singlepass,
     compilation_options: &CompilationOptionsLegacy,
-    opcode_cost: Arc<Mutex<OpcodeCost>>,
+    opcode_config: Arc<Mutex<OpcodeConfig>>,
 ) {
     // Create breakpoints middleware
     let breakpoints_middleware = Arc::new(Breakpoints::new());
@@ -198,7 +198,7 @@ fn push_middlewares(
     let metering_middleware = Arc::new(Metering::new(
         compilation_options.gas_limit,
         compilation_options.unmetered_locals,
-        opcode_cost,
+        opcode_config,
         breakpoints_middleware.clone(),
     ));
 

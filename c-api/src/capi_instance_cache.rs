@@ -1,11 +1,11 @@
 use std::slice;
 
 use meta::capi_safe_unwind;
-use multiversx_chain_vm_executor::CompilationOptionsLegacy;
 
 use crate::{
+    capi_compilation_options::vm_exec_compilation_options_t,
     capi_executor::{CapiExecutor, vm_exec_executor_t},
-    capi_instance::{CapiInstance, vm_exec_compilation_options_t, vm_exec_instance_t},
+    capi_instance::{CapiInstance, vm_exec_instance_t},
     service_singleton::with_service,
     vm_exec_result_t,
 };
@@ -68,13 +68,14 @@ pub unsafe extern "C" fn vm_exec_instance_from_cache(
         return vm_exec_result_t::VM_EXEC_ERROR;
     }
 
+    return_if_ptr_null!(options_ptr, "compilation options ptr is null");
+
     let cache_bytes: &[u8] =
         unsafe { slice::from_raw_parts(cache_bytes_ptr, cache_bytes_len as usize) };
-    let compilation_options: &CompilationOptionsLegacy =
-        unsafe { &*(options_ptr as *const CompilationOptionsLegacy) };
+    let compilation_options = unsafe { (*options_ptr).to_legacy() };
     let instance_result = capi_executor
         .content
-        .new_instance_from_cache(cache_bytes, compilation_options);
+        .new_instance_from_cache(cache_bytes, &compilation_options);
     match instance_result {
         Ok(instance_box) => {
             let capi_instance = CapiInstance {
