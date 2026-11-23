@@ -1,5 +1,6 @@
 mod breakpoint_value;
 mod compilation_options;
+pub mod ei;
 mod executor;
 mod instance;
 mod missing_wasm;

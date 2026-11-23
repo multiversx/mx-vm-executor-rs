@@ -1,0 +1,24 @@
+pub mod delta;
+mod deprecated_ei;
+mod ei_1_0;
+mod ei_1_1;
+mod ei_1_2;
+mod ei_1_3;
+mod ei_1_4;
+mod ei_1_5;
+mod ei_version;
+mod vm_hook_signature;
+mod vm_hook_signature_list;
+mod vm_hook_signature_val_type;
+
+pub use deprecated_ei::DeprecatedVMHook;
+pub use ei_1_0::EI_1_0_NAMES;
+pub use ei_1_1::EI_1_1_NAMES;
+pub use ei_1_2::EI_1_2_NAMES;
+pub use ei_1_3::EI_1_3_NAMES;
+pub use ei_1_4::EI_1_4_NAMES;
+pub use ei_1_5::EI_1_5_NAMES;
+pub use ei_version::{EIVersion, parse_check_ei};
+pub use vm_hook_signature::{VmHookSignature, check_vm_hook_signatures, vm_hook_signature_map};
+pub use vm_hook_signature_list::VM_HOOK_SIGNATURES;
+pub use vm_hook_signature_val_type::ValType;
