@@ -6,7 +6,7 @@ use wasmer::wasmparser::Operator;
 use wasmer::{AsStoreMut, Instance, LocalFunctionIndex};
 use wasmer_types::{GlobalIndex, MiddlewareError, ModuleInfo};
 
-use crate::we_helpers::{create_global_index, get_global_value_u64, is_control_flow_operator};
+use crate::we_helpers::{create_i64_global_index, get_global_value_u64, is_control_flow_operator};
 
 const BREAKPOINT_VALUE: &str = "breakpoint_value";
 
@@ -64,10 +64,10 @@ unsafe impl Send for Breakpoints {}
 unsafe impl Sync for Breakpoints {}
 
 impl ModuleMiddleware for Breakpoints {
-    fn generate_function_middleware(
+    fn generate_function_middleware<'a>(
         &self,
         _local_function_index: LocalFunctionIndex,
-    ) -> Box<dyn FunctionMiddleware> {
+    ) -> Box<dyn FunctionMiddleware<'a> + 'a> {
         Box::new(FunctionBreakpoints {
             global_index: self.global_index.lock().unwrap().clone().unwrap(),
         })
@@ -77,7 +77,7 @@ impl ModuleMiddleware for Breakpoints {
         let mut global_index = self.global_index.lock().unwrap();
 
         *global_index = Some(BreakpointsGlobalIndex {
-            breakpoint_value_global_index: create_global_index(
+            breakpoint_value_global_index: create_i64_global_index(
                 module_info,
                 BREAKPOINT_VALUE,
                 BREAKPOINT_VALUE_NO_BREAKPOINT as i64,
@@ -112,11 +112,11 @@ impl FunctionBreakpoints {
     }
 }
 
-impl FunctionMiddleware for FunctionBreakpoints {
-    fn feed<'b>(
+impl<'a> FunctionMiddleware<'a> for FunctionBreakpoints {
+    fn feed(
         &mut self,
-        operator: Operator<'b>,
-        state: &mut MiddlewareReaderState<'b>,
+        operator: Operator<'a>,
+        state: &mut MiddlewareReaderState<'a>,
     ) -> Result<(), MiddlewareError> {
         let must_add_breakpoint = is_control_flow_operator(&operator);
 
